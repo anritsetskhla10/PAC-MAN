@@ -1,12 +1,22 @@
+import { Board } from './components/Game/Board';
+import { SettingsPanel } from './components/SettingsPanel';
+import { ThemeProvider } from './context/ThemeProvider';
+
 function App() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <h1 className="text-4xl font-bold text-yellow-400 mb-8">Pacman</h1>
-      <div className="p-4 border-4 border-blue-600 rounded-lg">
-        <p>Game Board will be here</p>
+    <ThemeProvider>
+      <div className="min-h-screen bg-bg-main text-text-main font-poppins transition-colors duration-300 flex flex-col items-center justify-center gap-8 p-4">
+        
+        <h1 className="text-3xl font-bold text-primary">Pac-Man</h1>
+
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+          <Board />
+          <SettingsPanel />
+        </div>
+
       </div>
-    </div>
-  )
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;

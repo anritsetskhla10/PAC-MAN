@@ -1,1 +1,20 @@
 @import "tailwindcss";
+
+@theme {
+  --color-primary: var(--primary);
+  --color-bg-main: var(--bg-main);
+}
+
+:root {
+  /* Default  */
+  --primary: #00d4ff; 
+  --bg-main: #f0f4f8;
+  --game-bg: #000000;         
+  --wall-color: #1e3a8a;     
+  --food-color: #fef08a;      
+}
+
+/* Dark Mode */
+.dark {
+  --bg-main: #0f0f1a;
+}
