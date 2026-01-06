@@ -8,7 +8,9 @@ export const Board3D = () => {
   const { settings } = useTheme();
 
   return (
-    <div className="w-full h-150 rounded-xl overflow-hidden shadow-2xl border-4 border-border-color bg-black">
+    <div className="relative w-full h-150 rounded-xl overflow-hidden shadow-2xl border-4 border-border-color bg-black">
+    {/* Crosshair */}
+    <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-white/50 rounded-full -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none" />
       <Canvas shadows>
         <fog attach="fog" args={['black', 0, 15]} />
 
