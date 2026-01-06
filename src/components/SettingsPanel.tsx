@@ -28,6 +28,19 @@ export const SettingsPanel = () => {
           </button>
         </div>
 
+        <hr className="border-border-color my-4" />
+       
+       {/* 3D Mode Toggle */}
+       <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">3D View</span>
+          <button 
+            onClick={() => updateSetting('is3DMode', !settings.is3DMode)}
+            className={`w-12 h-6 rounded-full p-1 transition-colors ${settings.is3DMode ? 'bg-purple-600' : 'bg-gray-300'}`}
+          >
+            <div className={`w-4 h-4 bg-white rounded-full transition-transform ${settings.is3DMode ? 'translate-x-6' : 'translate-x-0'}`} />
+          </button>
+        </div>
+
         <hr className="border-border-color" />
 
         {/* Wall Color Picker */}

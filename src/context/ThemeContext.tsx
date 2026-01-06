@@ -5,6 +5,7 @@ export interface ThemeSettings {
   foodColor: string;
   gameBg: string;
   isDarkMode: boolean;
+  is3DMode: boolean;
 }
 
 export interface ThemeContextType {
@@ -18,6 +19,7 @@ export const defaultSettings: ThemeSettings = {
   foodColor: '#fef08a',
   gameBg: '#000000',
   isDarkMode: true,
+  is3DMode: false,
 };
 
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
