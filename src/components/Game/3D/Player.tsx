@@ -1,16 +1,16 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import { PointerLockControls } from '@react-three/drei';
+import { useGame } from '../../../context/GameContext'; 
 import { LEVEL_MAP } from '../../../utils/constants';
 import { TileType } from '../../../types';
 
 export const Player = () => {
   const { camera } = useThree();
-  const [pos, setPos] = useState({ x: 1, z: 1 });
-  
-  const posRef = useRef(pos); 
-  useEffect(() => { posRef.current = pos; }, [pos]);
+  const { playerPos, setPlayerPos } = useGame(); 
+  const posRef = useRef(playerPos);
+  useEffect(() => { posRef.current = playerPos; }, [playerPos]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -50,7 +50,6 @@ export const Player = () => {
         newZ -= rightStep.z;
       }
 
-
       const targetX = Math.round(newX);
       const targetZ = Math.round(newZ);
 
@@ -58,31 +57,31 @@ export const Player = () => {
         LEVEL_MAP[targetZ] && 
         LEVEL_MAP[targetZ][targetX] !== TileType.WALL
       ) {
-        setPos({ x: targetX, z: targetZ });
+        setPlayerPos({ x: targetX, z: targetZ });
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [camera]); 
+  }, [camera, setPlayerPos]);
 
   useFrame(() => {
-    const targetPosition = new Vector3(pos.x, 0.5, pos.z);
-    camera.position.lerp(targetPosition, 0.1);
+    const targetPosition = new Vector3(playerPos.x, 0.5, playerPos.z);
+    camera.position.lerp(targetPosition, 0.15); 
   });
 
   return (
     <>
       <PointerLockControls />
-      
-      <group position={[pos.x, 0.5, pos.z]}>
+      <group position={[playerPos.x, 0.5, playerPos.z]}>
         <spotLight 
           position={[0, 0, 0]}
-          target={camera} 
+          target={camera}
           intensity={2}
-          angle={0.5}
+          angle={0.6}
           penumbra={1}
-          distance={10}
+          distance={15}
+          castShadow
         />
       </group>
     </>

@@ -1,7 +1,7 @@
 // კოორდინატები
 export type Coordinate = {
   x: number;
-  y: number;
+  y: number; 
 };
 
 // მიმართულებები
@@ -20,8 +20,9 @@ export const TileType = {
   EMPTY: 0,
   WALL: 1,
   FOOD: 2,
-  PACMAN: 3, 
-  GHOST: 4,  
+  PACMAN_START: 3,
+  GHOST_START: 4,  
+  GHOST_HOUSE: 5,  
 } as const;
 
 export type TileType = typeof TileType[keyof typeof TileType];
