@@ -4,7 +4,7 @@ export const SettingsPanel = () => {
   const { settings, updateSetting, resetTheme } = useTheme();
 
   return (
-    <div className="card-surface p-6 rounded-xl border border-border-color w-full max-w-md">
+    <div className="card-surface p-6 rounded-xl bg-bg-primary border border-border-color w-full max-w-md">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-text-muted">Customize Theme</h3>
         <button 

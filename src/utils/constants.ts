@@ -1,7 +1,7 @@
 
 export const CELL_SIZE = 20; 
 
-// 1 = Wall, 2 = Food, 0 = Empty, 5 = Ghost House, 3 = Pacman Start
+// 1 = Wall, 2 = Food, 0 = Empty, 5 = Ghost House, 3 = Pacman Start, 4 = Ghost Start
 export const LEVEL_MAP: number[][] = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   [1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1],

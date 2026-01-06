@@ -3,18 +3,36 @@
 @theme {
   --color-primary: var(--primary);
   --color-bg-main: var(--bg-main);
+  --color-bg-card: var(--bg-card);     
+  --color-text-main: var(--text-main); 
+  --color-text-muted: var(--text-muted);
+  --color-border-color: var(--border-color);
+}
+
+@utility card-surface {
+  background-color: var(--bg-card);
+  border-radius: 0.75rem;
+  &:where(:root:not(.dark) *) {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
 }
 
 :root {
-  /* Default  */
   --primary: #00d4ff; 
   --bg-main: #f0f4f8;
   --game-bg: #000000;         
   --wall-color: #1e3a8a;     
   --food-color: #fef08a;      
+  --bg-card: #ffffff;       
+  --text-main: #0f172a;     
+  --text-muted: #64748b;    
+  --border-color: #cbd5e1;  
 }
 
-/* Dark Mode */
 .dark {
   --bg-main: #0f0f1a;
+  --bg-card: #1e1e2f;       
+  --text-main: #ffffff;     
+  --text-muted: #9ca3af;    
+  --border-color: rgba(255, 255, 255, 0.1); 
 }
