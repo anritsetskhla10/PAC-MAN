@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { LEVEL_MAP } from '../../utils/constants';
 import { TileType } from '../../types';
 import { cn } from '../../utils/cn';
 import { useGame } from '../../context/GameContext';
@@ -9,7 +8,7 @@ interface BoardProps {
 }
 
 export const Board = ({ isMinimap = false }: BoardProps) => {
-  const { playerPos, ghostsPos, setPlayerPos } = useGame();
+  const { playerPos, ghostsPos, layout, movePlayer } = useGame(); 
 
   useEffect(() => {
     if (isMinimap) return;
@@ -23,17 +22,12 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
       if (e.key === 'ArrowLeft' || e.key === 'a') newX -= 1;
       if (e.key === 'ArrowRight' || e.key === 'd') newX += 1;
 
-      if (
-        LEVEL_MAP[newZ] && 
-        LEVEL_MAP[newZ][newX] !== TileType.WALL
-      ) {
-        setPlayerPos({ x: newX, z: newZ });
-      }
+      movePlayer(newX, newZ);
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [playerPos, setPlayerPos, isMinimap]); 
+  }, [playerPos, movePlayer, isMinimap]); 
 
   const cellSize = isMinimap ? 10 : 28; 
 
@@ -47,10 +41,10 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
             : "border-4 shadow-[0_0_30px_var(--wall-color)] bg-(--game-bg) border-(--wall-color) gap-px"
         )}
         style={{
-          gridTemplateColumns: `repeat(${LEVEL_MAP[0].length}, ${cellSize}px)`,
+          gridTemplateColumns: `repeat(${layout[0].length}, ${cellSize}px)`,
         }}
       >
-        {LEVEL_MAP.map((row, rowIndex) =>
+        {layout.map((row, rowIndex) =>
           row.map((tile, colIndex) => {
             const isPlayerHere = playerPos.x === colIndex && playerPos.z === rowIndex;
             const isGhostHere = ghostsPos.some(g => g.x === colIndex && g.z === rowIndex);
@@ -61,17 +55,11 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
                 style={{ width: cellSize, height: cellSize }}
                 className={cn(
                   "flex items-center justify-center",
-                  
-                  // კედელი
                   tile === TileType.WALL && (isMinimap 
                     ? "bg-blue-500/50" 
                     : "bg-(--wall-color) opacity-60 rounded-xs"
                   ),
-
-                  // მოთამაშე
                   isPlayerHere && "bg-yellow-400 rounded-full z-10 scale-90 shadow-[0_0_10px_yellow]",
-                  
-                  // მოჩვენება
                   isGhostHere && "bg-red-600 rounded-t-full z-10 scale-90 animate-bounce"
                 )}
               >

@@ -9,6 +9,9 @@ export interface GameContextType {
   playerPos: Position;
   setPlayerPos: (pos: Position) => void;
   ghostsPos: Position[];
+  score: number;           
+  layout: number[][];     
+  movePlayer: (targetX: number, targetZ: number) => void;
 }
 
 export const GameContext = createContext<GameContextType | undefined>(undefined);

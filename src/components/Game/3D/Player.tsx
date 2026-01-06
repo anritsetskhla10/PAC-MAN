@@ -2,13 +2,12 @@ import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import { PointerLockControls } from '@react-three/drei';
-import { useGame } from '../../../context/GameContext'; 
-import { LEVEL_MAP } from '../../../utils/constants';
-import { TileType } from '../../../types';
+import { useGame } from '../../../context/GameContext';
 
 export const Player = () => {
   const { camera } = useThree();
-  const { playerPos, setPlayerPos } = useGame(); 
+  const { playerPos, movePlayer } = useGame(); 
+
   const posRef = useRef(playerPos);
   useEffect(() => { posRef.current = playerPos; }, [playerPos]);
 
@@ -20,7 +19,6 @@ export const Player = () => {
 
       const direction = new Vector3();
       camera.getWorldDirection(direction);
-
       const isFacingX = Math.abs(direction.x) > Math.abs(direction.z);
 
       const forwardStep = { 
@@ -50,24 +48,16 @@ export const Player = () => {
         newZ -= rightStep.z;
       }
 
-      const targetX = Math.round(newX);
-      const targetZ = Math.round(newZ);
-
-      if (
-        LEVEL_MAP[targetZ] && 
-        LEVEL_MAP[targetZ][targetX] !== TileType.WALL
-      ) {
-        setPlayerPos({ x: targetX, z: targetZ });
-      }
+      movePlayer(Math.round(newX), Math.round(newZ));
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [camera, setPlayerPos]);
+  }, [camera, movePlayer]);
 
   useFrame(() => {
     const targetPosition = new Vector3(playerPos.x, 0.5, playerPos.z);
-    camera.position.lerp(targetPosition, 0.15); 
+    camera.position.lerp(targetPosition, 0.15);
   });
 
   return (
