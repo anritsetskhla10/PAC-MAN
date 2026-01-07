@@ -12,6 +12,8 @@ export interface GameContextType {
   score: number;           
   layout: number[][];     
   movePlayer: (targetX: number, targetZ: number) => void;
+  isGameOver: boolean;     
+  restartGame: () => void;
 }
 
 export const GameContext = createContext<GameContextType | undefined>(undefined);
