@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { GameContext, type Position } from './GameContext';
+import { type GameStatus, TileType } from '../types';
 import { LEVEL_MAP } from '../utils/constants';
-import { TileType } from '../types';
 import { calculateGhostNextMove } from '../utils/ghostLogic';
 
+// --- საწყისი პოზიციების დალაგება ---
 const getInitialPositions = () => {
   let pacmanStart: Position = { x: 1, z: 1 };
   const ghostsStart: Position[] = [];
+  
+  // ვქმნით რუკის  ასლს, რომ რესტარტისას საჭმელები აღდგეს
   const initialLayout = LEVEL_MAP.map(row => [...row]);
 
   LEVEL_MAP.forEach((row, rowIndex) => {
@@ -24,36 +27,68 @@ const getInitialPositions = () => {
 };
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {
+  // მონაცემების ინიციალიზაცია
   const { pacmanStart, ghostsStart, initialLayout } = getInitialPositions();
 
+  // --- STATE ---
   const [playerPos, setPlayerPos] = useState<Position>(pacmanStart);
   const [ghostsPos, setGhostsPos] = useState<Position[]>(ghostsStart);
   const [layout, setLayout] = useState<number[][]>(initialLayout);
   const [score, setScore] = useState<number>(0);
-  const [isGameOver, setIsGameOver] = useState<boolean>(false);
+  
+  // თამაშის სტატუსი (ვიწყებთ 'idle'-ით, ანუ მენიუთი)
+  const [gameStatus, setGameStatus] = useState<GameStatus>('idle');
+
+  // --- REFS (მნიშვნელოვანია Game Loop-ისთვის) ---
+  // ვიყენებთ Refs-ს, რომ useEffect-ში ყოველთვის გვქონდეს განახლებული მონაცემები
+  // ისე, რომ ტაიმერები არ დავარესტარტოთ.
   const playerPosRef = useRef(playerPos);
   const layoutRef = useRef(layout);
 
-  useEffect(() => {
-    playerPosRef.current = playerPos;
-  }, [playerPos]);
-
-  useEffect(() => {
-    layoutRef.current = layout; 
-  }, [layout]);
+  // რეფების სინქრონიზაცია სტეიტთან
+  useEffect(() => { playerPosRef.current = playerPos; }, [playerPos]);
+  useEffect(() => { layoutRef.current = layout; }, [layout]);
 
 
-  // ---  MOVEMENT (Pacman) ---
+  // --- GAME CONTROLS ---
+  const startGame = () => setGameStatus('playing');
+  
+  const pauseGame = () => {
+    if (gameStatus === 'playing') setGameStatus('paused');
+  };
+
+  const resumeGame = () => {
+    if (gameStatus === 'paused') setGameStatus('playing');
+  };
+
+  const restartGame = () => {
+    const freshData = getInitialPositions();
+    setPlayerPos(freshData.pacmanStart);
+    setGhostsPos(freshData.ghostsStart);
+    setLayout(freshData.initialLayout);
+    setScore(0);
+    setGameStatus('playing'); 
+  };
+
+
+  // --- PLAYER MOVEMENT LOGIC ---
   const movePlayer = useCallback((targetX: number, targetZ: number) => {
-    if (isGameOver) return;
+    // მოძრაობს მხოლოდ მაშინ, თუ სტატუსი არის 'playing'
+    if (gameStatus !== 'playing') return;
 
+    // საზღვრების შემოწმება
     if (!layout[targetZ] || layout[targetZ][targetX] === undefined) return;
+    
     const targetTile = layout[targetZ][targetX];
 
+    // კედელი
     if (targetTile === TileType.WALL) return;
 
+    // საჭმელი
     if (targetTile === TileType.FOOD) {
       setScore((prev) => prev + 10);
+      
+      // რუკის განახლება (საჭმლის წაშლა)
       setLayout((prevLayout) => {
         const newLayout = prevLayout.map((row) => [...row]);
         newLayout[targetZ][targetX] = TileType.EMPTY;
@@ -61,18 +96,20 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       });
     }
 
+    // პოზიციის განახლება
     setPlayerPos({ x: targetX, z: targetZ });
-  }, [layout, isGameOver]);
+  }, [layout, gameStatus]);
 
 
-  // --- GHOST  ---
+  // ---  GHOST AI LOGIC ---
   useEffect(() => {
-    if (isGameOver) return;
+    // ტაიმერი მუშაობს მხოლოდ 'playing' რეჟიმში
+    if (gameStatus !== 'playing') return;
 
     const moveInterval = setInterval(() => {
       setGhostsPos((prevGhosts) => {
+        // გავდივართ ყველა მოჩვენებაზე
         return prevGhosts.map((ghostPos, index) => {
-          
           return calculateGhostNextMove(
             ghostPos, 
             index, 
@@ -81,39 +118,62 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           );
         });
       });
-    }, 400); 
+    }, 400); // მოჩვენებების სიჩქარე (400ms)
 
     return () => clearInterval(moveInterval);
-  }, [isGameOver]);
+  }, [gameStatus]);
 
 
-  // --- COLLISION ---
+  // ---  COLLISION DETECTION ---
   useEffect(() => {
-    if (isGameOver) return;
+    if (gameStatus !== 'playing') return;
 
     const hit = ghostsPos.some(ghost => ghost.x === playerPos.x && ghost.z === playerPos.z);
 
     if (hit) {
+      // setTimeout(0) გვჭირდება, რომ ავირიდოთ React Warning (setState during render)
       setTimeout(() => {
-        setIsGameOver(true);
+        setGameStatus('gameover');
         console.log("GAME OVER!");
       }, 0);
     }
-  }, [playerPos, ghostsPos, isGameOver]);
+  }, [playerPos, ghostsPos, gameStatus]);
 
 
-  const restartGame = () => {
-    const freshData = getInitialPositions();
-    setPlayerPos(freshData.pacmanStart);
-    setGhostsPos(freshData.ghostsStart);
-    setLayout(freshData.initialLayout);
-    setScore(0);
-    setIsGameOver(false);
-  };
+  // ---  KEYBOARD SHORTCUTS (ESC) ---
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Escape') {
+        if (gameStatus === 'playing') {
+          setGameStatus('paused');
+          // 3D რეჟიმში მაუსის გამოჩენა
+          if (document.pointerLockElement) {
+            document.exitPointerLock();
+          }
+        } else if (gameStatus === 'paused') {
+          setGameStatus('playing');
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [gameStatus]);
+
 
   return (
     <GameContext.Provider value={{ 
-      playerPos, setPlayerPos: () => {}, ghostsPos, score, layout, movePlayer, isGameOver, restartGame 
+      playerPos, 
+      ghostsPos, 
+      score, 
+      layout, 
+      gameStatus, 
+      
+      movePlayer, 
+      startGame, 
+      pauseGame, 
+      resumeGame, 
+      restartGame 
     }}>
       {children}
     </GameContext.Provider>

@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react';
+import type { GameStatus } from '../types';
 
 export interface Position {
   x: number;
@@ -6,13 +7,18 @@ export interface Position {
 }
 
 export interface GameContextType {
+  // მონაცემები
   playerPos: Position;
-  setPlayerPos: (pos: Position) => void;
   ghostsPos: Position[];
-  score: number;           
-  layout: number[][];     
-  movePlayer: (targetX: number, targetZ: number) => void;
-  isGameOver: boolean;     
+  score: number;
+  layout: number[][];
+  gameStatus: GameStatus; 
+
+  // ფუნქციები
+  movePlayer: (x: number, z: number) => void;
+  startGame: () => void;
+  pauseGame: () => void;
+  resumeGame: () => void;
   restartGame: () => void;
 }
 

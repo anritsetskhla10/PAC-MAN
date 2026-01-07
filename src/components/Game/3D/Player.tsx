@@ -3,16 +3,35 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import { PointerLockControls } from '@react-three/drei';
 import { useGame } from '../../../context/GameContext';
+import type { PointerLockControls as PointerLockControlsImpl } from 'three-stdlib';
 
 export const Player = () => {
   const { camera } = useThree();
-  const { playerPos, movePlayer } = useGame(); 
+  const { playerPos, movePlayer, gameStatus } = useGame(); 
 
+  const controlsRef = useRef<PointerLockControlsImpl>(null);
+
+  // ---  მაუსის ჩაკეტვის ლოგიკა ---
+  useEffect(() => {
+    if (gameStatus === 'playing') {
+      setTimeout(() => {
+        controlsRef.current?.lock();
+      }, 100);
+    } else {
+      controlsRef.current?.unlock();
+    }
+  }, [gameStatus]);
+
+  // ---  პოზიციის სინქრონიზაცია ---
   const posRef = useRef(playerPos);
   useEffect(() => { posRef.current = playerPos; }, [playerPos]);
 
+  // ---  კლავიატურის მოსმენა ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // თუ თამაში არ მიდის, არ იმოძრაო
+      if (gameStatus !== 'playing') return;
+
       const currentPos = posRef.current;
       let newX = currentPos.x;
       let newZ = currentPos.z;
@@ -53,8 +72,9 @@ export const Player = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [camera, movePlayer]);
+  }, [camera, movePlayer, gameStatus]);
 
+  // ---  კამერის მოძრაობა ---
   useFrame(() => {
     const targetPosition = new Vector3(playerPos.x, 0.5, playerPos.z);
     camera.position.lerp(targetPosition, 0.15);
@@ -62,7 +82,8 @@ export const Player = () => {
 
   return (
     <>
-      <PointerLockControls />
+      <PointerLockControls ref={controlsRef} />
+      
       <group position={[playerPos.x, 0.5, playerPos.z]}>
         <spotLight 
           position={[0, 0, 0]}

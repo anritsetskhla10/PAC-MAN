@@ -44,3 +44,5 @@ export interface GameState {
   isGameOver: boolean;
   layout: number[][]; 
 }
+//თამაშის სტატუსი
+export type GameStatus = 'idle' | 'playing' | 'paused' | 'gameover';
