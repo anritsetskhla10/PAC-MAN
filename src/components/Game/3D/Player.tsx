@@ -1,17 +1,15 @@
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3 } from 'three';
-import { PointerLockControls } from '@react-three/drei';
+import { PointerLockControls } from '@react-three/drei'; 
 import { useGame } from '../../../context/GameContext';
 import type { PointerLockControls as PointerLockControlsImpl } from 'three-stdlib';
 
 export const Player = () => {
   const { camera } = useThree();
-  const { playerPos, movePlayer, gameStatus } = useGame(); 
-
+  const { playerPos, movePlayer, gameStatus } = useGame();
   const controlsRef = useRef<PointerLockControlsImpl>(null);
 
-  // ---  მაუსის ჩაკეტვის ლოგიკა ---
   useEffect(() => {
     if (gameStatus === 'playing') {
       setTimeout(() => {
@@ -21,15 +19,11 @@ export const Player = () => {
       controlsRef.current?.unlock();
     }
   }, [gameStatus]);
-
-  // ---  პოზიციის სინქრონიზაცია ---
   const posRef = useRef(playerPos);
   useEffect(() => { posRef.current = playerPos; }, [playerPos]);
 
-  // ---  კლავიატურის მოსმენა ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // თუ თამაში არ მიდის, არ იმოძრაო
       if (gameStatus !== 'playing') return;
 
       const currentPos = posRef.current;
@@ -74,10 +68,9 @@ export const Player = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [camera, movePlayer, gameStatus]);
 
-  // ---  კამერის მოძრაობა ---
   useFrame(() => {
     const targetPosition = new Vector3(playerPos.x, 0.5, playerPos.z);
-    camera.position.lerp(targetPosition, 0.15);
+    camera.position.lerp(targetPosition, 0.2); 
   });
 
   return (
@@ -85,14 +78,16 @@ export const Player = () => {
       <PointerLockControls ref={controlsRef} />
       
       <group position={[playerPos.x, 0.5, playerPos.z]}>
-        <spotLight 
-          position={[0, 0, 0]}
-          target={camera}
-          intensity={2}
-          angle={0.6}
-          penumbra={1}
-          distance={15}
-          castShadow
+        <pointLight 
+          intensity={1.5} 
+          distance={10} 
+          decay={2} 
+          color="#ffaa00"
+        />
+        <pointLight 
+            intensity={0.5}
+            distance={20}
+            color="white"
         />
       </group>
     </>
