@@ -9,7 +9,6 @@ const getInitialPositions = () => {
   let pacmanStart: Position = { x: 1, z: 1 };
   const ghostsStart: Position[] = [];
   
-  // ვქმნით რუკის  ასლს, რომ რესტარტისას საჭმელები აღდგეს
   const initialLayout = LEVEL_MAP.map(row => [...row]);
 
   LEVEL_MAP.forEach((row, rowIndex) => {
@@ -27,7 +26,6 @@ const getInitialPositions = () => {
 };
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {
-  // მონაცემების ინიციალიზაცია
   const { pacmanStart, ghostsStart, initialLayout } = getInitialPositions();
 
   // --- STATE ---
@@ -35,32 +33,19 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [ghostsPos, setGhostsPos] = useState<Position[]>(ghostsStart);
   const [layout, setLayout] = useState<number[][]>(initialLayout);
   const [score, setScore] = useState<number>(0);
-  
-  // თამაშის სტატუსი (ვიწყებთ 'idle'-ით, ანუ მენიუთი)
   const [gameStatus, setGameStatus] = useState<GameStatus>('idle');
 
-  // --- REFS (მნიშვნელოვანია Game Loop-ისთვის) ---
-  // ვიყენებთ Refs-ს, რომ useEffect-ში ყოველთვის გვქონდეს განახლებული მონაცემები
-  // ისე, რომ ტაიმერები არ დავარესტარტოთ.
+  // --- REFS ---
   const playerPosRef = useRef(playerPos);
   const layoutRef = useRef(layout);
 
-  // რეფების სინქრონიზაცია სტეიტთან
   useEffect(() => { playerPosRef.current = playerPos; }, [playerPos]);
   useEffect(() => { layoutRef.current = layout; }, [layout]);
 
-
-  // --- GAME CONTROLS ---
+  // --- CONTROLS ---
   const startGame = () => setGameStatus('playing');
-  
-  const pauseGame = () => {
-    if (gameStatus === 'playing') setGameStatus('paused');
-  };
-
-  const resumeGame = () => {
-    if (gameStatus === 'paused') setGameStatus('playing');
-  };
-
+  const pauseGame = () => { if (gameStatus === 'playing') setGameStatus('paused'); };
+  const resumeGame = () => { if (gameStatus === 'paused') setGameStatus('playing'); };
   const restartGame = () => {
     const freshData = getInitialPositions();
     setPlayerPos(freshData.pacmanStart);
@@ -70,110 +55,89 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setGameStatus('playing'); 
   };
 
-
-  // --- PLAYER MOVEMENT LOGIC ---
+  // --- PLAYER MOVEMENT ---
   const movePlayer = useCallback((targetX: number, targetZ: number) => {
-    // მოძრაობს მხოლოდ მაშინ, თუ სტატუსი არის 'playing'
     if (gameStatus !== 'playing') return;
-
-    // საზღვრების შემოწმება
     if (!layout[targetZ] || layout[targetZ][targetX] === undefined) return;
     
     const targetTile = layout[targetZ][targetX];
-
-    // კედელი
     if (targetTile === TileType.WALL) return;
 
-    // საჭმელი
     if (targetTile === TileType.FOOD) {
       setScore((prev) => prev + 10);
-      
-      // რუკის განახლება (საჭმლის წაშლა)
       setLayout((prevLayout) => {
         const newLayout = prevLayout.map((row) => [...row]);
         newLayout[targetZ][targetX] = TileType.EMPTY;
         return newLayout;
       });
     }
-
-    // პოზიციის განახლება
     setPlayerPos({ x: targetX, z: targetZ });
   }, [layout, gameStatus]);
 
-
-  // ---  GHOST AI LOGIC ---
+  // --- GHOST AI LOGIC ---
   useEffect(() => {
-    // ტაიმერი მუშაობს მხოლოდ 'playing' რეჟიმში
     if (gameStatus !== 'playing') return;
 
     const moveInterval = setInterval(() => {
       setGhostsPos((prevGhosts) => {
-        // გავდივართ ყველა მოჩვენებაზე
-        return prevGhosts.map((ghostPos, index) => {
-          return calculateGhostNextMove(
-            ghostPos, 
-            index, 
+        if (!prevGhosts || prevGhosts.length === 0) return prevGhosts;
+
+        const nextPositions = [...prevGhosts];
+
+        for (let i = 0; i < prevGhosts.length; i++) {
+          const ghost = prevGhosts[i];
+          if (!ghost) continue;
+
+          const newMove = calculateGhostNextMove(
+            ghost, 
+            i, 
             playerPosRef.current, 
-            layoutRef.current
+            layoutRef.current,
+            nextPositions 
           );
-        });
+
+          nextPositions[i] = newMove;
+        }
+        return nextPositions;
       });
-    }, 400); // მოჩვენებების სიჩქარე (400ms)
+    }, 400); // სიჩქარე
 
     return () => clearInterval(moveInterval);
   }, [gameStatus]);
 
-
-  // ---  COLLISION DETECTION ---
+  // --- COLLISION DETECTION ---
   useEffect(() => {
     if (gameStatus !== 'playing') return;
 
-    const hit = ghostsPos.some(ghost => ghost.x === playerPos.x && ghost.z === playerPos.z);
+    const hit = ghostsPos.some(ghost => ghost && ghost.x === playerPos.x && ghost.z === playerPos.z);
 
     if (hit) {
-      // setTimeout(0) გვჭირდება, რომ ავირიდოთ React Warning (setState during render)
       setTimeout(() => {
         setGameStatus('gameover');
-        console.log("GAME OVER!");
       }, 0);
     }
   }, [playerPos, ghostsPos, gameStatus]);
 
-
-  // ---  KEYBOARD SHORTCUTS (ESC) ---
+  // --- KEYBOARD LISTENERS ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Escape') {
         if (gameStatus === 'playing') {
           setGameStatus('paused');
-          // 3D რეჟიმში მაუსის გამოჩენა
-          if (document.pointerLockElement) {
-            document.exitPointerLock();
-          }
+          if (document.pointerLockElement) document.exitPointerLock();
         } else if (gameStatus === 'paused') {
           setGameStatus('playing');
         }
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [gameStatus]);
 
-
   return (
     <GameContext.Provider value={{ 
-      playerPos, 
-      ghostsPos, 
-      score, 
-      layout, 
-      gameStatus, 
-      
-      movePlayer, 
-      startGame, 
-      pauseGame, 
-      resumeGame, 
-      restartGame 
+      playerPos, ghostsPos, score, layout, gameStatus, 
+      movePlayer, startGame, pauseGame, resumeGame, restartGame 
     }}>
       {children}
     </GameContext.Provider>

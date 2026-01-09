@@ -9,18 +9,26 @@ export const Player = () => {
   const { camera } = useThree();
   const { playerPos, movePlayer, gameStatus } = useGame();
   const controlsRef = useRef<PointerLockControlsImpl>(null);
+  
+  const posRef = useRef(playerPos);
 
+  useEffect(() => { 
+    if (playerPos && !isNaN(playerPos.x) && !isNaN(playerPos.z)) {
+      posRef.current = playerPos; 
+    }
+  }, [playerPos]);
+
+  // --- Controls Lock ---
   useEffect(() => {
     if (gameStatus === 'playing') {
-      setTimeout(() => { controlsRef.current?.lock(); }, 100);
+      const timer = setTimeout(() => { controlsRef.current?.lock(); }, 100);
+      return () => clearTimeout(timer);
     } else {
       controlsRef.current?.unlock();
     }
   }, [gameStatus]);
-  
-  const posRef = useRef(playerPos);
-  useEffect(() => { posRef.current = playerPos; }, [playerPos]);
 
+  // --- Keyboard Movement ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (gameStatus !== 'playing') return;
@@ -47,25 +55,33 @@ export const Player = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [camera, movePlayer, gameStatus]);
 
+  // --- Camera Movement (Smooth Lerp) ---
   useFrame(() => {
-    const targetPosition = new Vector3(playerPos.x, 0.5, playerPos.z);
-    camera.position.lerp(targetPosition, 0.2); 
+    if (!posRef.current || isNaN(posRef.current.x)) return;
+
+    const targetPosition = new Vector3(posRef.current.x, 0.5, posRef.current.z);
+  
+    if (!isNaN(camera.position.x)) {
+       camera.position.lerp(targetPosition, 0.2);
+    } else {
+       camera.position.copy(targetPosition);
+    }
   });
 
   return (
     <>
       <PointerLockControls ref={controlsRef} />
       
+
       <group position={[playerPos.x, 0.5, playerPos.z]}>
         <pointLight 
           position={[0, 0.6, 0]} 
-          intensity={1.2} 
+          intensity={1.5} 
           distance={10} 
           decay={2} 
           color="#ffaa00"
-          castShadow 
-          shadow-mapSize={[2048, 2048]} 
-          shadow-bias={-0.001} 
+          shadow-mapSize={[1024, 1024]} 
+          shadow-bias={-0.0001} 
         />
         <pointLight position={[0, 0.5, 0]} intensity={0.2} distance={3} color="white" />
       </group>

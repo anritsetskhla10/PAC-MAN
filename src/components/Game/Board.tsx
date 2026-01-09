@@ -2,10 +2,12 @@ import { useEffect } from 'react';
 import { TileType } from '../../types';
 import { cn } from '../../utils/cn';
 import { useGame } from '../../context/GameContext';
+import { GhostIcon } from '../icons/GhostIcon'; 
 
 interface BoardProps {
   isMinimap?: boolean;
 }
+const GHOST_COLORS = ['#FF0000', '#FFB8FF', '#00FFFF', '#FFB852'];
 
 export const Board = ({ isMinimap = false }: BoardProps) => {
   const { playerPos, ghostsPos, layout, movePlayer } = useGame(); 
@@ -47,22 +49,23 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
         {layout.map((row, rowIndex) =>
           row.map((tile, colIndex) => {
             const isPlayerHere = playerPos.x === colIndex && playerPos.z === rowIndex;
-            const isGhostHere = ghostsPos.some(g => g.x === colIndex && g.z === rowIndex);
+            const ghostIndex = ghostsPos.findIndex(g => g.x === colIndex && g.z === rowIndex);
+            const isGhostHere = ghostIndex !== -1;
 
             return (
               <div
                 key={`${rowIndex}-${colIndex}`}
                 style={{ width: cellSize, height: cellSize }}
                 className={cn(
-                  "flex items-center justify-center",
+                  "flex items-center justify-center relative", 
                   tile === TileType.WALL && (isMinimap 
                     ? "bg-blue-500/50" 
                     : "bg-(--wall-color) opacity-60 rounded-xs"
                   ),
                   isPlayerHere && "bg-yellow-400 rounded-full z-10 scale-90 shadow-[0_0_10px_yellow]",
-                  isGhostHere && "bg-red-600 rounded-t-full z-10 scale-90 animate-bounce"
                 )}
               >
+                {/* --- FOOD --- */}
                 {tile === TileType.FOOD && !isPlayerHere && !isGhostHere && (
                   <div 
                     className={cn(
@@ -72,6 +75,18 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
                     style={{ backgroundColor: 'var(--food-color)' }}
                   />
                 )}
+
+                {/* --- GHOST ICON --- */}
+                {isGhostHere && (
+                  <GhostIcon 
+                    color={GHOST_COLORS[ghostIndex % GHOST_COLORS.length]}
+                    className={cn(
+                      "z-20 animate-bounce drop-shadow-md",
+                      isMinimap ? "w-2 h-2" : "w-6 h-6" 
+                    )}
+                  />
+                )}
+
               </div>
             );
           })
