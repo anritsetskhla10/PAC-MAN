@@ -21,9 +21,13 @@ export const Board3D = () => {
 
       <Canvas shadows camera={{ fov: 60, near: 0.1 }}>
         <fog attach="fog" args={['#000000', 0, 25]} />
+        
         <hemisphereLight 
-          args={['#ffffff', '#222222', 0.6]} 
+          color="#ffffff" 
+          groundColor="#222222" 
+          intensity={0.6} 
         />
+        
         <ambientLight intensity={0.3} />
         
         <Player />
@@ -41,4 +45,4 @@ export const Board3D = () => {
       </Canvas>
     </div>
   );
-};
+}
