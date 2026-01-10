@@ -4,6 +4,7 @@ import { GameProvider } from './context/GameProvider';
 import { Header } from './components/Header';
 import { GamePage } from './pages/GamePage';
 import { SettingsPage } from './pages/SettingsPage';
+import { GhostShowcase } from './components/GhostShowcase';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<GamePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/ghost-lab" element={<GhostShowcase />} />
               </Routes>
             </main>
           </div>
