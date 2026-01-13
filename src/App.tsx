@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import { GamePage } from './pages/GamePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { GhostShowcase } from './components/GhostShowcase';
+import { FoodShowcase } from './components/FoodShowcase'; 
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
                 <Route path="/" element={<GamePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/ghost-lab" element={<GhostShowcase />} />
+                <Route path="/food-lab" element={<FoodShowcase />} />
               </Routes>
             </main>
           </div>
