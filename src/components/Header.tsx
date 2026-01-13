@@ -17,6 +17,15 @@ export const Header = () => {
         >
           Game
         </NavLink>
+
+        <NavLink 
+          to="/ghost-lab" 
+          className={({ isActive }) => 
+            `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-text-muted'}`
+          }
+        >
+          Ghost Lab
+        </NavLink>
         
         <NavLink 
           to="/settings" 

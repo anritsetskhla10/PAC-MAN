@@ -13,7 +13,7 @@ function App() {
         <BrowserRouter>
           <div className="min-h-screen bg-bg-main text-text-main font-poppins transition-colors duration-300">
             <Header />
-            <main className="container mx-auto px-4">
+            <main className="w-full pt-16">
               <Routes>
                 <Route path="/" element={<GamePage />} />
                 <Route path="/settings" element={<SettingsPage />} />

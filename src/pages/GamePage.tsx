@@ -10,11 +10,11 @@ export const GamePage = () => {
   const { score, gameStatus, pauseGame } = useGame();
 
   return (
-    <div className="relative flex flex-col items-center min-h-screen pt-24 pb-10 gap-6 bg-bg-main transition-colors duration-300">
+    <div className="container mx-auto px-4 py-8 flex flex-col items-center gap-6 bg-bg-main transition-colors duration-300">
       
       {/* HEADER: Score & Pause Button */}
       <div className={cn(
-        "flex justify-between items-center w-full px-4 gap-4 z-40 transition-all duration-300",
+        "flex justify-between items-center w-full gap-4 z-40 transition-all duration-300",
         settings.is3DMode ? "max-w-[95%]" : "max-w-4xl"
       )}>
         <h2 className="text-2xl font-bold text-primary flex items-center gap-2 drop-shadow-md">
