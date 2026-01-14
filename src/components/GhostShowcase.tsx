@@ -12,6 +12,7 @@ export const GhostShowcase = () => {
   const isDark = settings.isDarkMode; 
 
   const colors = ['#FF0000', '#FFB8FF', '#00FFFF', '#FFB852', '#00FF00', '#FFFFFF'];
+  const yPos = variant === 1 ? 0 : 0.6;
 
   return (
     <div className={`w-full h-[calc(100vh-4rem)] flex flex-col md:flex-row overflow-hidden transition-colors duration-300 
@@ -80,6 +81,7 @@ export const GhostShowcase = () => {
         }`} />
         
         <Canvas camera={{ position: [0, 0, 4.5], fov: 50 }}>
+          <color attach="background" args={[isDark ? '#171717' : '#f0f0f0']} />
           <OrbitControls 
             enablePan={false}           
             minDistance={2}             
@@ -94,7 +96,7 @@ export const GhostShowcase = () => {
           <pointLight position={[10, 10, 10]} intensity={isDark ? 1 : 0.8} />
           <pointLight position={[-5, -5, -5]} intensity={0.5} color={isDark ? "blue" : "white"} />
 
-          <group scale={[1.8, 1.8, 1.8]}>
+          <group scale={[1.8, 1.8, 1.8]} position={[0, yPos, 0]}>
              {variant === 1 && <ClassicGhost color={ghostColor} />}
              {variant === 2 && <ReaperGhost color={ghostColor} />}
           </group>
