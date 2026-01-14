@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { InstancedMesh, Object3D } from 'three';
+import * as THREE from 'three';
 import { useTheme } from '../context/ThemeContext';
 import { useGame } from '../context/GameContext';
 import { LEVEL_MAP } from '../utils/constants';
@@ -86,6 +87,7 @@ export const InstancedLevel = () => {
           metalness={0}
           emissive={settings.wallColor}
           emissiveIntensity={0.05}
+          side={THREE.DoubleSide} 
         />
       </instancedMesh>
 
@@ -103,7 +105,7 @@ export const InstancedLevel = () => {
         />
       </instancedMesh>
 
-      {/* --- FOOD --- */}
+      {/* --- FOOD  --- */}
       <instancedMesh ref={foodRef} args={[undefined, undefined, foodData.length]}>
         <sphereGeometry args={[0.15, 16, 16]} />
         <meshStandardMaterial

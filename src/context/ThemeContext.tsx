@@ -6,11 +6,13 @@ export interface ThemeSettings {
   gameBg: string;
   isDarkMode: boolean;
   is3DMode: boolean;
+  ghostVariant: number;
+  ghostColor: string;   
 }
 
 export interface ThemeContextType {
   settings: ThemeSettings;
-  updateSetting: (key: keyof ThemeSettings, value: string | boolean) => void;
+  updateSetting: (key: keyof ThemeSettings, value: string | boolean | number) => void;
   resetTheme: () => void;
 }
 
@@ -20,10 +22,11 @@ export const defaultSettings: ThemeSettings = {
   gameBg: '#000000',
   isDarkMode: true,
   is3DMode: false,
+  ghostVariant: 1, 
+  ghostColor: '#FF0000'
 };
 
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);

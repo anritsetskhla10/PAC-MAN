@@ -2,10 +2,10 @@ import { Canvas } from '@react-three/fiber';
 import { Player } from './Player';
 import { InstancedLevel } from '../../InstancedLevel';
 import { Board } from '../Board';
-import { Ghost3D } from './Ghost3D';
+import { Ghost3D } from '../3D/Ghost3D'; 
 import { useGame } from '../../../context/GameContext';
 
-const GHOST_COLORS = ['#FF0000', '#FFB8FF', '#00FFFF', '#FFB852'];
+const GAME_GHOST_COLORS = ['#FF0000', '#FFB8FF', '#00FFFF', '#FFB852'];
 
 export const Board3D = () => {
   const { ghostsPos } = useGame();
@@ -19,16 +19,12 @@ export const Board3D = () => {
       </div>
       <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-white/60 rounded-full -translate-x-1/2 -translate-y-1/2 z-40 pointer-events-none mix-blend-difference" />
 
-      <Canvas shadows camera={{ fov: 60, near: 0.1 }}>
-        <fog attach="fog" args={['#000000', 0, 25]} />
+      <Canvas shadows camera={{ fov: 60, near: 0.01 }}>
+        <color attach="background" args={['#1a1a1a']} />
+        <fog attach="fog" args={['#1a1a1a', 0, 25]} />
+        <hemisphereLight color="#ffffff" groundColor="#222222" intensity={0.6} />
         
-        <hemisphereLight 
-          color="#ffffff" 
-          groundColor="#222222" 
-          intensity={0.6} 
-        />
-        
-        <ambientLight intensity={0.3} />
+        <ambientLight intensity={0.8} />
         
         <Player />
         <InstancedLevel />
@@ -38,7 +34,7 @@ export const Board3D = () => {
             key={index}
             x={pos.x} 
             z={pos.z}
-            color={GHOST_COLORS[index % GHOST_COLORS.length]} 
+            color={GAME_GHOST_COLORS[index % GAME_GHOST_COLORS.length]} 
           />
         ))}
 

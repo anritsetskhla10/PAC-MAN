@@ -1,4 +1,4 @@
-import  { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { ThemeContext, defaultSettings, type ThemeSettings } from './ThemeContext';
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
@@ -18,7 +18,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [settings]);
 
-  const updateSetting = (key: keyof ThemeSettings, value: string | boolean) => {
+  const updateSetting = (key: keyof ThemeSettings, value: string | boolean | number) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
