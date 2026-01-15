@@ -60,9 +60,8 @@ export const Player = () => {
     if (!posRef.current || isNaN(posRef.current.x)) return;
 
     const targetPosition = new Vector3(posRef.current.x, 0.5, posRef.current.z);
-  
     if (!isNaN(camera.position.x)) {
-       camera.position.lerp(targetPosition, 0.2);
+       camera.position.lerp(targetPosition, 0.8); 
     } else {
        camera.position.copy(targetPosition);
     }

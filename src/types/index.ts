@@ -23,6 +23,9 @@ export const TileType = {
   PACMAN_START: 3,
   GHOST_START: 4,  
   GHOST_HOUSE: 5,  
+  POWER_PELLET: 6,
+  CHERRY: 7,
+  STRAWBERRY: 8,
 } as const;
 
 export type TileType = typeof TileType[keyof typeof TileType];

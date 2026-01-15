@@ -3,6 +3,7 @@ import { TileType } from '../../types';
 import { cn } from '../../utils/cn';
 import { useGame } from '../../context/GameContext';
 import { GhostIcon } from '../icons/GhostIcon'; 
+import { Food2D } from '../Game/Foods/Food2D';
 
 interface BoardProps {
   isMinimap?: boolean;
@@ -14,19 +15,15 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
 
   useEffect(() => {
     if (isMinimap) return;
-
     const handleKeyDown = (e: KeyboardEvent) => {
       let newX = playerPos.x;
       let newZ = playerPos.z;
-
       if (e.key === 'ArrowUp' || e.key === 'w') newZ -= 1;
       if (e.key === 'ArrowDown' || e.key === 's') newZ += 1;
       if (e.key === 'ArrowLeft' || e.key === 'a') newX -= 1;
       if (e.key === 'ArrowRight' || e.key === 'd') newX += 1;
-
       movePlayer(newX, newZ);
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [playerPos, movePlayer, isMinimap]); 
@@ -52,6 +49,15 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
             const ghostIndex = ghostsPos.findIndex(g => g.x === colIndex && g.z === rowIndex);
             const isGhostHere = ghostIndex !== -1;
 
+            const isStrawberry = tile === TileType.STRAWBERRY;
+            const isCherry = tile === TileType.CHERRY;
+            const isPower = tile === TileType.POWER_PELLET;
+            const isFood = tile === TileType.FOOD;
+            let foodSize = 0;
+            if (isStrawberry || isCherry) foodSize = isMinimap ? cellSize : 20;
+            if (isPower) foodSize = isMinimap ? cellSize : 16;
+            if (isFood) foodSize = isMinimap ? cellSize : 28;
+
             return (
               <div
                 key={`${rowIndex}-${colIndex}`}
@@ -65,15 +71,15 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
                   isPlayerHere && "bg-yellow-400 rounded-full z-10 scale-90 shadow-[0_0_10px_yellow]",
                 )}
               >
-                {/* --- FOOD --- */}
-                {tile === TileType.FOOD && !isPlayerHere && !isGhostHere && (
-                  <div 
-                    className={cn(
-                      "rounded-full shadow-[0_0_5px_var(--food-color)]",
-                      isMinimap ? "w-0.75 h-0.75" : "w-2 h-2"
-                    )}
-                    style={{ backgroundColor: 'var(--food-color)' }}
-                  />
+                {/* --- UNIVERSAL FOOD RENDER (Minimap & Main) --- */}
+                {!isPlayerHere && !isGhostHere && (
+                    <>
+                        {isStrawberry ? <Food2D type="strawberry" size={foodSize} /> :
+                         isCherry ? <Food2D type="cherry" size={foodSize} /> :
+                         isPower ? <Food2D type="power" size={foodSize} /> :
+                         isFood ? <Food2D type="dot" size={foodSize} /> : null
+                        }
+                    </>
                 )}
 
                 {/* --- GHOST ICON --- */}
@@ -86,7 +92,6 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
                     )}
                   />
                 )}
-
               </div>
             );
           })
