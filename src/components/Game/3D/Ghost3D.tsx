@@ -1,6 +1,6 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Group, Vector3 } from 'three';
+import { Vector3, Group } from 'three';
 import { useTheme } from '../../../context/ThemeContext';
 import { ClassicGhost } from '../3D/Ghosts/ClassicGhost';
 import { ReaperGhost } from '../3D/Ghosts/ReaperGhost';
@@ -12,25 +12,49 @@ interface Ghost3DProps {
 }
 
 export const Ghost3D = ({ x, z, color }: Ghost3DProps) => {
-  const groupRef = useRef<Group>(null);
   const { settings } = useTheme();
+  const groupRef = useRef<Group>(null);
+  
+  const prevPos = useRef({ x, z });
+  const targetRotation = useRef(0);
 
-  const variant = settings.ghostVariant;
+  // --- კუთხის გამოთვლა ---
+  useEffect(() => {
+    const dx = x - prevPos.current.x;
+    const dz = z - prevPos.current.z;
+    if (Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01) {
+      targetRotation.current = Math.atan2(dx, dz);
+    }
 
-  useFrame(() => {
+    prevPos.current = { x, z };
+  }, [x, z]);
+
+
+  useFrame((state, delta) => {
     if (!groupRef.current) return;
+
+    const currentPos = groupRef.current.position;
+    const targetPos = new Vector3(x, 0.5, z);
+    currentPos.lerp(targetPos, 6.0 * delta);
+
+    const currentRotation = groupRef.current.rotation.y;
+    const target = targetRotation.current;
     
-    const targetPos = new Vector3(x, 0.5, z); 
-    groupRef.current.position.lerp(targetPos, 0.1);
+    const angleDiff = target - currentRotation;
+    const normalizedDiff = Math.atan2(Math.sin(angleDiff), Math.cos(angleDiff));
+    
+    // 10.0 ტრიალის სიჩქარე
+    groupRef.current.rotation.y += normalizedDiff * 10.0 * delta; 
+    const t = state.clock.getElapsedTime();
+    groupRef.current.position.y = 0.5 + Math.sin(t * 3) * 0.05;
   });
 
   return (
-    <group ref={groupRef} position={[x, 0.5, z]} scale={[0.6, 0.6, 0.6]}>
-      {variant === 2 ? (
-        <ReaperGhost color={color} />
-      ) : (
-        <ClassicGhost color={color} />
-      )}
+    <group ref={groupRef} position={[x, 0.5, z]}>
+      <group scale={[0.6, 0.6, 0.6]} position={[0, -0.2, 0]}> 
+        {settings.ghostVariant === 1 && <ClassicGhost color={color} />}
+        {settings.ghostVariant === 2 && <ReaperGhost color={color} />}
+      </group>
     </group>
   );
 };
