@@ -1,20 +1,14 @@
 import { createContext, useContext } from 'react';
-import type { GameStatus } from '../types';
-
-export interface Position {
-  x: number;
-  z: number;
-}
+import type { GameStatus, Ghost, Coordinate } from '../types'; 
+export type Position = Coordinate;
 
 export interface GameContextType {
-  // მონაცემები
   playerPos: Position;
-  ghostsPos: Position[];
+  ghostsPos: Ghost[]; 
   score: number;
   layout: number[][];
   gameStatus: GameStatus; 
 
-  // ფუნქციები
   movePlayer: (x: number, z: number) => void;
   startGame: () => void;
   pauseGame: () => void;

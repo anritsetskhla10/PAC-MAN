@@ -32,27 +32,20 @@ export const Board3D = () => {
 
         {layout.map((row, z) => 
           row.map((tile, x) => {
-            if (tile === TileType.STRAWBERRY) {
-                return <group key={`${x}-${z}`} position={[x, 0.5, z]}><Food3D type="strawberry" /></group>;
-            }
-            if (tile === TileType.CHERRY) {
-                return <group key={`${x}-${z}`} position={[x, 0.5, z]}><Food3D type="cherry" /></group>;
-            }
-            if (tile === TileType.POWER_PELLET) {
-                return <group key={`${x}-${z}`} position={[x, 0.5, z]}><Food3D type="power" /></group>;
-            }
-            if (tile === TileType.FOOD) {
-                return <group key={`${x}-${z}`} position={[x, 0.5, z]}><Food3D type="dot" /></group>;
-            }
+            if (tile === TileType.STRAWBERRY) return <group key={`${x}-${z}`} position={[x, 0.5, z]}><Food3D type="strawberry" /></group>;
+            if (tile === TileType.CHERRY) return <group key={`${x}-${z}`} position={[x, 0.5, z]}><Food3D type="cherry" /></group>;
+            if (tile === TileType.POWER_PELLET) return <group key={`${x}-${z}`} position={[x, 0.5, z]}><Food3D type="power" /></group>;
+            if (tile === TileType.FOOD) return <group key={`${x}-${z}`} position={[x, 0.5, z]}><Food3D type="dot" /></group>;
             return null;
           })
         )}
 
-        {ghostsPos.map((pos, index) => (
+        {ghostsPos.map((ghost, index) => (
           <Ghost3D 
             key={index}
-            x={pos.x} 
-            z={pos.z}
+            x={ghost.x} 
+            z={ghost.z}
+            state={ghost.state} 
             color={GAME_GHOST_COLORS[index % GAME_GHOST_COLORS.length]} 
           />
         ))}

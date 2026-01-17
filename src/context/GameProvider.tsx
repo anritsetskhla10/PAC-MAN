@@ -1,41 +1,37 @@
 import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { GameContext, type Position } from './GameContext';
-import { type GameStatus, TileType } from '../types';
+import { type GameStatus, TileType, GhostState, type Ghost } from '../types';
 import { LEVEL_MAP, SCORES } from '../utils/constants';
 import { calculateGhostNextMove } from '../utils/ghostLogic';
 
-// --- საწყისი პოზიციების დალაგება ---
 const getInitialPositions = () => {
   let pacmanStart: Position = { x: 1, z: 1 };
-  const ghostsStart: Position[] = [];
-  
+  const ghostsStart: Ghost[] = [];
   const initialLayout = LEVEL_MAP.map(row => [...row]);
 
   LEVEL_MAP.forEach((row, rowIndex) => {
     row.forEach((tile, colIndex) => {
-      if (tile === TileType.PACMAN_START) { 
-        pacmanStart = { x: colIndex, z: rowIndex };
-      }
+      if (tile === TileType.PACMAN_START) pacmanStart = { x: colIndex, z: rowIndex };
       if (tile === TileType.GHOST_START) {
-        ghostsStart.push({ x: colIndex, z: rowIndex });
+        ghostsStart.push({ 
+            x: colIndex, z: rowIndex, startX: colIndex, startZ: rowIndex,
+            color: 'red', state: GhostState.NORMAL 
+        });
       }
     });
   });
-
   return { pacmanStart, ghostsStart, initialLayout };
 };
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const { pacmanStart, ghostsStart, initialLayout } = getInitialPositions();
 
-  // --- STATE ---
   const [playerPos, setPlayerPos] = useState<Position>(pacmanStart);
-  const [ghostsPos, setGhostsPos] = useState<Position[]>(ghostsStart);
+  const [ghostsPos, setGhostsPos] = useState<Ghost[]>(ghostsStart);
   const [layout, setLayout] = useState<number[][]>(initialLayout);
   const [score, setScore] = useState<number>(0);
-  const [gameStatus, setGameStatus] = useState<GameStatus>('idle');
+  const [gameStatus, setGameStatus] = useState<GameStatus>('playing'); 
 
-  // --- REFS ---
   const playerPosRef = useRef(playerPos);
   const layoutRef = useRef(layout);
 
@@ -55,114 +51,121 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setGameStatus('playing'); 
   };
 
+  // --- POWER MODE ---
+  const activatePowerMode = () => {
+    setGhostsPos(prev => prev.map(g => {
+        if (g.state !== GhostState.EATEN) {
+            return { ...g, state: GhostState.SCARED };
+        }
+        return g;
+    }));
+
+    setTimeout(() => {
+        setGhostsPos(prev => prev.map(g => {
+            if (g.state === GhostState.SCARED) {
+                return { ...g, state: GhostState.NORMAL };
+            }
+            return g;
+        }));
+    }, 10000);
+  };
+
   // --- PLAYER MOVEMENT ---
   const movePlayer = useCallback((targetX: number, targetZ: number) => {
     if (gameStatus !== 'playing') return;
     if (!layout[targetZ] || layout[targetZ][targetX] === undefined) return;
     
     const targetTile = layout[targetZ][targetX];
-    
-    // კედელს ვერ გაივლის
     if (targetTile === TileType.WALL) return;
 
-    // ვამოწმებთ, არის თუ არა უჯრა საჭმელი
-    const isFood = 
-      targetTile === TileType.FOOD || 
-      targetTile === TileType.POWER_PELLET || 
-      targetTile === TileType.CHERRY || 
-      targetTile === TileType.STRAWBERRY;
+    const isFood = ([
+        TileType.FOOD, TileType.POWER_PELLET, TileType.CHERRY, TileType.STRAWBERRY
+    ] as number[]).includes(targetTile);
 
     if (isFood) {
-      //  ქულების დათვლა ტიპის მიხედვით
-      let pointsToAdd = 0;
+      let pts = 0;
+      if (targetTile === TileType.FOOD) pts = SCORES.DOT;
+      if (targetTile === TileType.POWER_PELLET) { pts = SCORES.POWER_PELLET; activatePowerMode(); }
+      if (targetTile === TileType.CHERRY) pts = SCORES.CHERRY;
+      if (targetTile === TileType.STRAWBERRY) pts = SCORES.STRAWBERRY;
       
-      switch (targetTile) {
-        case TileType.FOOD:
-          pointsToAdd = SCORES.DOT;
-          break;
-        case TileType.POWER_PELLET:
-          pointsToAdd = SCORES.POWER_PELLET;
-          break;
-        case TileType.CHERRY:
-          pointsToAdd = SCORES.CHERRY;
-          break;
-        case TileType.STRAWBERRY:
-          pointsToAdd = SCORES.STRAWBERRY;
-          break;
-      }
-
-      setScore((prev) => prev + pointsToAdd);
-
-      //  საჭმლის გაქრობა რუკიდან (ხდება EMPTY)
-      setLayout((prevLayout) => {
-        const newLayout = prevLayout.map((row) => [...row]);
-        newLayout[targetZ][targetX] = TileType.EMPTY;
-        return newLayout;
+      setScore(s => s + pts);
+      setLayout(l => {
+        const nl = l.map(r => [...r]);
+        nl[targetZ][targetX] = TileType.EMPTY;
+        return nl;
       });
     }
-
-    // პოზიციის შეცვლა
     setPlayerPos({ x: targetX, z: targetZ });
   }, [layout, gameStatus]);
 
-  // --- GHOST AI LOGIC ---
+  // --- GHOST LOOP (მოძრაობა და გაცოცხლება) ---
   useEffect(() => {
     if (gameStatus !== 'playing') return;
 
-    const moveInterval = setInterval(() => {
-      setGhostsPos((prevGhosts) => {
-        if (!prevGhosts || prevGhosts.length === 0) return prevGhosts;
+    const interval = setInterval(() => {
+      setGhostsPos(prev => {
+        const next = [...prev];
+        for (let i = 0; i < prev.length; i++) {
+          const g = prev[i];
 
-        const nextPositions = [...prevGhosts];
+          //  გაცოცხლება: თუ EATEN არის და მივიდა სახლში
+          if (g.state === GhostState.EATEN) {
+             const dist = Math.abs(g.x - g.startX) + Math.abs(g.z - g.startZ);
+             if (dist < 0.5) {
+                 next[i] = { ...g, state: GhostState.NORMAL };
+                 continue;
+             }
+          }
 
-        for (let i = 0; i < prevGhosts.length; i++) {
-          const ghost = prevGhosts[i];
-          if (!ghost) continue;
-
-          const newMove = calculateGhostNextMove(
-            ghost, 
-            i, 
-            playerPosRef.current, 
-            layoutRef.current,
-            nextPositions 
-          );
-
-          nextPositions[i] = newMove;
+          //  მოძრაობა
+          const newPos = calculateGhostNextMove(g, i, playerPosRef.current, layoutRef.current, next);
+          next[i] = { ...g, x: newPos.x, z: newPos.z };
         }
-        return nextPositions;
+        return next;
       });
-    }, 400); // სიჩქარე
+    }, 400); 
 
-    return () => clearInterval(moveInterval);
+    return () => clearInterval(interval);
   }, [gameStatus]);
 
-  // --- COLLISION DETECTION ---
+  // --- COLLISION ---
   useEffect(() => {
     if (gameStatus !== 'playing') return;
+    
+    // ვპოულობთ მოჩვენებას, რომელიც ძალიან ახლოსაა პაკმენთან
+    const hitIndex = ghostsPos.findIndex(g => Math.round(g.x) === playerPos.x && Math.round(g.z) === playerPos.z);
 
-    const hit = ghostsPos.some(ghost => ghost && ghost.x === playerPos.x && ghost.z === playerPos.z);
-
-    if (hit) {
-      setTimeout(() => {
-        setGameStatus('gameover');
-      }, 0);
+    if (hitIndex !== -1) {
+        const ghost = ghostsPos[hitIndex];
+        
+        setTimeout(() => {
+            if (ghost.state === GhostState.NORMAL) {
+                setGameStatus('gameover');
+            } 
+            else if (ghost.state === GhostState.SCARED) {
+                // მოჩვენების ჭამა -> ხდება EATEN 
+                setScore(s => s + 200);
+                setGhostsPos(prev => {
+                    const ng = [...prev];
+                    ng[hitIndex] = { ...ghost, state: GhostState.EATEN };
+                    return ng;
+                });
+            }
+        }, 0);
     }
   }, [playerPos, ghostsPos, gameStatus]);
 
-  // --- KEYBOARD LISTENERS ---
+  // --- KEYBOARD ---
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKey = (e: KeyboardEvent) => {
       if (e.code === 'Escape') {
-        if (gameStatus === 'playing') {
-          setGameStatus('paused');
-          if (document.pointerLockElement) document.exitPointerLock();
-        } else if (gameStatus === 'paused') {
-          setGameStatus('playing');
-        }
+         if (gameStatus === 'playing') setGameStatus('paused');
+         else if (gameStatus === 'paused') setGameStatus('playing');
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
   }, [gameStatus]);
 
   return (
@@ -172,5 +175,5 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }}>
       {children}
     </GameContext.Provider>
-  ); 
+  );
 };

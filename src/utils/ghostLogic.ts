@@ -1,116 +1,105 @@
-import { TileType } from '../types';
-import type { Position } from '../context/GameContext';
+import { TileType, GhostState } from '../types'; 
+import type { Ghost } from '../types';
 
-// დამხმარე: ამოწმებს, არის თუ არა დაკავებული უჯრა სხვა მოჩვენების მიერ
-const isOccupiedByGhost = (target: Position, allGhosts: Position[]): boolean => {
+interface Position { x: number; z: number; }
+
+// შემოწმება: არის თუ არა უჯრაზე სხვა მოჩვენება
+const isOccupiedByGhost = (target: Position, allGhosts: Ghost[]): boolean => {
   if (!allGhosts) return false;
-  // ghost && ghost.x შემოწმება თავიდან გვაცილებს undefined crash-ს
-  return allGhosts.some(ghost => ghost && ghost.x === target.x && ghost.z === target.z);
+  return allGhosts.some(g => 
+    g.state !== GhostState.EATEN && 
+    Math.round(g.x) === target.x && 
+    Math.round(g.z) === target.z
+  );
 };
 
-const getValidNeighbors = (pos: Position, layout: number[][], allGhosts: Position[]) => {
-  const directions = [
-    { x: 0, z: -1 }, { x: 0, z: 1 }, { x: -1, z: 0 }, { x: 1, z: 0 },
-  ];
+// ვალიდური მეზობელი უჯრები
+const getValidNeighbors = (pos: Position, layout: number[][], allGhosts: Ghost[], ignoreGhosts: boolean) => {
+  const directions = [{ x: 0, z: -1 }, { x: 0, z: 1 }, { x: -1, z: 0 }, { x: 1, z: 0 }];
 
   return directions
     .map(dir => ({ x: pos.x + dir.x, z: pos.z + dir.z }))
     .filter(p => {
-      //  რუკის საზღვრები (უსაფრთხოების დამატებით)
-      if (!layout || !layout[p.z] || layout[p.z][p.x] === undefined) return false;
-      
-      //  კედელი
+      //  რუკის საზღვრები
+      if (!layout[p.z] || layout[p.z][p.x] === undefined) return false;
+      // კედელი
       if (layout[p.z][p.x] === TileType.WALL) return false;
-      
-      //  სხვა მოჩვენება
-      if (isOccupiedByGhost(p, allGhosts)) return false;
-
+      //  სხვა მოჩვენებები (თუ ignoreGhosts გამორთულია)
+      if (!ignoreGhosts && isOccupiedByGhost(p, allGhosts)) return false;
       return true;
     });
 };
 
-const getNextStepBFS = (
-  start: Position, 
-  target: Position, 
-  layout: number[][], 
-  allGhosts: Position[]
-): Position => {
-  // თუ start არასწორია, ვაბრუნებთ ისევ start-ს
-  if (!start || start.x === undefined) return start;
-  if (start.x === target.x && start.z === target.z) return start;
+// BFS (გზის გაგნება)
+const getNextStepBFS = (start: Position, target: Position, layout: number[][], allGhosts: Ghost[], ignoreGhosts: boolean): Position => {
+  const startInt = { x: Math.round(start.x), z: Math.round(start.z) };
+  
+  // თუ უკვე ადგილზეა
+  if (startInt.x === target.x && startInt.z === target.z) return startInt;
 
-  const queue: { pos: Position; firstStep: Position | null }[] = [
-    { pos: start, firstStep: null }
-  ];
+  const queue = [{ pos: startInt, firstStep: null as Position | null }];
   const visited = new Set<string>();
-  visited.add(`${start.x},${start.z}`);
+  visited.add(`${startInt.x},${startInt.z}`);
 
   while (queue.length > 0) {
-    const item = queue.shift();
-    if (!item) break; 
-    const { pos, firstStep } = item;
-
+    const { pos, firstStep } = queue.shift()!;
+    
     if (pos.x === target.x && pos.z === target.z) {
-      return firstStep || start; 
+      return firstStep || startInt;
     }
 
-    const neighbors = getValidNeighbors(pos, layout, allGhosts);
-
-    for (const neighbor of neighbors) {
-      const key = `${neighbor.x},${neighbor.z}`;
+    const neighbors = getValidNeighbors(pos, layout, allGhosts, ignoreGhosts);
+    for (const n of neighbors) {
+      const key = `${n.x},${n.z}`;
       if (!visited.has(key)) {
         visited.add(key);
-        const nextFirstStep = firstStep || neighbor;
-        queue.push({ pos: neighbor, firstStep: nextFirstStep });
+        queue.push({ pos: n, firstStep: firstStep || n });
       }
     }
   }
-
-  // თუ გზა ვერ იპოვა, ვამოწმებთ, შეგვიძლია თუ არა სადმე გადადგმა
-  const fallback = getValidNeighbors(start, layout, allGhosts);
-  // თუ არცერთი მეზობელი არ არის თავისუფალი, ვბრუნდებით start-ს
-  return fallback.length > 0 ? fallback[0] : start;
+  // თუ გზა ვერ იპოვა (ჩიხი), უბრალოდ სადმე გადადგას
+  const fallback = getValidNeighbors(startInt, layout, allGhosts, ignoreGhosts);
+  return fallback.length > 0 ? fallback[0] : startInt;
 };
 
+// --- მთავარი ფუნქცია ---
 export const calculateGhostNextMove = (
-  currentGhostPos: Position, 
-  ghostIndex: number, 
-  pacmanPos: Position, 
-  layout: number[][],
-  allGhosts: Position[] 
+  ghost: Ghost, 
+  index: number, 
+  playerPos: Position, 
+  layout: number[][], 
+  allGhosts: Ghost[]
 ): Position => {
-  // დაცვა:  თუ რომელიმე პოზიცია არასწორია, ვბრუნდებით currentGhostPos-ს
-  if (!currentGhostPos || !pacmanPos || !layout) return currentGhostPos;
-
-  // სხვა მოჩვენებები
-  const otherGhosts = allGhosts ? allGhosts.filter((_, i) => i !== ghostIndex) : [];
-
-  let target: Position = pacmanPos;
-
-  // AI ლოგიკა
-  switch (ghostIndex) {
-    case 0: target = pacmanPos; break;
-    case 1: { 
-      const pX = Math.min((layout[0]?.length || 20) - 2, Math.max(1, pacmanPos.x + 2)); 
-      target = { x: pX, z: pacmanPos.z };
-      break;
+  // EATEN (თვალები) -> მიდის სახლში
+  if (ghost.state === GhostState.EATEN) {
+    const home = { x: ghost.startX, z: ghost.startZ };
+    
+    if (Math.abs(ghost.x - home.x) < 0.5 && Math.abs(ghost.z - home.z) < 0.5) {
+        return { x: home.x, z: home.z };
     }
-    case 2: { 
-      const neighbors = getValidNeighbors(currentGhostPos, layout, otherGhosts);
-      if (neighbors.length > 0 && Math.random() > 0.4) {
-        return neighbors[Math.floor(Math.random() * neighbors.length)];
-      }
-      target = pacmanPos; 
-      break;
-    }
-    case 3: { 
-      const dist = Math.abs(currentGhostPos.x - pacmanPos.x) + Math.abs(currentGhostPos.z - pacmanPos.z);
-      if (dist < 6) target = { x: 1, z: (layout.length || 15) - 2 }; 
-      else target = pacmanPos;
-      break;
-    }
-    default: target = pacmanPos;
+    // სახლისკენ მიმავალ გზაზე სხვა მოჩვენებებს აიგნორებს (true)
+    return getNextStepBFS(ghost, home, layout, [], true);
   }
 
-  return getNextStepBFS(currentGhostPos, target, layout, otherGhosts);
+  const otherGhosts = allGhosts.filter((_, i) => i !== index);
+
+  //  SCARED -> გარბის პაკმენისგან
+  if (ghost.state === GhostState.SCARED) {
+    const currentInt = { x: Math.round(ghost.x), z: Math.round(ghost.z) };
+    const neighbors = getValidNeighbors(currentInt, layout, otherGhosts, false);
+    
+    if (neighbors.length === 0) return currentInt;
+
+    // ირჩევს ყველაზე შორს მყოფ უჯრას
+    let best = neighbors[0];
+    let maxDist = -1;
+    for (const n of neighbors) {
+      const d = Math.abs(n.x - playerPos.x) + Math.abs(n.z - playerPos.z);
+      if (d > maxDist) { maxDist = d; best = n; }
+    }
+    return best;
+  }
+
+  // NORMAL -> მისდევს პაკმენს
+  return getNextStepBFS(ghost, playerPos, layout, otherGhosts, false);
 };

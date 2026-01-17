@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
-import { TileType } from '../../types';
+import { TileType, GhostState } from '../../types';
 import { cn } from '../../utils/cn';
 import { useGame } from '../../context/GameContext';
 import { GhostIcon } from '../icons/GhostIcon'; 
+import { EyesIcon } from '../icons/EyesIcon'; 
 import { Food2D } from '../Game/Foods/Food2D';
 
 interface BoardProps {
@@ -46,13 +47,16 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
         {layout.map((row, rowIndex) =>
           row.map((tile, colIndex) => {
             const isPlayerHere = playerPos.x === colIndex && playerPos.z === rowIndex;
-            const ghostIndex = ghostsPos.findIndex(g => g.x === colIndex && g.z === rowIndex);
+            
+            const ghostIndex = ghostsPos.findIndex(g => Math.round(g.x) === colIndex && Math.round(g.z) === rowIndex);
+            const ghost = ghostsPos[ghostIndex];
             const isGhostHere = ghostIndex !== -1;
 
             const isStrawberry = tile === TileType.STRAWBERRY;
             const isCherry = tile === TileType.CHERRY;
             const isPower = tile === TileType.POWER_PELLET;
             const isFood = tile === TileType.FOOD;
+            
             let foodSize = 0;
             if (isStrawberry || isCherry) foodSize = isMinimap ? cellSize : 20;
             if (isPower) foodSize = isMinimap ? cellSize : 16;
@@ -71,7 +75,6 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
                   isPlayerHere && "bg-yellow-400 rounded-full z-10 scale-90 shadow-[0_0_10px_yellow]",
                 )}
               >
-                {/* --- UNIVERSAL FOOD RENDER (Minimap & Main) --- */}
                 {!isPlayerHere && !isGhostHere && (
                     <>
                         {isStrawberry ? <Food2D type="strawberry" size={foodSize} /> :
@@ -82,15 +85,28 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
                     </>
                 )}
 
-                {/* --- GHOST ICON --- */}
+                {/* --- GHOST RENDER LOGIC --- */}
                 {isGhostHere && (
-                  <GhostIcon 
-                    color={GHOST_COLORS[ghostIndex % GHOST_COLORS.length]}
-                    className={cn(
-                      "z-20 animate-bounce drop-shadow-md",
-                      isMinimap ? "w-2 h-2" : "w-6 h-6" 
-                    )}
-                  />
+                  ghost.state === GhostState.EATEN ? (
+                    <EyesIcon 
+                      className={cn(
+                        "z-20", 
+                        isMinimap ? "w-2 h-2" : "w-6 h-6"
+                      )} 
+                    />
+                  ) : (
+                    <GhostIcon 
+                      color={
+                          ghost.state === GhostState.SCARED 
+                          ? '#0000FF' 
+                          : GHOST_COLORS[ghostIndex % GHOST_COLORS.length]
+                      }
+                      className={cn(
+                        "z-20 animate-bounce drop-shadow-md",
+                        isMinimap ? "w-2 h-2" : "w-6 h-6" 
+                      )}
+                    />
+                  )
                 )}
               </div>
             );

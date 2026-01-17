@@ -1,7 +1,6 @@
-// კოორდინატები
 export type Coordinate = {
   x: number;
-  y: number; 
+  z: number; 
 };
 
 // მიმართულებები
@@ -11,8 +10,6 @@ export const Direction = {
   LEFT: 'LEFT',
   RIGHT: 'RIGHT',
 } as const;
-
-//  'UP' | 'DOWN' | 'LEFT' | 'RIGHT'
 export type Direction = typeof Direction[keyof typeof Direction];
 
 // უჯრის ტიპები
@@ -27,25 +24,25 @@ export const TileType = {
   CHERRY: 7,
   STRAWBERRY: 8,
 } as const;
-
 export type TileType = typeof TileType[keyof typeof TileType];
 
-// მოჩვენების ინტერფეისი
+// --- GHOST STATE  ---
+export const GhostState = {
+  NORMAL: 'NORMAL',   
+  SCARED: 'SCARED',   
+  EATEN: 'EATEN',     
+} as const;
+export type GhostState = typeof GhostState[keyof typeof GhostState];
+
+// მოჩვენების ინტერფეისი 
 export interface Ghost {
-  id: string;
-  position: Coordinate;
-  direction: Direction;
+  id?: string;
+  x: number;
+  z: number;
+  startX: number; 
+  startZ: number;
   color: string;
+  state: GhostState; 
 }
 
-// თამაშის მთლიანი სტეიტის ინტერფეისი
-export interface GameState {
-  pacman: Coordinate;
-  pacmanDirection: Direction;
-  ghosts: Ghost[];
-  score: number;
-  isGameOver: boolean;
-  layout: number[][]; 
-}
-//თამაშის სტატუსი
-export type GameStatus = 'idle' | 'playing' | 'paused' | 'gameover';
+export type GameStatus = 'idle' | 'playing' | 'paused' | 'gameover' | 'won';

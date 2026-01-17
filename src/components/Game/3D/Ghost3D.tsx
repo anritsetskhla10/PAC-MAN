@@ -4,56 +4,74 @@ import { Vector3, Group } from 'three';
 import { useTheme } from '../../../context/ThemeContext';
 import { ClassicGhost } from '../3D/Ghosts/ClassicGhost';
 import { ReaperGhost } from '../3D/Ghosts/ReaperGhost';
+import { Eyes3D } from '../3D/Ghosts/Eyes3D'; 
 
 interface Ghost3DProps {
   x: number;
   z: number;
   color: string;
+  state: 'NORMAL' | 'SCARED' | 'EATEN';
 }
 
-export const Ghost3D = ({ x, z, color }: Ghost3DProps) => {
+export const Ghost3D = ({ x, z, color, state }: Ghost3DProps) => {
   const { settings } = useTheme();
   const groupRef = useRef<Group>(null);
-  
   const prevPos = useRef({ x, z });
   const targetRotation = useRef(0);
 
-  // --- კუთხის გამოთვლა ---
   useEffect(() => {
     const dx = x - prevPos.current.x;
     const dz = z - prevPos.current.z;
     if (Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01) {
       targetRotation.current = Math.atan2(dx, dz);
     }
-
     prevPos.current = { x, z };
   }, [x, z]);
 
-
-  useFrame((state, delta) => {
+  useFrame((stateThree, delta) => {
     if (!groupRef.current) return;
 
     const currentPos = groupRef.current.position;
     const targetPos = new Vector3(x, 0.5, z);
-    currentPos.lerp(targetPos, 6.0 * delta);
+    
+    // თუ თვალებია, ძალიან სწრაფად იფრინოს (15.0)
+    const speed = state === 'EATEN' ? 15.0 : 6.0; 
+    currentPos.lerp(targetPos, speed * delta);
 
-    const currentRotation = groupRef.current.rotation.y;
-    const target = targetRotation.current;
+    const tRotation = targetRotation.current;
+    const cRotation = groupRef.current.rotation.y;
     
-    const angleDiff = target - currentRotation;
-    const normalizedDiff = Math.atan2(Math.sin(angleDiff), Math.cos(angleDiff));
+    let diff = tRotation - cRotation;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+
+    // თვალები უფრო სწრაფად ტრიალდება (20.0), სხეული ნელა (10.0)
+    const rotationSpeed = state === 'EATEN' ? 20.0 : 10.0;
+    groupRef.current.rotation.y += diff * rotationSpeed * delta; 
     
-    // 10.0 ტრიალის სიჩქარე
-    groupRef.current.rotation.y += normalizedDiff * 10.0 * delta; 
-    const t = state.clock.getElapsedTime();
-    groupRef.current.position.y = 0.5 + Math.sin(t * 3) * 0.05;
+    if (state !== 'EATEN') {
+        const t = stateThree.clock.getElapsedTime();
+        groupRef.current.position.y = 0.5 + Math.sin(t * 3) * 0.05;
+    } else {
+        groupRef.current.position.y = 0.5; 
+    }
   });
+
+  const displayColor = state === 'SCARED' ? '#0000FF' : color;
 
   return (
     <group ref={groupRef} position={[x, 0.5, z]}>
       <group scale={[0.6, 0.6, 0.6]} position={[0, -0.2, 0]}> 
-        {settings.ghostVariant === 1 && <ClassicGhost color={color} />}
-        {settings.ghostVariant === 2 && <ReaperGhost color={color} />}
+        
+        {state === 'EATEN' ? (
+           <Eyes3D /> 
+        ) : (
+           <>
+             {settings.ghostVariant === 1 && <ClassicGhost color={displayColor} />}
+             {settings.ghostVariant === 2 && <ReaperGhost color={displayColor} />}
+           </>
+        )}
+
       </group>
     </group>
   );
