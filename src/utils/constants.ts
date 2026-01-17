@@ -19,3 +19,10 @@ export const LEVEL_MAP: number[][] = [
   [1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1],
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ];
+
+export const SCORES = {
+  DOT: 10,
+  POWER_PELLET: 50,
+  CHERRY: 100,
+  STRAWBERRY: 300,
+};

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { GameContext, type Position } from './GameContext';
 import { type GameStatus, TileType } from '../types';
-import { LEVEL_MAP } from '../utils/constants';
+import { LEVEL_MAP, SCORES } from '../utils/constants';
 import { calculateGhostNextMove } from '../utils/ghostLogic';
 
 // --- საწყისი პოზიციების დალაგება ---
@@ -61,16 +61,47 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (!layout[targetZ] || layout[targetZ][targetX] === undefined) return;
     
     const targetTile = layout[targetZ][targetX];
+    
+    // კედელს ვერ გაივლის
     if (targetTile === TileType.WALL) return;
 
-    if (targetTile === TileType.FOOD) {
-      setScore((prev) => prev + 10);
+    // ვამოწმებთ, არის თუ არა უჯრა საჭმელი
+    const isFood = 
+      targetTile === TileType.FOOD || 
+      targetTile === TileType.POWER_PELLET || 
+      targetTile === TileType.CHERRY || 
+      targetTile === TileType.STRAWBERRY;
+
+    if (isFood) {
+      //  ქულების დათვლა ტიპის მიხედვით
+      let pointsToAdd = 0;
+      
+      switch (targetTile) {
+        case TileType.FOOD:
+          pointsToAdd = SCORES.DOT;
+          break;
+        case TileType.POWER_PELLET:
+          pointsToAdd = SCORES.POWER_PELLET;
+          break;
+        case TileType.CHERRY:
+          pointsToAdd = SCORES.CHERRY;
+          break;
+        case TileType.STRAWBERRY:
+          pointsToAdd = SCORES.STRAWBERRY;
+          break;
+      }
+
+      setScore((prev) => prev + pointsToAdd);
+
+      //  საჭმლის გაქრობა რუკიდან (ხდება EMPTY)
       setLayout((prevLayout) => {
         const newLayout = prevLayout.map((row) => [...row]);
         newLayout[targetZ][targetX] = TileType.EMPTY;
         return newLayout;
       });
     }
+
+    // პოზიციის შეცვლა
     setPlayerPos({ x: targetX, z: targetZ });
   }, [layout, gameStatus]);
 
