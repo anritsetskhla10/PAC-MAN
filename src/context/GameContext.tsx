@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { GameStatus, Ghost, Coordinate } from '../types'; 
+
 export type Position = Coordinate;
 
 export interface GameContextType {
@@ -8,6 +9,7 @@ export interface GameContextType {
   score: number;
   layout: number[][];
   gameStatus: GameStatus; 
+  remainingFood: number; 
 
   movePlayer: (x: number, z: number) => void;
   startGame: () => void;
