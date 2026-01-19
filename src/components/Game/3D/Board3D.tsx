@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber';
-import { Player } from './Player';
+import { Pacman3D } from '../Player/Pacman3D'; 
 import { InstancedLevel } from '../../InstancedLevel';
 import { Board } from '../Board';
 import { Ghost3D } from '../3D/Ghost3D'; 
@@ -27,7 +27,9 @@ export const Board3D = () => {
         <hemisphereLight color="#ffffff" groundColor="#222222" intensity={0.6} />
         <ambientLight intensity={1.0} />
         
-        <Player />
+        {/* --- PACMAN 3D --- */}
+        <Pacman3D />
+        
         <InstancedLevel />
 
         {layout.map((row, z) => 

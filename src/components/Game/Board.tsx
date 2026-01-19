@@ -5,6 +5,7 @@ import { useGame } from '../../context/GameContext';
 import { GhostIcon } from '../icons/GhostIcon'; 
 import { EyesIcon } from '../icons/EyesIcon'; 
 import { Food2D } from '../Game/Foods/Food2D';
+import { Pacman2D } from '../Game/Player/Pacman2D';
 
 interface BoardProps {
   isMinimap?: boolean;
@@ -72,9 +73,15 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
                     ? "bg-blue-500/50" 
                     : "bg-(--wall-color) opacity-60 rounded-xs"
                   ),
-                  isPlayerHere && "bg-yellow-400 rounded-full z-10 scale-90 shadow-[0_0_10px_yellow]",
                 )}
               >
+                {/* --- PACMAN (2D) --- */}
+                {isPlayerHere && (
+                    <div className="z-30 absolute inset-0 flex items-center justify-center">
+                        <Pacman2D size={isMinimap ? cellSize : 32} />
+                    </div>
+                )}
+
                 {!isPlayerHere && !isGhostHere && (
                     <>
                         {isStrawberry ? <Food2D type="strawberry" size={foodSize} /> :
@@ -85,26 +92,14 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
                     </>
                 )}
 
-                {/* --- GHOST RENDER LOGIC --- */}
+                {/* --- GHOST --- */}
                 {isGhostHere && (
                   ghost.state === GhostState.EATEN ? (
-                    <EyesIcon 
-                      className={cn(
-                        "z-20", 
-                        isMinimap ? "w-2 h-2" : "w-6 h-6"
-                      )} 
-                    />
+                    <EyesIcon className={cn("z-20", isMinimap ? "w-2 h-2" : "w-6 h-6")} />
                   ) : (
                     <GhostIcon 
-                      color={
-                          ghost.state === GhostState.SCARED 
-                          ? '#0000FF' 
-                          : GHOST_COLORS[ghostIndex % GHOST_COLORS.length]
-                      }
-                      className={cn(
-                        "z-20 animate-bounce drop-shadow-md",
-                        isMinimap ? "w-2 h-2" : "w-6 h-6" 
-                      )}
+                      color={ghost.state === GhostState.SCARED ? '#0000FF' : GHOST_COLORS[ghostIndex % GHOST_COLORS.length]}
+                      className={cn("z-20 animate-bounce drop-shadow-md", isMinimap ? "w-2 h-2" : "w-6 h-6")}
                     />
                   )
                 )}

@@ -9,39 +9,23 @@ export const Header = () => {
       </div>
 
       <nav className="flex items-center gap-6">
-        <NavLink 
-          to="/" 
-          className={({ isActive }) => 
-            `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-text-muted'}`
-          }
-        >
+        <NavLink to="/" className={({ isActive }) => `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-text-muted'}`}>
           Game
         </NavLink>
 
-        <NavLink 
-          to="/ghost-lab" 
-          className={({ isActive }) => 
-            `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-text-muted'}`
-          }
-        >
+        <NavLink to="/ghost-lab" className={({ isActive }) => `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-text-muted'}`}>
           Ghost Lab
         </NavLink>
 
-        <NavLink 
-          to="/food-lab" 
-          className={({ isActive }) => 
-            `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-text-muted'}`
-          }
-        >
+        <NavLink to="/pacman-lab" className={({ isActive }) => `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-text-muted'}`}>
+          Pacman Lab
+        </NavLink>
+
+        <NavLink to="/food-lab" className={({ isActive }) => `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-text-muted'}`}>
           Food Lab
         </NavLink>
         
-        <NavLink 
-          to="/settings" 
-          className={({ isActive }) => 
-            `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-text-muted'}`
-          }
-        >
+        <NavLink to="/settings" className={({ isActive }) => `text-sm font-medium transition-colors hover:text-primary ${isActive ? 'text-primary' : 'text-text-muted'}`}>
           Settings
         </NavLink>
       </nav>
