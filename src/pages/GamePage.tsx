@@ -10,20 +10,17 @@ export const GamePage = () => {
   const { score, gameStatus, pauseGame } = useGame();
 
   return (
-    <div className="container mx-auto px-4 py-8 flex flex-col items-center gap-6 bg-bg-main transition-colors duration-300">
+    <div className="relative w-full h-dvh overflow-hidden bg-black flex flex-col items-center justify-center">
       
-      {/* HEADER: Score & Pause Button */}
-      <div className={cn(
-        "flex justify-between items-center w-full gap-4 z-40 transition-all duration-300",
-        settings.is3DMode ? "max-w-[95%]" : "max-w-4xl"
-      )}>
-        <h2 className="text-2xl font-bold text-primary flex items-center gap-2 drop-shadow-md">
-          {settings.is3DMode ? "🎮 3D Mode" : "🕹️ 2D Mode"}
+      <div className="absolute top-4 left-0 right-0 z-50 flex justify-between items-center px-4 w-full pointer-events-none">
+        
+        <h2 className="text-xl font-bold text-primary drop-shadow-md bg-black/40 px-3 py-1 rounded-full backdrop-blur pointer-events-auto">
+          {settings.is3DMode ? "🎮 3D" : "🕹️ 2D"}
         </h2>
         
-        <div className="flex items-center gap-4">
-          <div className="bg-primary/10 border border-primary/50 px-6 py-2 rounded-full backdrop-blur-md shadow-lg">
-              <span className="text-primary font-bold text-xl tracking-wider">
+        <div className="flex items-center gap-3 pointer-events-auto">
+          <div className="bg-primary/20 border border-primary/50 px-4 py-1 rounded-full backdrop-blur shadow-lg">
+              <span className="text-primary font-bold text-lg tracking-wider">
                 SCORE: {score}
               </span>
           </div>
@@ -36,8 +33,7 @@ export const GamePage = () => {
                   document.exitPointerLock();
                 }
               }}
-              className="w-10 h-10 flex items-center justify-center bg-gray-800 text-white rounded-full hover:bg-gray-700 border border-white/20 transition-all shadow-md"
-              title="Pause (Esc)"
+              className="w-10 h-10 flex items-center justify-center bg-gray-800 text-white rounded-full hover:bg-gray-700 border border-white/20 transition-all shadow-md active:scale-95"
             >
               ⏸
             </button>
@@ -45,28 +41,23 @@ export const GamePage = () => {
         </div>
       </div>
 
-      {/* GAME AREA CONTAINER */}
       <div className={cn(
-        "relative transition-all duration-500 ease-in-out border-4 border-primary/30 rounded-xl overflow-hidden shadow-2xl",
-        settings.is3DMode 
-          ? "w-[95%] h-[calc(100vh-180px)]" 
-          : "w-auto h-auto max-w-4xl"
+        "relative w-full h-full transition-all duration-300",
+        !settings.is3DMode && "flex items-center justify-center p-4" 
       )}>
         
         <GameOverlay /> 
 
         {settings.is3DMode ? (
-          <Board3D />
+          <div className="w-full h-full">
+             <Board3D />
+          </div>
         ) : (
-          <div className="p-1 bg-black/40 backdrop-blur">
+          <div className="relative max-w-200 max-h-200 aspect-square w-full shadow-2xl border-4 border-primary/30 rounded-xl overflow-hidden bg-black/40 backdrop-blur">
              <Board />
           </div>
         )}
       </div>
-
-      <p className="text-sm text-text-muted font-mono opacity-70">
-        {gameStatus === 'idle' ? "PRESS START TO PLAY" : "PRESS [ESC] TO PAUSE"}
-      </p>
 
     </div>
   );

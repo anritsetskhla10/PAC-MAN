@@ -13,20 +13,20 @@ export const Board3D = () => {
   const { ghostsPos, layout } = useGame();
 
   return (
-    <div className="relative w-full h-full rounded-xl overflow-hidden shadow-2xl border-4 border-border-color bg-black">
+    <div className="relative w-full h-full bg-black overflow-hidden">
       
-      <div className="absolute top-4 left-4 z-50 pointer-events-none opacity-90 scale-90 origin-top-left">
+      <div className="absolute top-16 left-4 z-40 pointer-events-none opacity-80 scale-75 origin-top-left sm:top-20">
         <Board isMinimap={true} />
-        <div className="text-white text-[10px] text-center mt-1 font-mono bg-black/50 rounded backdrop-blur">RADAR</div>
       </div>
-      <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-white/60 rounded-full -translate-x-1/2 -translate-y-1/2 z-40 pointer-events-none mix-blend-difference" />
+      <div className="absolute top-1/2 left-1/2 w-1 h-1 bg-white/50 rounded-full -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none mix-blend-difference" />
 
-      <Canvas shadows camera={{ fov: 60, near: 0.001 }}>
-        <color attach="background" args={['#1a1a1a']} />
-        <fog attach="fog" args={['#1a1a1a', 0, 25]} />
-        <hemisphereLight color="#ffffff" groundColor="#222222" intensity={0.6} />
-        <ambientLight intensity={1.0} />
+      <Canvas shadows camera={{ fov: 60, near: 0.001 }} className="touch-none block">
+        <color attach="background" args={['#050505']} />
+        <fog attach="fog" args={['#050505', 0, 40]} />
         
+        <hemisphereLight color="#ffffff" groundColor="#000000" intensity={0.7} />
+        <ambientLight intensity={0.6} />
+
         <Pacman3D />
         
         <InstancedLevel />
@@ -42,13 +42,14 @@ export const Board3D = () => {
         )}
 
         {ghostsPos.map((ghost, index) => (
-          <Ghost3D 
-            key={index}
-            x={ghost.x} 
-            z={ghost.z}
-            state={ghost.state} 
-            color={GAME_GHOST_COLORS[index % GAME_GHOST_COLORS.length]} 
-          />
+          <group key={index} position={[0, 0.1, 0]}>
+            <Ghost3D 
+              x={ghost.x} 
+              z={ghost.z}
+              state={ghost.state} 
+              color={GAME_GHOST_COLORS[index % GAME_GHOST_COLORS.length]} 
+            />
+          </group>
         ))}
 
       </Canvas>

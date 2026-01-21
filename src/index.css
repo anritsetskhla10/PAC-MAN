@@ -9,14 +9,6 @@
   --color-border-color: var(--border-color);
 }
 
-@utility card-surface {
-  background-color: var(--bg-card);
-  border-radius: 0.75rem;
-  &:where(:root:not(.dark) *) {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  }
-}
-
 :root {
   --primary: #00d4ff; 
   --bg-main: #f0f4f8;
@@ -27,6 +19,7 @@
   --text-main: #0f172a;     
   --text-muted: #64748b;    
   --border-color: #cbd5e1;  
+  --app-height: 100dvh; 
 }
 
 .dark {
@@ -35,4 +28,16 @@
   --text-main: #ffffff;     
   --text-muted: #9ca3af;    
   --border-color: rgba(255, 255, 255, 0.1); 
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; 
+  overscroll-behavior: none; 
+  touch-action: none; 
+  user-select: none;
+  -webkit-user-select: none;
 }
