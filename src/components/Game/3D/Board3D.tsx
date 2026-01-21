@@ -15,7 +15,7 @@ export const Board3D = () => {
   return (
     <div className="relative w-full h-full rounded-xl overflow-hidden shadow-2xl border-4 border-border-color bg-black">
       
-      <div className="absolute bottom-4 right-4 z-50 pointer-events-none opacity-90 scale-90 origin-bottom-right">
+      <div className="absolute top-4 left-4 z-50 pointer-events-none opacity-90 scale-90 origin-top-left">
         <Board isMinimap={true} />
         <div className="text-white text-[10px] text-center mt-1 font-mono bg-black/50 rounded backdrop-blur">RADAR</div>
       </div>
@@ -27,7 +27,6 @@ export const Board3D = () => {
         <hemisphereLight color="#ffffff" groundColor="#222222" intensity={0.6} />
         <ambientLight intensity={1.0} />
         
-        {/* --- PACMAN 3D --- */}
         <Pacman3D />
         
         <InstancedLevel />
