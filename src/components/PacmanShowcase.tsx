@@ -20,8 +20,6 @@ export const PacmanShowcase = () => {
       >
         <h1 className="text-2xl font-bold text-yellow-500 mb-2">Pacman Lab 🟡</h1>
     
-
-        {/* --- MODE TOGGLE --- */}
         <div className="bg-gray-200 dark:bg-gray-700 p-1 rounded-lg flex mb-4">
             <button 
                 onClick={() => setIs3DMode(false)}
@@ -46,7 +44,6 @@ export const PacmanShowcase = () => {
             : 'bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-gray-200 via-gray-100 to-white'
         }`} />
 
-        {/* --- 3D VIEW --- */}
         {is3DMode ? (
             <Canvas camera={{ position: [4, 4, 4], fov: 45 }}>
                 <OrbitControls enablePan={false} autoRotate autoRotateSpeed={3} />
@@ -61,7 +58,6 @@ export const PacmanShowcase = () => {
                 <gridHelper args={[10, 10, isDark ? '#444' : '#ccc', isDark ? '#222' : '#e5e5e5']} position={[0, -1.2, 0]} />
             </Canvas>
         ) : (
-            // --- 2D VIEW ---
             <div className="z-10 transform scale-150 p-10 bg-black/10 dark:bg-white/5 rounded-2xl backdrop-blur-sm border border-white/10 shadow-2xl">
                  <Pacman2D size={200} />
             </div>

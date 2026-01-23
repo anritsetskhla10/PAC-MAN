@@ -45,4 +45,17 @@ export interface Ghost {
   state: GhostState; 
 }
 
+// თამაშის სტატუსი
 export type GameStatus = 'idle' | 'playing' | 'paused' | 'gameover' | 'won';
+
+// --- THEME SETTINGS ---
+export interface ThemeSettings {
+  wallColor: string;
+  foodColor: string;
+  gameBg: string;
+  isDarkMode: boolean;
+  is3DMode: boolean;       
+  isSpectatorMode: boolean; 
+  ghostVariant: number;
+  ghostColor: string;   
+}

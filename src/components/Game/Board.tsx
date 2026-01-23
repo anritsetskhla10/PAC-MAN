@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { TileType, GhostState } from '../../types';
 import { cn } from '../../utils/cn';
 import { useGame } from '../../context/GameContext';
@@ -14,6 +14,15 @@ const GHOST_COLORS = ['#FF0000', '#FFB8FF', '#00FFFF', '#FFB852'];
 
 export const Board = ({ isMinimap = false }: BoardProps) => {
   const { playerPos, ghostsPos, layout, movePlayer } = useGame(); 
+  
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 600);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     if (isMinimap) return;
@@ -30,7 +39,12 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [playerPos, movePlayer, isMinimap]); 
 
-  const cellSize = isMinimap ? 10 : 28; 
+  let cellSize = 28;
+  if (isMinimap) {
+    cellSize = isMobile ? 6 : 10;
+  } else {
+    cellSize = isMobile ? 18 : 28; 
+  }
 
   return (
     <div className="relative flex justify-center">
@@ -38,8 +52,8 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
         className={cn(
           "grid rounded-lg transition-all duration-300",
           isMinimap 
-            ? "border-2 border-white/30 bg-black/80 shadow-none gap-px" 
-            : "border-4 shadow-[0_0_30px_var(--wall-color)] bg-(--game-bg) border-(--wall-color) gap-px"
+            ? "border-2 border-white/30 bg-black/80 shadow-none gap-[0.5px]" 
+            : "border-0 bg-(--game-bg) gap-px" 
         )}
         style={{
           gridTemplateColumns: `repeat(${layout[0].length}, ${cellSize}px)`,
@@ -48,7 +62,6 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
         {layout.map((row, rowIndex) =>
           row.map((tile, colIndex) => {
             const isPlayerHere = playerPos.x === colIndex && playerPos.z === rowIndex;
-            
             const ghostIndex = ghostsPos.findIndex(g => Math.round(g.x) === colIndex && Math.round(g.z) === rowIndex);
             const ghost = ghostsPos[ghostIndex];
             const isGhostHere = ghostIndex !== -1;
@@ -59,9 +72,11 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
             const isFood = tile === TileType.FOOD;
             
             let foodSize = 0;
-            if (isStrawberry || isCherry) foodSize = isMinimap ? cellSize : 20;
-            if (isPower) foodSize = isMinimap ? cellSize : 16;
-            if (isFood) foodSize = isMinimap ? cellSize : 28;
+            const scale = isMinimap ? 0.4 : (isMobile ? 0.6 : 1);
+
+            if (isStrawberry || isCherry) foodSize = 20 * scale;
+            if (isPower) foodSize = 16 * scale;
+            if (isFood) foodSize = 8 * scale;
 
             return (
               <div
@@ -71,17 +86,18 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
                   "flex items-center justify-center relative", 
                   tile === TileType.WALL && (isMinimap 
                     ? "bg-blue-500/50" 
-                    : "bg-(--wall-color) opacity-60 rounded-xs"
+                    : "bg-(--wall-color) opacity-60 rounded-[1px]"
                   ),
                 )}
               >
-                {/* --- PACMAN (2D) --- */}
+                {/* PACMAN */}
                 {isPlayerHere && (
                     <div className="z-30 absolute inset-0 flex items-center justify-center">
-                        <Pacman2D size={isMinimap ? cellSize : 32} />
+                        <Pacman2D size={cellSize * 0.9} />
                     </div>
                 )}
 
+                {/* FOOD */}
                 {!isPlayerHere && !isGhostHere && (
                     <>
                         {isStrawberry ? <Food2D type="strawberry" size={foodSize} /> :
@@ -92,14 +108,14 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
                     </>
                 )}
 
-                {/* --- GHOST --- */}
+                {/* GHOST */}
                 {isGhostHere && (
                   ghost.state === GhostState.EATEN ? (
-                    <EyesIcon className={cn("z-20", isMinimap ? "w-2 h-2" : "w-6 h-6")} />
+                    <EyesIcon className={cn("z-20", isMinimap ? "w-2 h-2" : isMobile ? "w-4 h-4" : "w-6 h-6")} />
                   ) : (
                     <GhostIcon 
                       color={ghost.state === GhostState.SCARED ? '#0000FF' : GHOST_COLORS[ghostIndex % GHOST_COLORS.length]}
-                      className={cn("z-20 animate-bounce drop-shadow-md", isMinimap ? "w-2 h-2" : "w-6 h-6")}
+                      className={cn("z-20 animate-bounce drop-shadow-md", isMinimap ? "w-2 h-2" : isMobile ? "w-4 h-4" : "w-6 h-6")}
                     />
                   )
                 )}

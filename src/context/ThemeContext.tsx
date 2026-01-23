@@ -1,14 +1,5 @@
 import { createContext, useContext } from 'react';
-
-export interface ThemeSettings {
-  wallColor: string;
-  foodColor: string;
-  gameBg: string;
-  isDarkMode: boolean;
-  is3DMode: boolean;
-  ghostVariant: number;
-  ghostColor: string;   
-}
+import type { ThemeSettings } from '../types'; 
 
 export interface ThemeContextType {
   settings: ThemeSettings;
@@ -21,7 +12,8 @@ export const defaultSettings: ThemeSettings = {
   foodColor: '#fef08a',
   gameBg: '#000000',
   isDarkMode: true,
-  is3DMode: false,
+  is3DMode: false,          
+  isSpectatorMode: false,   
   ghostVariant: 1, 
   ghostColor: '#FF0000'
 };

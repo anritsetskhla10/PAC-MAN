@@ -6,17 +6,33 @@ import { GameOverlay } from '../components/GameOverlay';
 import { cn } from '../utils/cn';
 
 export const GamePage = () => {
-  const { settings } = useTheme();
+  const { settings, updateSetting } = useTheme();
   const { score, gameStatus, pauseGame } = useGame();
+
+  const toggleCameraMode = () => {
+    updateSetting('isSpectatorMode', !settings.isSpectatorMode);
+  };
 
   return (
     <div className="relative w-full h-dvh overflow-hidden bg-black flex flex-col items-center justify-center">
       
+      {/* HEADER */}
       <div className="absolute top-4 left-0 right-0 z-50 flex justify-between items-center px-4 w-full pointer-events-none">
         
-        <h2 className="text-xl font-bold text-primary drop-shadow-md bg-black/40 px-3 py-1 rounded-full backdrop-blur pointer-events-auto">
-          {settings.is3DMode ? "🎮 3D" : "🕹️ 2D"}
-        </h2>
+        <div className="flex gap-2 pointer-events-auto">
+             <h2 className="text-xl font-bold text-primary drop-shadow-md bg-black/40 px-3 py-1 rounded-full backdrop-blur border border-primary/20">
+              {settings.is3DMode ? "🎮 3D" : "🕹️ 2D"}
+            </h2>
+
+            {settings.is3DMode && (
+                <button 
+                    onClick={toggleCameraMode}
+                    className="bg-blue-600/80 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg hover:bg-blue-500 transition-colors backdrop-blur pointer-events-auto"
+                >
+                    {settings.isSpectatorMode ? "🎥 Spectator" : "👀 First Person"}
+                </button>
+            )}
+        </div>
         
         <div className="flex items-center gap-3 pointer-events-auto">
           <div className="bg-primary/20 border border-primary/50 px-4 py-1 rounded-full backdrop-blur shadow-lg">
@@ -41,9 +57,10 @@ export const GamePage = () => {
         </div>
       </div>
 
+      {/* GAME AREA */}
       <div className={cn(
         "relative w-full h-full transition-all duration-300",
-        !settings.is3DMode && "flex items-center justify-center p-4" 
+        !settings.is3DMode && "flex items-center justify-center" 
       )}>
         
         <GameOverlay /> 
@@ -53,7 +70,7 @@ export const GamePage = () => {
              <Board3D />
           </div>
         ) : (
-          <div className="relative max-w-200 max-h-200 aspect-square w-full shadow-2xl border-4 border-primary/30 rounded-xl overflow-hidden bg-black/40 backdrop-blur">
+          <div className="relative w-fit mx-auto z-10">
              <Board />
           </div>
         )}
