@@ -3,7 +3,6 @@ export type Coordinate = {
   z: number; 
 };
 
-// მიმართულებები
 export const Direction = {
   UP: 'UP',
   DOWN: 'DOWN',
@@ -12,7 +11,9 @@ export const Direction = {
 } as const;
 export type Direction = typeof Direction[keyof typeof Direction];
 
-// უჯრის ტიპები
+export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
+export type GlobalMode = 'CHASE' | 'SCATTER'; 
+
 export const TileType = {
   EMPTY: 0,
   WALL: 1,
@@ -26,7 +27,6 @@ export const TileType = {
 } as const;
 export type TileType = typeof TileType[keyof typeof TileType];
 
-// --- GHOST STATE  ---
 export const GhostState = {
   NORMAL: 'NORMAL',   
   SCARED: 'SCARED',   
@@ -34,7 +34,6 @@ export const GhostState = {
 } as const;
 export type GhostState = typeof GhostState[keyof typeof GhostState];
 
-// მოჩვენების ინტერფეისი 
 export interface Ghost {
   id?: string;
   x: number;
@@ -42,13 +41,13 @@ export interface Ghost {
   startX: number; 
   startZ: number;
   color: string;
-  state: GhostState; 
+  state: GhostState;
+  currentDir: Coordinate;
+  movementProgress: number; 
 }
 
-// თამაშის სტატუსი
 export type GameStatus = 'idle' | 'playing' | 'paused' | 'gameover' | 'won';
 
-// --- THEME SETTINGS ---
 export interface ThemeSettings {
   wallColor: string;
   foodColor: string;
@@ -57,5 +56,6 @@ export interface ThemeSettings {
   is3DMode: boolean;       
   isSpectatorMode: boolean; 
   ghostVariant: number;
-  ghostColor: string;   
+  ghostColor: string;
+  difficulty: Difficulty;
 }

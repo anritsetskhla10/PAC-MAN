@@ -1,4 +1,5 @@
 import { useTheme } from '../context/ThemeContext';
+import type { Difficulty } from '../types';
 
 export const SettingsPanel = () => {
   const { settings, updateSetting, resetTheme } = useTheme();
@@ -16,12 +17,30 @@ export const SettingsPanel = () => {
       </div>
       
       <div className="space-y-6">
-        
-        {/* --- GENERAL SETTINGS --- */}
+        {/* --- DIFFICULTY --- */}
+        <div className="space-y-2 pb-4 border-b border-white/10">
+            <h4 className="text-xs font-bold text-text-muted uppercase tracking-widest pb-2">Difficulty</h4>
+            <div className="flex gap-2">
+                {(['EASY', 'MEDIUM', 'HARD'] as Difficulty[]).map((level) => (
+                    <button
+                        key={level}
+                        onClick={() => updateSetting('difficulty', level)}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-all ${
+                            settings.difficulty === level 
+                            ? 'bg-primary text-black border-primary' 
+                            : 'bg-transparent text-text-muted border-white/20 hover:bg-white/5'
+                        }`}
+                    >
+                        {level}
+                    </button>
+                ))}
+            </div>
+        </div>
+
+        {/* --- DISPLAY --- */}
         <div className="space-y-4">
             <h4 className="text-xs font-bold text-text-muted uppercase tracking-widest border-b border-white/10 pb-2">Display</h4>
             
-            {/* Dark Mode */}
             <Toggle 
                 label="Dark Mode" 
                 isOn={settings.isDarkMode} 
@@ -29,7 +48,6 @@ export const SettingsPanel = () => {
                 color="bg-primary"
             />
         
-            {/* 3D Mode Toggle */}
             <Toggle 
                 label="3D Graphics" 
                 isOn={settings.is3DMode} 
@@ -37,7 +55,6 @@ export const SettingsPanel = () => {
                 color="bg-purple-600"
             />
 
-            {/* Camera Mode Toggle (Only if 3D is ON) */}
             {settings.is3DMode && (
                  <div className="flex items-center justify-between pl-4 border-l-2 border-purple-500/30">
                     <span className="text-sm font-medium text-text-muted">Camera Type</span>
@@ -65,7 +82,6 @@ export const SettingsPanel = () => {
   );
 };
 
-// დამხმარე კომპონენტები
 const Toggle = ({ label, isOn, onToggle, color }: { label: string, isOn: boolean, onToggle: () => void, color: string }) => (
     <div className="flex items-center justify-between cursor-pointer" onClick={onToggle}>
       <span className="text-sm font-medium select-none">{label}</span>

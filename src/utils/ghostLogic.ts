@@ -1,105 +1,240 @@
-import { TileType, GhostState } from '../types'; 
-import type { Ghost } from '../types';
+import { TileType, GhostState, type Ghost, type Coordinate, type Difficulty, type GlobalMode } from '../types';
+import { GHOST_CONFIG, HOUSE_DOOR, TUNNEL_ROW } from './constants';
 
-interface Position { x: number; z: number; }
+const DIRECTIONS = [
+  { x: 0, z: -1 },
+  { x: -1, z: 0 }, 
+  { x: 0, z: 1 }, 
+  { x: 1, z: 0 },  
+];
 
-// შემოწმება: არის თუ არა უჯრაზე სხვა მოჩვენება
-const isOccupiedByGhost = (target: Position, allGhosts: Ghost[]): boolean => {
-  if (!allGhosts) return false;
-  return allGhosts.some(g => 
-    g.state !== GhostState.EATEN && 
-    Math.round(g.x) === target.x && 
-    Math.round(g.z) === target.z
-  );
+const getDistSq = (a: Coordinate, b: Coordinate) => {
+  return (a.x - b.x) ** 2 + (a.z - b.z) ** 2;
 };
 
-// ვალიდური მეზობელი უჯრები
-const getValidNeighbors = (pos: Position, layout: number[][], allGhosts: Ghost[], ignoreGhosts: boolean) => {
-  const directions = [{ x: 0, z: -1 }, { x: 0, z: 1 }, { x: -1, z: 0 }, { x: 1, z: 0 }];
-
-  return directions
-    .map(dir => ({ x: pos.x + dir.x, z: pos.z + dir.z }))
-    .filter(p => {
-      //  რუკის საზღვრები
-      if (!layout[p.z] || layout[p.z][p.x] === undefined) return false;
-      // კედელი
-      if (layout[p.z][p.x] === TileType.WALL) return false;
-      //  სხვა მოჩვენებები (თუ ignoreGhosts გამორთულია)
-      if (!ignoreGhosts && isOccupiedByGhost(p, allGhosts)) return false;
-      return true;
-    });
+// ამოწმებს, არის თუ არა მოჩვენება სახლის შიგნით
+const isInGhostHouse = (pos: Coordinate) => {
+  return (pos.z > 8.5 && pos.z < 9.5) && (pos.x >= 8 && pos.x <= 10);
 };
 
-// BFS (გზის გაგნება)
-const getNextStepBFS = (start: Position, target: Position, layout: number[][], allGhosts: Ghost[], ignoreGhosts: boolean): Position => {
-  const startInt = { x: Math.round(start.x), z: Math.round(start.z) };
+const isWall = (x: number, z: number, layout: number[][], allowHouse: boolean = false) => {
+  if (z < 0 || z >= layout.length || x < 0 || x >= layout[0].length) {
+    if (z === TUNNEL_ROW) return false; 
+    return true;
+  }
+  const tile = layout[z][x];
   
-  // თუ უკვე ადგილზეა
-  if (startInt.x === target.x && startInt.z === target.z) return startInt;
+  if (allowHouse) {
+    if (tile === TileType.GHOST_HOUSE || tile === TileType.GHOST_START) return false;
+  }
+  
+  return tile === TileType.WALL || tile === TileType.GHOST_HOUSE || tile === TileType.GHOST_START;
+};
 
-  const queue = [{ pos: startInt, firstStep: null as Position | null }];
+const isRedZone = (x: number, z: number, dir: Coordinate) => {
+  if (dir.z === -1) { 
+    if ((x >= 8 && x <= 10) && (z === 8 || z === 20)) return true;
+  }
+  return false;
+};
+
+// --- BFS PATHFINDING ---
+const getNextStepBFS = (start: Coordinate, target: Coordinate, layout: number[][]): Coordinate => {
+  const startX = Math.round(start.x);
+  const startZ = Math.round(start.z);
+  const targetX = Math.round(target.x);
+  const targetZ = Math.round(target.z);
+
+  if (startX === targetX && startZ === targetZ) return start;
+
+  const queue: { x: number, z: number, firstStep: Coordinate | null }[] = [
+    { x: startX, z: startZ, firstStep: null }
+  ];
   const visited = new Set<string>();
-  visited.add(`${startInt.x},${startInt.z}`);
+  visited.add(`${startX},${startZ}`);
 
   while (queue.length > 0) {
-    const { pos, firstStep } = queue.shift()!;
-    
-    if (pos.x === target.x && pos.z === target.z) {
-      return firstStep || startInt;
-    }
+    const { x, z, firstStep } = queue.shift()!;
+    if (x === targetX && z === targetZ) return firstStep || { x: targetX, z: targetZ };
 
-    const neighbors = getValidNeighbors(pos, layout, allGhosts, ignoreGhosts);
-    for (const n of neighbors) {
-      const key = `${n.x},${n.z}`;
-      if (!visited.has(key)) {
+    for (const dir of DIRECTIONS) {
+      const nextX = x + dir.x;
+      const nextZ = z + dir.z;
+      const key = `${nextX},${nextZ}`;
+      
+      let isPassable = false;
+      if (nextZ === TUNNEL_ROW) isPassable = true;
+      else if (nextZ >= 0 && nextZ < layout.length && nextX >= 0 && nextX < layout[0].length) {
+          const t = layout[nextZ][nextX];
+          isPassable = t !== TileType.WALL; 
+      }
+
+      if (!visited.has(key) && isPassable) {
         visited.add(key);
-        queue.push({ pos: n, firstStep: firstStep || n });
+        const nextFirstStep = firstStep || { x: nextX, z: nextZ };
+        queue.push({ x: nextX, z: nextZ, firstStep: nextFirstStep });
       }
     }
   }
-  // თუ გზა ვერ იპოვა (ჩიხი), უბრალოდ სადმე გადადგას
-  const fallback = getValidNeighbors(startInt, layout, allGhosts, ignoreGhosts);
-  return fallback.length > 0 ? fallback[0] : startInt;
+  return { x: startX, z: startZ };
 };
 
-// --- მთავარი ფუნქცია ---
+// --- TARGETING ---
+const getBlinkyTarget = (playerPos: Coordinate) => playerPos;
+const getPinkyTarget = (playerPos: Coordinate, playerDir: Coordinate) => ({
+  x: playerPos.x + playerDir.x * 4,
+  z: playerPos.z + playerDir.z * 4
+});
+const getInkyTarget = (playerPos: Coordinate, playerDir: Coordinate, blinkyPos: Coordinate) => {
+  const pivotX = playerPos.x + playerDir.x * 2;
+  const pivotZ = playerPos.z + playerDir.z * 2;
+  return {
+    x: blinkyPos.x + (pivotX - blinkyPos.x) * 2,
+    z: blinkyPos.z + (pivotZ - blinkyPos.z) * 2
+  };
+};
+const getClydeTarget = (ghostPos: Coordinate, playerPos: Coordinate) => {
+  return getDistSq(ghostPos, playerPos) > 64 ? playerPos : GHOST_CONFIG.CLYDE.scatterTarget;
+};
+
+// --- MOVEMENT ENGINE ---
+const getBestMove = (current: Coordinate, currentDir: Coordinate, target: Coordinate, layout: number[][], allowReverse: boolean, allowHouse: boolean): { nextPos: Coordinate, nextDir: Coordinate } => {
+  let bestMove = current;
+  let bestDir = currentDir;
+  let minDistance = Infinity;
+  const validMoves: { pos: Coordinate, dir: Coordinate, dist: number }[] = [];
+
+  for (const dir of DIRECTIONS) {
+    if (!allowReverse && dir.x === -currentDir.x && dir.z === -currentDir.z) continue;
+    if (!allowHouse && isRedZone(current.x, current.z, dir)) continue;
+
+    const nextX = current.x + dir.x;
+    const nextZ = current.z + dir.z;
+
+    if (!isWall(nextX, nextZ, layout, allowHouse)) {
+      const dist = getDistSq({ x: nextX, z: nextZ }, target);
+      validMoves.push({ pos: { x: nextX, z: nextZ }, dir, dist });
+    }
+  }
+
+  if (validMoves.length === 0) {
+      for (const dir of DIRECTIONS) {
+          const nextX = current.x + dir.x;
+          const nextZ = current.z + dir.z;
+          if (!isWall(nextX, nextZ, layout, allowHouse)) {
+              return { nextPos: { x: nextX, z: nextZ }, nextDir: dir };
+          }
+      }
+      return { nextPos: current, nextDir: currentDir };
+  }
+
+  for (const move of validMoves) {
+      if (move.dist < minDistance) {
+          minDistance = move.dist;
+          bestMove = move.pos;
+          bestDir = move.dir;
+      }
+  }
+  return { nextPos: bestMove, nextDir: bestDir };
+};
+
+const getRandomMove = (current: Coordinate, currentDir: Coordinate, layout: number[][]) => {
+    const validMoves: { pos: Coordinate, dir: Coordinate }[] = [];
+    for (const dir of DIRECTIONS) {
+        if (dir.x === -currentDir.x && dir.z === -currentDir.z) continue; 
+        const nextX = current.x + dir.x;
+        const nextZ = current.z + dir.z;
+        if (!isWall(nextX, nextZ, layout, false)) {
+            validMoves.push({ pos: { x: nextX, z: nextZ }, dir });
+        }
+    }
+    if (validMoves.length > 0) {
+        const randomIdx = Math.floor(Math.random() * validMoves.length);
+        return { nextPos: validMoves[randomIdx].pos, nextDir: validMoves[randomIdx].dir };
+    }
+    return { nextPos: current, nextDir: currentDir };
+};
+
+// --- MAIN EXPORT ---
 export const calculateGhostNextMove = (
-  ghost: Ghost, 
-  index: number, 
-  playerPos: Position, 
-  layout: number[][], 
-  allGhosts: Ghost[]
-): Position => {
-  // EATEN (თვალები) -> მიდის სახლში
+  ghost: Ghost,
+  allGhosts: Ghost[],
+  playerPos: Coordinate,
+  playerDir: Coordinate,
+  layout: number[][],
+  difficulty: Difficulty,
+  globalMode: GlobalMode,
+  isElroy: boolean,
+  canLeaveHouse: boolean 
+): { nextPos: Coordinate, nextDir: Coordinate } => {
+
+  const currentPos = { x: Math.round(ghost.x), z: Math.round(ghost.z) };
+  
+  // EATEN STATE
   if (ghost.state === GhostState.EATEN) {
-    const home = { x: ghost.startX, z: ghost.startZ };
-    
-    if (Math.abs(ghost.x - home.x) < 0.5 && Math.abs(ghost.z - home.z) < 0.5) {
-        return { x: home.x, z: home.z };
+    const home = { x: ghost.startX, z: ghost.startZ }; 
+    if (Math.abs(currentPos.x - home.x) <= 0.5 && Math.abs(currentPos.z - home.z) <= 0.5) {
+       return { nextPos: currentPos, nextDir: { x: 0, z: 0 } };
     }
-    // სახლისკენ მიმავალ გზაზე სხვა მოჩვენებებს აიგნორებს (true)
-    return getNextStepBFS(ghost, home, layout, [], true);
+    const nextStep = getNextStepBFS(currentPos, home, layout);
+    const dirX = nextStep.x - currentPos.x;
+    const dirZ = nextStep.z - currentPos.z;
+    return { nextPos: nextStep, nextDir: { x: dirX, z: dirZ } };
   }
 
-  const otherGhosts = allGhosts.filter((_, i) => i !== index);
+  // HOUSE LOGIC
+  if (isInGhostHouse(currentPos)) {
+      if (canLeaveHouse) {
+          return getBestMove(currentPos, ghost.currentDir, HOUSE_DOOR, layout, false, true);
+      } else {
+          
+          let nextDir = ghost.currentDir;
+          if (nextDir.z === 0) nextDir = { x: 0, z: -1 };
+          
+          const targetZ = currentPos.z + (nextDir.z * 0.2); 
+          
+          if (targetZ < 8.6 || targetZ > 9.4) {
+             nextDir = { x: 0, z: -nextDir.z };
+             return { nextPos: currentPos, nextDir };
+          }
 
-  //  SCARED -> გარბის პაკმენისგან
+          return { 
+              nextPos: { x: currentPos.x, z: targetZ }, 
+              nextDir 
+          };
+      }
+  }
+
+  //  SCARED
   if (ghost.state === GhostState.SCARED) {
-    const currentInt = { x: Math.round(ghost.x), z: Math.round(ghost.z) };
-    const neighbors = getValidNeighbors(currentInt, layout, otherGhosts, false);
-    
-    if (neighbors.length === 0) return currentInt;
-
-    // ირჩევს ყველაზე შორს მყოფ უჯრას
-    let best = neighbors[0];
-    let maxDist = -1;
-    for (const n of neighbors) {
-      const d = Math.abs(n.x - playerPos.x) + Math.abs(n.z - playerPos.z);
-      if (d > maxDist) { maxDist = d; best = n; }
-    }
-    return best;
+    return getRandomMove(currentPos, ghost.currentDir, layout);
   }
 
-  // NORMAL -> მისდევს პაკმენს
-  return getNextStepBFS(ghost, playerPos, layout, otherGhosts, false);
+  //  CHASE / SCATTER
+  let target = playerPos;
+  
+  if (globalMode === 'SCATTER' && !isElroy) {
+     switch (ghost.color) {
+        case GHOST_CONFIG.BLINKY.color: target = GHOST_CONFIG.BLINKY.scatterTarget; break;
+        case GHOST_CONFIG.PINKY.color:  target = GHOST_CONFIG.PINKY.scatterTarget; break;
+        case GHOST_CONFIG.INKY.color:   target = GHOST_CONFIG.INKY.scatterTarget; break;
+        case GHOST_CONFIG.CLYDE.color:  target = GHOST_CONFIG.CLYDE.scatterTarget; break;
+     }
+  } else {
+     const isSmart = difficulty === 'HARD' || (difficulty === 'MEDIUM' && Math.random() > 0.2) || (difficulty === 'EASY' && Math.random() > 0.6);
+     if (!isSmart) return getRandomMove(currentPos, ghost.currentDir, layout);
+
+     switch (ghost.color) {
+        case GHOST_CONFIG.BLINKY.color: target = getBlinkyTarget(playerPos); break;
+        case GHOST_CONFIG.PINKY.color:  target = getPinkyTarget(playerPos, playerDir); break;
+        case GHOST_CONFIG.INKY.color: {
+          const blinky = allGhosts.find(g => g.color === GHOST_CONFIG.BLINKY.color);
+          target = blinky ? getInkyTarget(playerPos, playerDir, blinky) : playerPos;
+          break;
+        }
+        case GHOST_CONFIG.CLYDE.color:  target = getClydeTarget(currentPos, playerPos); break;
+     }
+  }
+
+  return getBestMove(currentPos, ghost.currentDir, target, layout, false, false);
 };
