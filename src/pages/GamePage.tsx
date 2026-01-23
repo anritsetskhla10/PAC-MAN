@@ -3,6 +3,7 @@ import { useGame } from '../context/GameContext';
 import { Board } from '../components/Game/Board';
 import { Board3D } from '../components/Game/3D/Board3D';
 import { GameOverlay } from '../components/GameOverlay';
+import { SwipeControls } from '../components/SwipeControls';
 import { cn } from '../utils/cn';
 
 export const GamePage = () => {
@@ -35,7 +36,7 @@ export const GamePage = () => {
         </div>
         
         <div className="flex items-center gap-3 pointer-events-auto">
-          <div className="bg-primary/20 border border-primary/50 px-4 py-1 rounded-full backdrop-blur shadow-lg">
+           <div className="bg-primary/20 border border-primary/50 px-4 py-1 rounded-full backdrop-blur shadow-lg">
               <span className="text-primary font-bold text-lg tracking-wider">
                 SCORE: {score}
               </span>
@@ -64,6 +65,8 @@ export const GamePage = () => {
       )}>
         
         <GameOverlay /> 
+        
+        <SwipeControls />
 
         {settings.is3DMode ? (
           <div className="w-full h-full">
