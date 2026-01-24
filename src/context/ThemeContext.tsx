@@ -16,7 +16,8 @@ export const defaultSettings: ThemeSettings = {
   isSpectatorMode: false,
   ghostVariant: 1, 
   ghostColor: '#FF0000',
-  difficulty: 'MEDIUM' 
+  difficulty: 'MEDIUM',
+  playerModel: 'classic',
 };
 
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);

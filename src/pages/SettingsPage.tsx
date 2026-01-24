@@ -1,4 +1,4 @@
-import { SettingsPanel } from '../components/SettingsPanel';
+import { SettingsPanel } from '../components/UI/SettingsPanel';
 
 export const SettingsPage = () => {
   return (

@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeProvider'; 
 import { GameProvider } from './context/GameProvider';   
-import { Header } from './components/Header';
+import { Header } from './components/layout/Header';
 import { GamePage } from './pages/GamePage';
 import { SettingsPage } from './pages/SettingsPage';
-import { GhostShowcase } from './components/GhostShowcase';
-import { FoodShowcase } from './components/FoodShowcase'; 
-import { PacmanShowcase } from './components/PacmanShowcase';
+import { GhostShowcase } from './pages/Showcases/GhostShowcase';
+import { FoodShowcase } from './pages/Showcases/FoodShowcase'; 
+import { PacmanShowcase } from './pages/Showcases/PacmanShowcase';
 
 function App() {
   return (

@@ -58,4 +58,5 @@ export interface ThemeSettings {
   ghostVariant: number;
   ghostColor: string;
   difficulty: Difficulty;
+  playerModel: 'classic' | 'avatar'; 
 }
