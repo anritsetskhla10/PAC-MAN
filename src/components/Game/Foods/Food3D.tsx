@@ -2,58 +2,66 @@ import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Group, MathUtils } from 'three';
 import { MeshDistortMaterial } from '@react-three/drei';
+import { useTheme } from '../../../context/ThemeContext';
 
-type FoodType = 'dot' | 'power' | 'cherry' | 'strawberry';
+type ConsumableVariant = 'dot' | 'power' | 'cherry' | 'strawberry';
 
 interface Food3DProps {
-  type: FoodType;
+  type: ConsumableVariant;
 }
 
-const STRAWBERRY_SEEDS = (() => {
-  const temp = [];
-  const numSeeds = 60;
-  const radius = 0.235;
+const PRECALCULATED_STRAWBERRY_SEEDS = (() => {
+  const seedPositions: [number, number, number][] = [];
+  const totalSeeds = 60;
+  const strawberryRadius = 0.235;
 
-  for (let i = 0; i < numSeeds; i++) {
-    const phi = Math.acos(-1 + (2 * i) / numSeeds);
-    const theta = Math.sqrt(numSeeds * Math.PI) * phi;
+  for (let i = 0; i < totalSeeds; i++) {
+    const phi = Math.acos(-1 + (2 * i) / totalSeeds);
+    const theta = Math.sqrt(totalSeeds * Math.PI) * phi;
     
     const verticalAdjust = phi > 1.5 ? 0.9 : 1; 
 
-    const x = radius * Math.sin(phi) * Math.cos(theta) * verticalAdjust;
-    const y = (radius * Math.sin(phi) * Math.sin(theta) * verticalAdjust) - 0.05;
-    const z = radius * Math.cos(phi);
+    const x = strawberryRadius * Math.sin(phi) * Math.cos(theta) * verticalAdjust;
+    const y = (strawberryRadius * Math.sin(phi) * Math.sin(theta) * verticalAdjust) - 0.05;
+    const z = strawberryRadius * Math.cos(phi);
 
-    temp.push([x, y, z] as [number, number, number]);
+    seedPositions.push([x, y, z]);
   }
-  return temp;
+  return seedPositions;
 })();
 
-
 export const Food3D = ({ type }: Food3DProps) => {
-  const groupRef = useRef<Group>(null);
-  useFrame((state) => {
-    if (!groupRef.current) return;
-    const t = state.clock.getElapsedTime();
-    
-    groupRef.current.rotation.y += 0.015;
-    groupRef.current.position.y = Math.sin(t * 2) * 0.05;
+  const meshGroupRef = useRef<Group>(null);
+  
+  const { settings } = useTheme();
+  
+  const themeDerivedPelletColor = settings?.foodColor ?? '#fef08a';
 
+  useFrame((state) => {
+    if (!meshGroupRef.current) return;
+    
+    const elapsedTime = state.clock.getElapsedTime();
+    
+    // Gentle floating animation for all items to make them feel "alive"
+    meshGroupRef.current.rotation.y += 0.015;
+    meshGroupRef.current.position.y = Math.sin(elapsedTime * 2) * 0.05;
+
+    // Power pellets get a special pulsing animation to indicate potency
     if (type === 'power') {
-        const scale = 1 + Math.sin(t * 8) * 0.15;
-        groupRef.current.scale.set(scale, scale, scale);
+        const pulseScale = 1 + Math.sin(elapsedTime * 8) * 0.15;
+        meshGroupRef.current.scale.set(pulseScale, pulseScale, pulseScale);
     }
   });
 
-  // --- DOT ---
+
   if (type === 'dot') {
     return (
-      <group ref={groupRef}>
+      <group ref={meshGroupRef}>
         <mesh rotation={[0.5, 0.5, 0]}>
           <icosahedronGeometry args={[0.15, 0]} /> 
           <meshStandardMaterial 
-            color="#fef08a" 
-            emissive="#fef08a" 
+            color={themeDerivedPelletColor} 
+            emissive={themeDerivedPelletColor} 
             emissiveIntensity={0.5}
             roughness={0.3}
           />
@@ -62,64 +70,60 @@ export const Food3D = ({ type }: Food3DProps) => {
     );
   }
 
-  // ---  POWER PELLET ---
   if (type === 'power') {
     return (
-      <group ref={groupRef}>
+      <group ref={meshGroupRef}>
         <mesh>
           <sphereGeometry args={[0.2, 32, 32]} />
+          {/* ToneMapped=false makes the emissive glow punch through post-processing effects */}
           <meshStandardMaterial 
-            color="#ffbd2e" 
-            emissive="#ffbd2e" 
+            color={themeDerivedPelletColor} 
+            emissive={themeDerivedPelletColor} 
             emissiveIntensity={2} 
             toneMapped={false} 
           />
         </mesh>
-        <pointLight distance={1} intensity={2} color="#ffbd2e" />
+        <pointLight distance={1} intensity={2} color={themeDerivedPelletColor} />
       </group>
     );
   }
 
-  // ---  CHERRY ---
   if (type === 'cherry') {
-    const fruitMat = { color: "#be123c", roughness: 0.1, metalness: 0.4 }; 
-    const stemMat = { color: "#a16207", roughness: 0.8 };
+    const cherryFleshMaterial = { color: "#be123c", roughness: 0.1, metalness: 0.4 }; 
+    const stemMaterial = { color: "#a16207", roughness: 0.8 };
 
     return (
-      <group ref={groupRef} position={[0, 0.1, 0]}>
+      <group ref={meshGroupRef} position={[0, 0.1, 0]}>
         <group position={[-0.16, -0.2, 0]} rotation={[0, 0, 0.2]}>
-            <mesh><sphereGeometry args={[0.15, 32, 32]} /><meshStandardMaterial {...fruitMat} /></mesh>
+            <mesh><sphereGeometry args={[0.15, 32, 32]} /><meshStandardMaterial {...cherryFleshMaterial} /></mesh>
         </group>
         <group position={[0.16, -0.2, 0]} rotation={[0, 0, -0.2]}>
-            <mesh><sphereGeometry args={[0.15, 32, 32]} /><meshStandardMaterial {...fruitMat} /></mesh>
+            <mesh><sphereGeometry args={[0.15, 32, 32]} /><meshStandardMaterial {...cherryFleshMaterial} /></mesh>
         </group>
         <mesh position={[-0.08, 0.08, 0]} rotation={[0, 0, -0.3]}>
-            <cylinderGeometry args={[0.008, 0.008, 0.6]} /><meshStandardMaterial {...stemMat} />
+            <cylinderGeometry args={[0.008, 0.008, 0.6]} /><meshStandardMaterial {...stemMaterial} />
         </mesh>
         <mesh position={[0.08, 0.08, 0]} rotation={[0, 0, 0.3]}>
-            <cylinderGeometry args={[0.008, 0.008, 0.6]} /><meshStandardMaterial {...stemMat} />
+            <cylinderGeometry args={[0.008, 0.008, 0.6]} /><meshStandardMaterial {...stemMaterial} />
         </mesh>
         <mesh position={[0, 0.36, 0]}>
-            <sphereGeometry args={[0.018]} /><meshStandardMaterial {...stemMat} />
+            <sphereGeometry args={[0.018]} /><meshStandardMaterial {...stemMaterial} />
         </mesh>
       </group>
     );
   }
 
-  // --- STRAWBERRY ---
   if (type === 'strawberry') {
-    const redColor = "#d32f2f";
-    const seedColor = "#ffdb70";
-    const leafColor = "#2e7d32";
+    const strawberryRed = "#d32f2f";
+    const seedYellow = "#ffdb70";
+    const leafGreen = "#2e7d32";
 
     return (
-      <group ref={groupRef} scale={[0.9, 0.9, 0.9]}>
-        
-        {/* body */}
+      <group ref={meshGroupRef} scale={[0.9, 0.9, 0.9]}>
         <mesh position={[0, 0, 0]} scale={[0.95, 1.15, 0.95]}>
             <sphereGeometry args={[0.25, 64, 64]} /> 
             <MeshDistortMaterial 
-                color={redColor}
+                color={strawberryRed}
                 roughness={0.4}
                 metalness={0.1}
                 distort={0.25} 
@@ -127,31 +131,28 @@ export const Food3D = ({ type }: Food3DProps) => {
             />
         </mesh>
 
-        {/* leaves */}
         <group position={[0, 0.22, 0]}>
             <mesh position={[0, 0.05, 0]}>
                 <cylinderGeometry args={[0.03, 0.04, 0.1]} />
-                <meshStandardMaterial color={leafColor} roughness={0.8} />
+                <meshStandardMaterial color={leafGreen} roughness={0.8} />
             </mesh>
             
-            {[0, 72, 144, 216, 288].map((deg, i) => (
-                <group key={i} rotation={[0.4, MathUtils.degToRad(deg), 0]}>
+            {[0, 72, 144, 216, 288].map((degreeAngle, index) => (
+                <group key={index} rotation={[0.4, MathUtils.degToRad(degreeAngle), 0]}>
                      <mesh position={[0, 0.02, 0.08]} scale={[1, 0.1, 1.5]} rotation={[-0.2, 0, 0]}>
                         <sphereGeometry args={[0.08, 16, 16]} />
-                        <meshStandardMaterial color={leafColor} roughness={0.7} side={2} />
+                        <meshStandardMaterial color={leafGreen} roughness={0.7} side={2} />
                     </mesh>
                 </group>
             ))}
         </group>
 
-        {/* STRAWBERRY_SEEDS */}
-        {STRAWBERRY_SEEDS.map((pos, i) => (
-            <mesh key={i} position={pos}>
+        {PRECALCULATED_STRAWBERRY_SEEDS.map((position, index) => (
+            <mesh key={`seed-${index}`} position={position}>
                 <sphereGeometry args={[0.012, 8, 8]} />
-                <meshStandardMaterial color={seedColor} roughness={0.5} />
+                <meshStandardMaterial color={seedYellow} roughness={0.5} />
             </mesh>
         ))}
-
       </group>
     );
   }
