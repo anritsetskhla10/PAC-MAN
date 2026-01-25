@@ -5,12 +5,13 @@ import { useTheme } from '../../../context/ThemeContext';
 import { ClassicGhost } from '../3D/Ghosts/ClassicGhost';
 import { ReaperGhost } from '../3D/Ghosts/ReaperGhost';
 import { Eyes3D } from '../3D/Ghosts/Eyes3D'; 
+import type { GhostState } from '../../../types';
 
 interface Ghost3DProps {
   x: number;
   z: number;
   color: string;
-  state: 'NORMAL' | 'SCARED' | 'EATEN';
+  state: GhostState;
 }
 
 export const Ghost3D = ({ x, z, color, state }: Ghost3DProps) => {

@@ -30,7 +30,9 @@ export type TileType = typeof TileType[keyof typeof TileType];
 export const GhostState = {
   NORMAL: 'NORMAL',   
   SCARED: 'SCARED',   
-  EATEN: 'EATEN',     
+  EATEN: 'EATEN',
+  EYES: 'EYES',      
+  FLASHING: 'FLASHING' 
 } as const;
 export type GhostState = typeof GhostState[keyof typeof GhostState];
 

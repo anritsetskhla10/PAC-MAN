@@ -45,9 +45,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [remainingFood, setRemainingFood] = useState<number>(foodCount); 
   const [dotsEaten, setDotsEaten] = useState<number>(0); 
 
+  const [ghostsEatenBatch, setGhostsEatenBatch] = useState<number>(0); 
+
   const [globalMode, setGlobalMode] = useState<GlobalMode>('SCATTER');
   const [waveIndex, setWaveIndex] = useState(0);
   const waveTimerRef = useRef<number>(0);
+
+  const powerModeTimerRef = useRef<number | null>(null);
+const flashTimerRef = useRef<number | null>(null);
 
   const playerDirRef = useRef<Position>({ x: 1, z: 0 }); 
   const playerPosRef = useRef(playerPos);
@@ -61,6 +66,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const resumeGame = () => { if (gameStatus === 'paused') setGameStatus('playing'); };
   
   const restartGame = () => {
+    // Clear any active power timers on restart
+    if (powerModeTimerRef.current) clearTimeout(powerModeTimerRef.current);
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+
     const freshData = getInitialPositions();
     setPlayerPos(freshData.pacmanStart);
     setGhostsPos(freshData.ghostsStart);
@@ -68,6 +77,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setRemainingFood(freshData.foodCount); 
     setDotsEaten(0); 
     setScore(0);
+    setGhostsEatenBatch(0); // Reset combo
     setGameStatus('playing'); 
     setGlobalMode('SCATTER');
     setWaveIndex(0);
@@ -76,8 +86,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getGhostSpeed = (ghost: Ghost, remainingFood: number) => {
-      if (ghost.state === GhostState.EATEN) return GHOST_SPEEDS.EATEN;
-      if (ghost.state === GhostState.SCARED) return GHOST_SPEEDS.SCARED;
+      if (ghost.state === GhostState.EATEN || ghost.state === GhostState.EYES) return GHOST_SPEEDS.EATEN;
+      if (ghost.state === GhostState.SCARED || ghost.state === GhostState.FLASHING) return GHOST_SPEEDS.SCARED;
       if (Math.round(ghost.z) === TUNNEL_ROW && (ghost.x < 2 || ghost.x > 16)) return GHOST_SPEEDS.TUNNEL;
       if (ghost.color === GHOST_CONFIG.BLINKY.color) {
           if (remainingFood <= 10) return GHOST_SPEEDS.ELROY_2; 
@@ -86,30 +96,56 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       return GHOST_SPEEDS.NORMAL;
   };
 
+  // --- POWER MODE LOGIC (Fixed) ---
   const activatePowerMode = () => {
+    // 1. Clear existing timers (Stacking Logic)
+    if (powerModeTimerRef.current) clearTimeout(powerModeTimerRef.current);
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+
+    // 2. Reset Combo Multiplier
+    setGhostsEatenBatch(0);
+
+    // 3. Global Reversal & State Change
     setGhostsPos(prev => prev.map(g => {
-        if (g.state !== GhostState.EATEN) {
-            return { 
-                ...g, 
-                state: GhostState.SCARED,
-                currentDir: { x: -g.currentDir.x, z: -g.currentDir.z }, 
-                movementProgress: 0 
-            };
-        }
-        return g;
+        // Don't affect dead ghosts
+        if (g.state === GhostState.EATEN || g.state === GhostState.EYES) return g;
+
+        return { 
+            ...g, 
+            state: GhostState.SCARED,
+            // Flip direction immediately
+            currentDir: { x: -g.currentDir.x, z: -g.currentDir.z }, 
+            // Invert progress to maintain visual smoothness during flip
+            movementProgress: 1 - g.movementProgress 
+        };
     }));
-    setTimeout(() => {
+
+    // 4. Set Timers (Assuming 7 seconds total duration for simplicity)
+    const DURATION = 7000;
+    const FLASH_START = DURATION - 2000; // Flash for last 2 seconds
+
+    flashTimerRef.current = setTimeout(() => {
         setGhostsPos(prev => prev.map(g => {
-            if (g.state === GhostState.SCARED) return { ...g, state: GhostState.NORMAL };
+            if (g.state === GhostState.SCARED) return { ...g, state: GhostState.FLASHING };
             return g;
         }));
-    }, 10000);
+    }, FLASH_START);
+
+    powerModeTimerRef.current = setTimeout(() => {
+        setGhostsPos(prev => prev.map(g => {
+            if (g.state === GhostState.SCARED || g.state === GhostState.FLASHING) {
+                return { ...g, state: GhostState.NORMAL };
+            }
+            return g;
+        }));
+        setGhostsEatenBatch(0); // Reset combo when mode ends
+    }, DURATION);
   };
 
   const movePlayer = useCallback((targetX: number, targetZ: number) => {
     if (gameStatus !== 'playing') return;
     
-    // Tunnel
+    // Tunnel Logic
     if (targetZ === TUNNEL_ROW) {
         if (targetX < 0) targetX = 18;
         else if (targetX > 18) targetX = 0;
@@ -128,7 +164,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (isFood) {
       let pts = 0;
       if (tile === TileType.FOOD) { pts = SCORES.DOT; setDotsEaten(prev => prev + 1); } 
-      if (tile === TileType.POWER_PELLET) { pts = SCORES.POWER_PELLET; setDotsEaten(prev => prev + 1); activatePowerMode(); }
+      if (tile === TileType.POWER_PELLET) { 
+          pts = SCORES.POWER_PELLET; 
+          setDotsEaten(prev => prev + 1); 
+          activatePowerMode(); 
+      }
       if (tile === TileType.CHERRY) pts = SCORES.CHERRY;
       if (tile === TileType.STRAWBERRY) pts = SCORES.STRAWBERRY;
       
@@ -147,7 +187,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setPlayerPos({ x: targetX, z: targetZ });
   }, [layout, gameStatus, playerPos]);
 
-  // --- RELEASE LOGIC ---
+  // --- GHOST RELEASE LOGIC ---
   const checkCanLeave = (ghost: Ghost, eatenCount: number) => {
       if (ghost.color === GHOST_CONFIG.BLINKY.color) return true;
       if (ghost.color === GHOST_CONFIG.PINKY.color && eatenCount >= 5) return true;
@@ -156,10 +196,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       return false;
   };
 
+  // --- GAME LOOP ---
   useEffect(() => {
     if (gameStatus !== 'playing') return;
 
     const interval = setInterval(() => {
+      // Wave Management
       if (waveIndex < WAVE_TIMINGS.length) {
           const currentWave = WAVE_TIMINGS[waveIndex];
           if (currentWave.duration !== -1) {
@@ -170,6 +212,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
                       setWaveIndex(nextIndex);
                       setGlobalMode(WAVE_TIMINGS[nextIndex].mode as GlobalMode);
                       waveTimerRef.current = 0;
+                      // Reverse direction on mode switch (Standard Pacman behavior)
                       setGhostsPos(gs => gs.map(g => {
                           if (g.state === GhostState.NORMAL) return { ...g, currentDir: { x: -g.currentDir.x, z: -g.currentDir.z } };
                           return g;
@@ -179,6 +222,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           }
       }
 
+      // Move Ghosts
       setGhostsPos(prev => {
         return prev.map((g) => {
           const speed = getGhostSpeed(g, remainingFood);
@@ -187,8 +231,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           if (newProgress >= 1) {
              newProgress -= 1; 
 
-             if (g.state === GhostState.EATEN) {
+             // Handle returning to house
+             if (g.state === GhostState.EATEN || g.state === GhostState.EYES) {
                  const dist = Math.abs(g.x - g.startX) + Math.abs(g.z - g.startZ);
+                 // If very close to home start point, revive
                  if (dist < 0.5) return { ...g, state: GhostState.NORMAL, movementProgress: 0 };
              }
 
@@ -230,25 +276,43 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     return () => clearInterval(interval);
   }, [gameStatus, settings.difficulty, remainingFood, globalMode, waveIndex, dotsEaten]);
 
+  // --- COLLISION DETECTION ---
   useEffect(() => {
     if (gameStatus !== 'playing') return;
-    const hitIndex = ghostsPos.findIndex(g => Math.round(g.x) === playerPos.x && Math.round(g.z) === playerPos.z);
+    
+    // Improved collision check (using slightly larger radius than just rounding)
+    const hitIndex = ghostsPos.findIndex(g => 
+       Math.abs(g.x - playerPos.x) < 0.6 && Math.abs(g.z - playerPos.z) < 0.6
+    );
+
     if (hitIndex !== -1) {
         const ghost = ghostsPos[hitIndex];
+        
+        // We use setTimeout 0 to avoid state update loops during render, 
+        // though typically direct updates are fine in useEffect. 
         setTimeout(() => {
             if (ghost.state === GhostState.NORMAL) {
                 setGameStatus('gameover'); 
-            } else if (ghost.state === GhostState.SCARED) {
-                setScore(s => s + 200);
+            } 
+            else if (ghost.state === GhostState.SCARED || ghost.state === GhostState.FLASHING) {
+                // Progressive Scoring Logic
+                // 200 * (2 ^ batch) -> 200, 400, 800, 1600
+                const comboMultiplier = Math.pow(2, ghostsEatenBatch);
+                const points = 200 * comboMultiplier;
+
+                setScore(s => s + points);
+                setGhostsEatenBatch(prev => prev + 1); // Increment combo
+
+                // Set Ghost to Eaten (Eyes)
                 setGhostsPos(prev => {
                     const ng = [...prev];
-                    ng[hitIndex] = { ...ghost, state: GhostState.EATEN, movementProgress: 0 };
+                    ng[hitIndex] = { ...ghost, state: GhostState.EATEN, movementProgress: 0 }; // Or GhostState.EYES
                     return ng;
                 });
             }
         }, 0);
     }
-  }, [playerPos, ghostsPos, gameStatus]);
+  }, [playerPos, ghostsPos, gameStatus, ghostsEatenBatch]); // Added ghostsEatenBatch dependency
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {

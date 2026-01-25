@@ -12,7 +12,6 @@ const getDistSq = (a: Coordinate, b: Coordinate) => {
   return (a.x - b.x) ** 2 + (a.z - b.z) ** 2;
 };
 
-// ამოწმებს, არის თუ არა მოჩვენება სახლის შიგნით
 const isInGhostHouse = (pos: Coordinate) => {
   return (pos.z > 8.5 && pos.z < 9.5) && (pos.x >= 8 && pos.x <= 10);
 };
@@ -38,7 +37,7 @@ const isRedZone = (x: number, z: number, dir: Coordinate) => {
   return false;
 };
 
-// --- BFS PATHFINDING ---
+// --- BFS PATHFINDING (Used for Eyes returning home) ---
 const getNextStepBFS = (start: Coordinate, target: Coordinate, layout: number[][]): Coordinate => {
   const startX = Math.round(start.x);
   const startZ = Math.round(start.z);
@@ -66,6 +65,8 @@ const getNextStepBFS = (start: Coordinate, target: Coordinate, layout: number[][
       if (nextZ === TUNNEL_ROW) isPassable = true;
       else if (nextZ >= 0 && nextZ < layout.length && nextX >= 0 && nextX < layout[0].length) {
           const t = layout[nextZ][nextX];
+          // Eyes ignore walls conceptually, but sticking to paths usually looks better in 3D
+          // For simplicity, eyes use standard pathing but ignore player collision
           isPassable = t !== TileType.WALL; 
       }
 
@@ -118,6 +119,7 @@ const getBestMove = (current: Coordinate, currentDir: Coordinate, target: Coordi
   }
 
   if (validMoves.length === 0) {
+      // Dead end handling (rare in standard maps but possible)
       for (const dir of DIRECTIONS) {
           const nextX = current.x + dir.x;
           const nextZ = current.z + dir.z;
@@ -170,10 +172,13 @@ export const calculateGhostNextMove = (
 
   const currentPos = { x: Math.round(ghost.x), z: Math.round(ghost.z) };
   
-  // EATEN STATE
-  if (ghost.state === GhostState.EATEN) {
+  // EATEN STATE (Eyes returning home)
+  // Note: We use GhostState.EATEN or EYES interchangeably depending on how you set it, 
+  // but standardizing on EATEN for the "return trip" is fine.
+  if (ghost.state === GhostState.EATEN || ghost.state === GhostState.EYES) {
     const home = { x: ghost.startX, z: ghost.startZ }; 
     if (Math.abs(currentPos.x - home.x) <= 0.5 && Math.abs(currentPos.z - home.z) <= 0.5) {
+       // Arrived home
        return { nextPos: currentPos, nextDir: { x: 0, z: 0 } };
     }
     const nextStep = getNextStepBFS(currentPos, home, layout);
@@ -187,7 +192,7 @@ export const calculateGhostNextMove = (
       if (canLeaveHouse) {
           return getBestMove(currentPos, ghost.currentDir, HOUSE_DOOR, layout, false, true);
       } else {
-          
+          // Bounce up and down waiting
           let nextDir = ghost.currentDir;
           if (nextDir.z === 0) nextDir = { x: 0, z: -1 };
           
@@ -205,8 +210,8 @@ export const calculateGhostNextMove = (
       }
   }
 
-  //  SCARED
-  if (ghost.state === GhostState.SCARED) {
+  //  SCARED OR FLASHING (Random Movement)
+  if (ghost.state === GhostState.SCARED || ghost.state === GhostState.FLASHING) {
     return getRandomMove(currentPos, ghost.currentDir, layout);
   }
 
@@ -221,6 +226,7 @@ export const calculateGhostNextMove = (
         case GHOST_CONFIG.CLYDE.color:  target = GHOST_CONFIG.CLYDE.scatterTarget; break;
      }
   } else {
+     // AI Smartness based on difficulty
      const isSmart = difficulty === 'HARD' || (difficulty === 'MEDIUM' && Math.random() > 0.2) || (difficulty === 'EASY' && Math.random() > 0.6);
      if (!isSmart) return getRandomMove(currentPos, ghost.currentDir, layout);
 
