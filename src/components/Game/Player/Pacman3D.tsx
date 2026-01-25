@@ -4,13 +4,15 @@ import { Vector3, Group, MeshStandardMaterial, DoubleSide } from 'three';
 import { PointerLockControls } from '@react-three/drei';
 import type { PointerLockControls as PointerLockControlsImpl } from 'three-stdlib';
 import { useGame } from '../../../context/GameContext'; 
+import type { PlayerHeading } from '../../../hooks/usePlayerHeading';
 
 interface Pacman3DProps {
   isShowcase?: boolean;
-  isSpectator?: boolean; 
+  isSpectator?: boolean;
+  heading?: PlayerHeading; 
 }
 
-export const Pacman3D = ({ isShowcase = false, isSpectator = false }: Pacman3DProps) => {
+export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'RIGHT' }: Pacman3DProps) => {
   const { playerPos, movePlayer, gameStatus } = useGame();
   const { camera, viewport } = useThree(); 
   const controlsRef = useRef<PointerLockControlsImpl>(null);
@@ -25,7 +27,7 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false }: Pacman3DPr
   const rightLegPivot = useRef<Group>(null);
 
   const currentPosRef = useRef(new Vector3(playerPos.x, 0, playerPos.z));
-  const targetRotation = useRef(Math.PI); 
+  const targetRotation = useRef(Math.PI / 2); 
   const isMoving = useRef(false);
 
   const colors = useMemo(() => ({
@@ -39,7 +41,22 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false }: Pacman3DPr
     eyes: new MeshStandardMaterial({ color: colors.eyes, roughness: 0.1, side: DoubleSide }),
   }), [colors]);
 
-  // --- KEYBOARD CONTROLS ---
+
+  useEffect(() => {
+    if (isSpectator || isShowcase) {
+        let angle = 0;
+        switch (heading) {
+            case 'UP':    angle = Math.PI; break;      
+            case 'DOWN':  angle = 0; break;             
+            case 'LEFT':  angle = -Math.PI / 2; break;  
+            case 'RIGHT': angle = Math.PI / 2; break; 
+        }
+        targetRotation.current = angle; 
+    }
+  }, [heading, isSpectator, isShowcase]);
+
+
+  // KEYBOARD MOVEMENTS
   useEffect(() => {
     if (isShowcase) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -80,7 +97,7 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false }: Pacman3DPr
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [camera, movePlayer, gameStatus, playerPos, isShowcase, isSpectator]);
 
-  // --- POINTER LOCK ---
+  // POINTER LOCK
   useEffect(() => {
     if (isShowcase || isSpectator) {
          controlsRef.current?.unlock(); 
@@ -95,29 +112,24 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false }: Pacman3DPr
     }
   }, [gameStatus, isShowcase, isSpectator]);
 
-  // --- MOVEMENT CALC ---
-  useEffect(() => {
-    if (isShowcase) return;
-    const dx = playerPos.x - currentPosRef.current.x;
-    const dz = playerPos.z - currentPosRef.current.z;
-    const hasMoved = Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01;
-    isMoving.current = hasMoved;
-    if (hasMoved) { targetRotation.current = Math.atan2(dx, dz) + Math.PI; }
-  }, [playerPos, isShowcase]);
-
-  // --- MAIN LOOP ---
+  //  MAIN LOOP 
   useFrame((state, delta) => {
     if (!groupRef.current) return;
 
-    // მოდელის პოზიცია
+    // მოდელის პოზიციის ინტერპოლაცია
     const targetVec = isShowcase 
         ? new Vector3(0, 0, 0)
         : new Vector3(playerPos.x, 0.85, playerPos.z);
     
+    // ვამოწმებთ მოძრაობს თუ არა 
+    const dx = playerPos.x - currentPosRef.current.x;
+    const dz = playerPos.z - currentPosRef.current.z;
+    isMoving.current = Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01;
+
     groupRef.current.position.lerp(targetVec, 9.0 * delta);
     currentPosRef.current.lerp(targetVec, 9.0 * delta);
 
-    //  კამერის კონტროლი
+    // კამერის ლოგიკა
     if (!isShowcase) {
         if (isSpectator) {
             const isMobile = viewport.aspect < 1;
@@ -135,7 +147,7 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false }: Pacman3DPr
                 camera.lookAt(groupRef.current.position); 
             }
         } else {
-            // --- FIRST PERSON MODE  ---
+            // First Person
             const fpsPos = new Vector3(groupRef.current.position.x, 0.6, groupRef.current.position.z);
             if (!isNaN(camera.position.x)) {
                 camera.position.lerp(fpsPos, 0.8);
@@ -143,15 +155,17 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false }: Pacman3DPr
         }
     }
 
-    //  ანიმაციები
-    if (!isSpectator && !isShowcase) return;
+    //  ROTATION 
+    if (isSpectator || isShowcase) {
+        const tRot = targetRotation.current;
+        const cRot = groupRef.current.rotation.y;
+        let diff = tRot - cRot;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        groupRef.current.rotation.y += diff * 15.0 * delta;
+    }
 
-    const tRot = targetRotation.current;
-    const cRot = groupRef.current.rotation.y;
-    let diff = tRot - cRot;
-    while (diff > Math.PI) diff -= Math.PI * 2;
-    while (diff < -Math.PI) diff += Math.PI * 2;
-    groupRef.current.rotation.y += diff * 12.0 * delta;
+    if (!isSpectator && !isShowcase) return;
 
     const t = state.clock.getElapsedTime();
     const speed = 12; 
@@ -194,8 +208,7 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false }: Pacman3DPr
 
       <group ref={groupRef}>
         <group scale={[0.4, 0.4, 0.4]} visible={isSpectator || isShowcase}>
-            
-             <group ref={mainBodyRef} position={[0, 1.1, 0]}>
+            <group ref={mainBodyRef} position={[0, 1.1, 0]}>
                 <group ref={upperJawRef}>
                     <mesh material={materials.skin}><sphereGeometry args={[1, 64, 64, 0, Math.PI * 2, 0, Math.PI / 2]} /></mesh>
                     <mesh rotation={[Math.PI / 2, 0, 0]}><circleGeometry args={[1, 64]} /><meshStandardMaterial color={colors.skin} side={DoubleSide} /></mesh>
@@ -218,6 +231,8 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false }: Pacman3DPr
                     <mesh rotation={[Math.PI / 2, 0, 0]}><circleGeometry args={[1, 64]} /><meshStandardMaterial color={colors.skin} side={DoubleSide} /></mesh>
                 </group>
             </group>
+            
+            {/*  ARMS AND LEGS  */}
             <group ref={leftArmPivot} position={[-0.92, 1.15, 0]}> 
                 <mesh position={[0, -0.35, 0]} material={materials.skin}><capsuleGeometry args={[0.24, 0.4, 16, 32]} /></mesh>
                 <group position={[0, -0.8, 0]}>

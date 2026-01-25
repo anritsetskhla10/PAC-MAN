@@ -6,15 +6,16 @@ import { GhostIcon } from '../icons/GhostIcon';
 import { EyesIcon } from '../icons/EyesIcon'; 
 import { Food2D } from '../Game/Foods/Food2D';
 import { Pacman2D } from '../Game/Player/Pacman2D';
+import type { PlayerHeading } from '../../hooks/usePlayerHeading'; 
 
 interface BoardProps {
   isMinimap?: boolean;
+  heading?: PlayerHeading; 
 }
 const GHOST_COLORS = ['#FF0000', '#FFB8FF', '#00FFFF', '#FFB852'];
 
-export const Board = ({ isMinimap = false }: BoardProps) => {
+export const Board = ({ isMinimap = false, heading }: BoardProps) => {
   const { playerPos, ghostsPos, layout, movePlayer } = useGame(); 
-  
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -39,12 +40,7 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [playerPos, movePlayer, isMinimap]); 
 
-  let cellSize = 28;
-  if (isMinimap) {
-    cellSize = isMobile ? 6 : 10;
-  } else {
-    cellSize = isMobile ? 18 : 28; 
-  }
+  const cellSize = isMinimap ? (isMobile ? 6 : 10) : (isMobile ? 18 : 28);
 
   return (
     <div className="relative flex justify-center">
@@ -71,9 +67,8 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
             const isPower = tile === TileType.POWER_PELLET;
             const isFood = tile === TileType.FOOD;
             
-            let foodSize = 0;
             const scale = isMinimap ? 0.4 : (isMobile ? 0.6 : 1);
-
+            let foodSize = 0;
             if (isStrawberry || isCherry) foodSize = 20 * scale;
             if (isPower) foodSize = 16 * scale;
             if (isFood) foodSize = 8 * scale;
@@ -90,14 +85,13 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
                   ),
                 )}
               >
-                {/* PACMAN */}
+                {/* PACMAN RENDER */}
                 {isPlayerHere && (
                     <div className="z-30 absolute inset-0 flex items-center justify-center">
-                        <Pacman2D size={cellSize * 0.9} />
+                        <Pacman2D size={cellSize * 0.9} heading={heading} />
                     </div>
                 )}
 
-                {/* FOOD */}
                 {!isPlayerHere && !isGhostHere && (
                     <>
                         {isStrawberry ? <Food2D type="strawberry" size={foodSize} /> :
@@ -108,7 +102,6 @@ export const Board = ({ isMinimap = false }: BoardProps) => {
                     </>
                 )}
 
-                {/* GHOST */}
                 {isGhostHere && (
                   ghost.state === GhostState.EATEN ? (
                     <EyesIcon className={cn("z-20", isMinimap ? "w-2 h-2" : isMobile ? "w-4 h-4" : "w-6 h-6")} />

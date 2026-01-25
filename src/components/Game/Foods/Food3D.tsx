@@ -7,7 +7,7 @@ import { useTheme } from '../../../context/ThemeContext';
 type ConsumableVariant = 'dot' | 'power' | 'cherry' | 'strawberry';
 
 interface Food3DProps {
-  type: ConsumableVariant;
+  consumableVariant: ConsumableVariant;
 }
 
 const PRECALCULATED_STRAWBERRY_SEEDS = (() => {
@@ -18,7 +18,6 @@ const PRECALCULATED_STRAWBERRY_SEEDS = (() => {
   for (let i = 0; i < totalSeeds; i++) {
     const phi = Math.acos(-1 + (2 * i) / totalSeeds);
     const theta = Math.sqrt(totalSeeds * Math.PI) * phi;
-    
     const verticalAdjust = phi > 1.5 ? 0.9 : 1; 
 
     const x = strawberryRadius * Math.sin(phi) * Math.cos(theta) * verticalAdjust;
@@ -30,9 +29,8 @@ const PRECALCULATED_STRAWBERRY_SEEDS = (() => {
   return seedPositions;
 })();
 
-export const Food3D = ({ type }: Food3DProps) => {
+export const Food3D = ({ consumableVariant }: Food3DProps) => {
   const meshGroupRef = useRef<Group>(null);
-  
   const { settings } = useTheme();
   
   const themeDerivedPelletColor = settings?.foodColor ?? '#fef08a';
@@ -42,19 +40,16 @@ export const Food3D = ({ type }: Food3DProps) => {
     
     const elapsedTime = state.clock.getElapsedTime();
     
-    // Gentle floating animation for all items to make them feel "alive"
     meshGroupRef.current.rotation.y += 0.015;
     meshGroupRef.current.position.y = Math.sin(elapsedTime * 2) * 0.05;
 
-    // Power pellets get a special pulsing animation to indicate potency
-    if (type === 'power') {
+    if (consumableVariant === 'power') {
         const pulseScale = 1 + Math.sin(elapsedTime * 8) * 0.15;
         meshGroupRef.current.scale.set(pulseScale, pulseScale, pulseScale);
     }
   });
 
-
-  if (type === 'dot') {
+  if (consumableVariant === 'dot') {
     return (
       <group ref={meshGroupRef}>
         <mesh rotation={[0.5, 0.5, 0]}>
@@ -70,12 +65,11 @@ export const Food3D = ({ type }: Food3DProps) => {
     );
   }
 
-  if (type === 'power') {
+  if (consumableVariant === 'power') {
     return (
       <group ref={meshGroupRef}>
         <mesh>
           <sphereGeometry args={[0.2, 32, 32]} />
-          {/* ToneMapped=false makes the emissive glow punch through post-processing effects */}
           <meshStandardMaterial 
             color={themeDerivedPelletColor} 
             emissive={themeDerivedPelletColor} 
@@ -88,7 +82,7 @@ export const Food3D = ({ type }: Food3DProps) => {
     );
   }
 
-  if (type === 'cherry') {
+  if (consumableVariant === 'cherry') {
     const cherryFleshMaterial = { color: "#be123c", roughness: 0.1, metalness: 0.4 }; 
     const stemMaterial = { color: "#a16207", roughness: 0.8 };
 
@@ -113,7 +107,7 @@ export const Food3D = ({ type }: Food3DProps) => {
     );
   }
 
-  if (type === 'strawberry') {
+  if (consumableVariant === 'strawberry') {
     const strawberryRed = "#d32f2f";
     const seedYellow = "#ffdb70";
     const leafGreen = "#2e7d32";

@@ -5,10 +5,12 @@ import { Board3D } from '../components/Game/3D/Board3D';
 import { GameOverlay } from '../components/GameOverlay';
 import { SwipeControls } from '../components/SwipeControls';
 import { cn } from '../utils/cn';
+import { usePlayerHeading } from '../hooks/usePlayerHeading'; 
 
 export const GamePage = () => {
   const { settings, updateSetting } = useTheme();
   const { score, gameStatus, pauseGame } = useGame();
+  const playerHeading = usePlayerHeading();
 
   const toggleCameraMode = () => {
     updateSetting('isSpectatorMode', !settings.isSpectatorMode);
@@ -65,16 +67,15 @@ export const GamePage = () => {
       )}>
         
         <GameOverlay /> 
-        
         <SwipeControls />
 
         {settings.is3DMode ? (
           <div className="w-full h-full">
-             <Board3D />
+             <Board3D heading={playerHeading} />
           </div>
         ) : (
           <div className="relative w-fit mx-auto z-10">
-             <Board />
+             <Board heading={playerHeading} />
           </div>
         )}
       </div>
