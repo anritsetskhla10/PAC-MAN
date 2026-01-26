@@ -42,7 +42,7 @@ export const FoodShowcase = () => {
 
   const MainContent = localIs3D ? (
     <ShowcaseCanvas isDark={isDark} scale={3}>
-        <Food3D type={foodType} />
+        <Food3D consumableVariant={foodType} />
     </ShowcaseCanvas>
   ) : (
     <div className="flex items-center justify-center h-full">
