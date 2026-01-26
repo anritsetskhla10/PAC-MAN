@@ -30,7 +30,12 @@ export const Board3D = ({ heading }: Board3DProps) => {
       {/* CROSSHAIR */}
       <div className="absolute top-1/2 left-1/2 w-1 h-1 bg-white/50 rounded-full -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none mix-blend-difference" />
 
-      <Canvas shadows camera={{ fov: 60, near: 0.001 }} className="touch-none block">
+      <Canvas 
+        shadows 
+        camera={{ fov: 60, near: 0.001 }} 
+        className="touch-none block"
+        dpr={[1, 1.5]} 
+      >
         <color attach="background" args={['#050505']} />
         <fog attach="fog" args={['#050505', 0, 40]} />
         <hemisphereLight color="#ffffff" groundColor="#000000" intensity={0.7} />

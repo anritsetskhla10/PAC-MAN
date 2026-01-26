@@ -5,6 +5,7 @@ import { PointerLockControls } from '@react-three/drei';
 import type { PointerLockControls as PointerLockControlsImpl } from 'three-stdlib';
 import { useGame } from '../../../context/GameContext'; 
 import type { PlayerHeading } from '../../../hooks/usePlayerHeading';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 
 interface Pacman3DProps {
   isShowcase?: boolean;
@@ -16,6 +17,8 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
   const { playerPos, movePlayer, gameStatus } = useGame();
   const { camera, viewport } = useThree(); 
   const controlsRef = useRef<PointerLockControlsImpl>(null);
+
+  const isMobile = useIsMobile();
 
   const groupRef = useRef<Group>(null);       
   const mainBodyRef = useRef<Group>(null);    
@@ -43,7 +46,7 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
 
 
   useEffect(() => {
-    if (isSpectator || isShowcase) {
+    if (isSpectator || isShowcase || isMobile) {
         let angle = 0;
         switch (heading) {
             case 'UP':    angle = Math.PI; break;      
@@ -53,10 +56,9 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
         }
         targetRotation.current = angle; 
     }
-  }, [heading, isSpectator, isShowcase]);
+  }, [heading, isSpectator, isShowcase, isMobile]);
 
 
-  // KEYBOARD MOVEMENTS
   useEffect(() => {
     if (isShowcase) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -97,9 +99,8 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [camera, movePlayer, gameStatus, playerPos, isShowcase, isSpectator]);
 
-  // POINTER LOCK
   useEffect(() => {
-    if (isShowcase || isSpectator) {
+    if (isShowcase || isSpectator || isMobile) {
          controlsRef.current?.unlock(); 
          return;
     }
@@ -110,18 +111,15 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
     } else {
       controlsRef.current?.unlock();
     }
-  }, [gameStatus, isShowcase, isSpectator]);
+  }, [gameStatus, isShowcase, isSpectator, isMobile]);
 
-  //  MAIN LOOP 
   useFrame((state, delta) => {
     if (!groupRef.current) return;
 
-    // მოდელის პოზიციის ინტერპოლაცია
     const targetVec = isShowcase 
         ? new Vector3(0, 0, 0)
         : new Vector3(playerPos.x, 0.85, playerPos.z);
     
-    // ვამოწმებთ მოძრაობს თუ არა 
     const dx = playerPos.x - currentPosRef.current.x;
     const dz = playerPos.z - currentPosRef.current.z;
     isMoving.current = Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01;
@@ -129,12 +127,11 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
     groupRef.current.position.lerp(targetVec, 9.0 * delta);
     currentPosRef.current.lerp(targetVec, 9.0 * delta);
 
-    // კამერის ლოგიკა
     if (!isShowcase) {
-        if (isSpectator) {
-            const isMobile = viewport.aspect < 1;
-            const camHeight = isMobile ? 18 : 14; 
-            const camDist = isMobile ? 10 : 8;
+        if (isSpectator || isMobile) {
+            const isLandscape = viewport.width > viewport.height;
+            const camHeight = isMobile ? (isLandscape ? 14 : 20) : 14; 
+            const camDist = isMobile ? (isLandscape ? 8 : 12) : 8;
             
             const camTargetPos = new Vector3(
                 groupRef.current.position.x, 
@@ -154,9 +151,7 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
             }
         }
     }
-
-    //  ROTATION 
-    if (isSpectator || isShowcase) {
+    if (isSpectator || isShowcase || isMobile) {
         const tRot = targetRotation.current;
         const cRot = groupRef.current.rotation.y;
         let diff = tRot - cRot;
@@ -165,7 +160,7 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
         groupRef.current.rotation.y += diff * 15.0 * delta;
     }
 
-    if (!isSpectator && !isShowcase) return;
+    if (!isSpectator && !isShowcase && !isMobile) return; 
 
     const t = state.clock.getElapsedTime();
     const speed = 12; 
@@ -201,13 +196,14 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
 
   return (
     <>
-      {!isShowcase && <PointerLockControls ref={controlsRef} />}
+      {!isShowcase && !isMobile && <PointerLockControls ref={controlsRef} />}
+      
       <group position={[playerPos.x, 3, playerPos.z]}>
          <pointLight intensity={1.5} distance={15} decay={2} color="#ffaa00" />
       </group>
 
       <group ref={groupRef}>
-        <group scale={[0.4, 0.4, 0.4]} visible={isSpectator || isShowcase}>
+        <group scale={[0.4, 0.4, 0.4]} visible={isSpectator || isShowcase || isMobile}>
             <group ref={mainBodyRef} position={[0, 1.1, 0]}>
                 <group ref={upperJawRef}>
                     <mesh material={materials.skin}><sphereGeometry args={[1, 64, 64, 0, Math.PI * 2, 0, Math.PI / 2]} /></mesh>
@@ -232,7 +228,7 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
                 </group>
             </group>
             
-            {/*  ARMS AND LEGS  */}
+            {/* ARMS AND LEGS  */}
             <group ref={leftArmPivot} position={[-0.92, 1.15, 0]}> 
                 <mesh position={[0, -0.35, 0]} material={materials.skin}><capsuleGeometry args={[0.24, 0.4, 16, 32]} /></mesh>
                 <group position={[0, -0.8, 0]}>
