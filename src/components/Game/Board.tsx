@@ -25,6 +25,7 @@ export const Board = ({ isMinimap = false, heading }: BoardProps) => {
         setIsLandscape(window.innerWidth > window.innerHeight);
     };
     handleResize();
+    
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -34,10 +35,13 @@ export const Board = ({ isMinimap = false, heading }: BoardProps) => {
     const handleKeyDown = (e: KeyboardEvent) => {
       let newX = playerPos.x;
       let newZ = playerPos.z;
-      if (e.key === 'ArrowUp' || e.key === 'w') newZ -= 1;
-      if (e.key === 'ArrowDown' || e.key === 's') newZ += 1;
-      if (e.key === 'ArrowLeft' || e.key === 'a') newX -= 1;
-      if (e.key === 'ArrowRight' || e.key === 'd') newX += 1;
+      
+      // WASD + Arrows support
+      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') newZ -= 1;
+      if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') newZ += 1;
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') newX -= 1;
+      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') newX += 1;
+      
       movePlayer(newX, newZ);
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -49,17 +53,17 @@ export const Board = ({ isMinimap = false, heading }: BoardProps) => {
   if (isMinimap) {
       cellSize = isMobile ? 6 : 10;
   } else if (isMobile) {
-      cellSize = isLandscape ? 14 : 18; 
+      cellSize = isLandscape ? 12 : 20; 
   }
 
   return (
-    <div className="relative flex justify-center">
+    <div className="relative flex justify-center p-1">
       <div
         className={cn(
           "grid rounded-lg transition-all duration-300",
           isMinimap 
-            ? "border-2 border-white/30 bg-black/80 shadow-none gap-[0.5px]" 
-            : "border-0 bg-(--game-bg) gap-px" 
+            ? "border-2 border-white/30 bg-black/90 shadow-none gap-[0.5px]" 
+            : "border-0 bg-(--game-bg) gap-px shadow-2xl" 
         )}
         style={{
           gridTemplateColumns: `repeat(${layout[0].length}, ${cellSize}px)`,
@@ -77,7 +81,9 @@ export const Board = ({ isMinimap = false, heading }: BoardProps) => {
             const isPower = tile === TileType.POWER_PELLET;
             const isFood = tile === TileType.FOOD;
             
-            const scale = isMinimap ? 0.4 : (isMobile ? 0.6 : 1);
+            // Scaling content inside cell
+            const scale = isMinimap ? 0.4 : (isMobile ? (isLandscape ? 0.55 : 0.65) : 1);
+            
             let foodSize = 0;
             if (isStrawberry || isCherry) foodSize = 20 * scale;
             if (isPower) foodSize = 16 * scale;
@@ -95,13 +101,7 @@ export const Board = ({ isMinimap = false, heading }: BoardProps) => {
                   ),
                 )}
               >
-                {/* PACMAN RENDER */}
-                {isPlayerHere && (
-                    <div className="z-30 absolute inset-0 flex items-center justify-center">
-                        <Pacman2D size={cellSize * 0.9} heading={heading} />
-                    </div>
-                )}
-
+                
                 {!isPlayerHere && !isGhostHere && (
                     <>
                         {isStrawberry ? <Food2D type="strawberry" size={foodSize} /> :
@@ -112,13 +112,19 @@ export const Board = ({ isMinimap = false, heading }: BoardProps) => {
                     </>
                 )}
 
+                {isPlayerHere && (
+                    <div className="z-20 absolute inset-0 flex items-center justify-center">
+                        <Pacman2D size={cellSize * 0.9} heading={heading} />
+                    </div>
+                )}
+
                 {isGhostHere && (
                   ghost.state === GhostState.EATEN ? (
-                    <EyesIcon className={cn("z-20", isMinimap ? "w-2 h-2" : isMobile ? "w-4 h-4" : "w-6 h-6")} />
+                    <EyesIcon className={cn("z-30", isMinimap ? "w-2 h-2" : isMobile ? "w-3 h-3" : "w-6 h-6")} />
                   ) : (
                     <GhostIcon 
                       color={ghost.state === GhostState.SCARED ? '#0000FF' : GHOST_COLORS[ghostIndex % GHOST_COLORS.length]}
-                      className={cn("z-20 animate-bounce drop-shadow-md", isMinimap ? "w-2 h-2" : isMobile ? "w-4 h-4" : "w-6 h-6")}
+                      className={cn("z-30 animate-bounce drop-shadow-md", isMinimap ? "w-2 h-2" : isMobile ? "w-4 h-4" : "w-6 h-6")}
                     />
                   )
                 )}

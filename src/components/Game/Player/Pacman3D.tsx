@@ -5,7 +5,7 @@ import { PointerLockControls } from '@react-three/drei';
 import type { PointerLockControls as PointerLockControlsImpl } from 'three-stdlib';
 import { useGame } from '../../../context/GameContext'; 
 import type { PlayerHeading } from '../../../hooks/usePlayerHeading';
-import { useIsMobile } from '../../../hooks/useIsMobile'; // <---
+import { useIsMobile } from '../../../hooks/useIsMobile'; 
 
 interface Pacman3DProps {
   isShowcase?: boolean;
@@ -45,8 +45,8 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
   }), [colors]);
 
 
+  // Rotation Logic (Handles Mobile & Spectator)
   useEffect(() => {
-    // isMobile-ზეც უნდა იმუშაოს როტაციამ
     if (isSpectator || isShowcase || isMobile) {
         let angle = 0;
         switch (heading) {
@@ -60,9 +60,10 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
   }, [heading, isSpectator, isShowcase, isMobile]);
 
 
-  // KEYBOARD MOVEMENTS 
+  // Keyboard Controls (Desktop Only)
   useEffect(() => {
-    if (isShowcase) return;
+    if (isShowcase || isMobile) return;
+    
     const handleKeyDown = (e: KeyboardEvent) => {
       if (gameStatus !== 'playing') return;
       
@@ -99,11 +100,10 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [camera, movePlayer, gameStatus, playerPos, isShowcase, isSpectator]);
+  }, [camera, movePlayer, gameStatus, playerPos, isShowcase, isSpectator, isMobile]);
 
-  // POINTER LOCK
+  // Pointer Lock 
   useEffect(() => {
-    //  მობილურზე არასდროს ჩავრთოთ მაუსის ლოქი 
     if (isShowcase || isSpectator || isMobile) {
          controlsRef.current?.unlock(); 
          return;
@@ -117,7 +117,7 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
     }
   }, [gameStatus, isShowcase, isSpectator, isMobile]);
 
-  //  MAIN LOOP 
+  // Animation Loop
   useFrame((state, delta) => {
     if (!groupRef.current) return;
 
@@ -132,14 +132,12 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
     groupRef.current.position.lerp(targetVec, 9.0 * delta);
     currentPosRef.current.lerp(targetVec, 9.0 * delta);
 
-    // კამერის ლოგიკა
+    // Camera Positioning
     if (!isShowcase) {
-        //  მობილურზე ავტომატურად ზედხედი (Spectator)
         if (isSpectator || isMobile) {
             const isLandscape = viewport.width > viewport.height;
-            // მობილურზე და Landscape-ზე კამერა უფრო შორს უნდა იყოს
-            const camHeight = isMobile ? (isLandscape ? 14 : 20) : 14; 
-            const camDist = isMobile ? (isLandscape ? 8 : 12) : 8;
+            const camHeight = isMobile ? (isLandscape ? 16 : 22) : 14; 
+            const camDist = isMobile ? (isLandscape ? 10 : 12) : 8;
             
             const camTargetPos = new Vector3(
                 groupRef.current.position.x, 
@@ -152,7 +150,7 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
                 camera.lookAt(groupRef.current.position); 
             }
         } else {
-            // First Person (მხოლოდ დესკტოპზე)
+            // FPS Camera 
             const fpsPos = new Vector3(groupRef.current.position.x, 0.6, groupRef.current.position.z);
             if (!isNaN(camera.position.x)) {
                 camera.position.lerp(fpsPos, 0.8);
@@ -183,15 +181,8 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
 
         if (leftLegPivot.current) leftLegPivot.current.rotation.x = legSwing;
         if (rightLegPivot.current) rightLegPivot.current.rotation.x = -legSwing;
-        
-        if (leftArmPivot.current) {
-            leftArmPivot.current.rotation.x = armSwing;
-            leftArmPivot.current.rotation.z = -0.8; 
-        }
-        if (rightArmPivot.current) {
-            rightArmPivot.current.rotation.x = -armSwing;
-            rightArmPivot.current.rotation.z = 0.8; 
-        }
+        if (leftArmPivot.current) { leftArmPivot.current.rotation.x = armSwing; leftArmPivot.current.rotation.z = -0.8; }
+        if (rightArmPivot.current) { rightArmPivot.current.rotation.x = -armSwing; rightArmPivot.current.rotation.z = 0.8; }
         if (mainBodyRef.current) mainBodyRef.current.position.y = 1.1 + bounce;
     } else {
         const breath = Math.sin(t * 2) * 0.03;
@@ -237,7 +228,7 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
                 </group>
             </group>
             
-            {/* ARMS AND LEGS */}
+            {/* ARMS & LEGS (Same Geometry) */}
             <group ref={leftArmPivot} position={[-0.92, 1.15, 0]}> 
                 <mesh position={[0, -0.35, 0]} material={materials.skin}><capsuleGeometry args={[0.24, 0.4, 16, 32]} /></mesh>
                 <group position={[0, -0.8, 0]}>

@@ -6,9 +6,9 @@ import { Ghost3D } from '../3D/Ghost3D';
 import { Food3D } from '../Foods/Food3D';
 import { useGame } from '../../../context/GameContext';
 import { useTheme } from '../../../context/ThemeContext';
-import { useIsMobile } from '../../../hooks/useIsMobile';
 import { TileType, type Ghost } from '../../../types';
 import type { PlayerHeading } from '../../../hooks/usePlayerHeading';
+import { useIsMobile } from '../../../hooks/useIsMobile'; 
 
 const GAME_GHOST_COLORS = ['#FF0000', '#FFB8FF', '#00FFFF', '#FFB852'];
 
@@ -19,28 +19,36 @@ interface Board3DProps {
 export const Board3D = ({ heading }: Board3DProps) => {
   const { ghostsPos, layout } = useGame();
   const { settings } = useTheme();
-  const isMobile = useIsMobile(); // <---
+  const isMobile = useIsMobile();
 
   return (
-    <div className="relative w-full h-full bg-black overflow-hidden">
+    <div className="relative w-full h-full bg-black overflow-hidden select-none">
       
-      <div className="absolute top-16 left-2 sm:top-20 sm:left-4 z-40 pointer-events-none opacity-80 scale-50 sm:scale-75 origin-top-left transition-transform landscape:scale-[0.3] landscape:top-2">
+      {/* MINIMAP OVERLAY */}
+      <div className="absolute top-16 left-2 sm:top-20 sm:left-4 z-40 pointer-events-none opacity-80 scale-50 sm:scale-75 origin-top-left transition-transform landscape:scale-[0.4] landscape:top-4">
         <Board isMinimap={true} />
       </div>
 
-      <div className="absolute top-1/2 left-1/2 w-1 h-1 bg-white/50 rounded-full -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none mix-blend-difference" />
+      {/* CENTER CROSSHAIR (Optional UI element) */}
+      {!isMobile && (
+        <div className="absolute top-1/2 left-1/2 w-1 h-1 bg-white/50 rounded-full -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none mix-blend-difference" />
+      )}
 
+      {/* 3D SCENE */}
       <Canvas 
         shadows={!isMobile} 
         camera={{ fov: 60, near: 0.001 }} 
         className="touch-none block"
         dpr={isMobile ? [1, 1.5] : [1, 2]} 
+        frameloop="always"
       >
         <color attach="background" args={['#050505']} />
-        <fog attach="fog" args={['#050505', 0, 40]} />
+        {/* Lights */}
         <hemisphereLight color="#ffffff" groundColor="#000000" intensity={0.7} />
-        <ambientLight intensity={0.6} />
+        <ambientLight intensity={0.4} />
         
+        {!isMobile && <fog attach="fog" args={['#050505', 0, 40]} />}
+        {/* Game Entities */}
         <Pacman3D 
            isSpectator={settings.isSpectatorMode} 
            heading={heading} 
@@ -48,6 +56,7 @@ export const Board3D = ({ heading }: Board3DProps) => {
         
         <InstancedLevel />
 
+        {/* Consumables */}
         {layout.map((row: number[], z: number) => 
           row.map((tile: number, x: number) => {
             if (tile === TileType.STRAWBERRY) return <group key={`${x}-${z}`} position={[x, 0.5, z]}><Food3D consumableVariant="strawberry" /></group>;
@@ -58,6 +67,7 @@ export const Board3D = ({ heading }: Board3DProps) => {
           })
         )}
 
+        {/* Ghosts */}
         {ghostsPos.map((ghost: Ghost, index: number) => (
           <group key={index} position={[0, 0.1, 0]}>
             <Ghost3D 
