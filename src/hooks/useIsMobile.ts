@@ -1,21 +1,21 @@
 import { useState, useEffect } from 'react';
 
 export const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    }
+    return false;
+  });
 
   useEffect(() => {
-    const checkMobile = () => {
-      const userAgent = typeof window.navigator === 'undefined' ? '' : navigator.userAgent;
-      const mobile = Boolean(
-        userAgent.match(/Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i) ||
-        window.innerWidth < 768
-      );
-      setIsMobile(mobile);
+    const handleResize = () => {
+      const check = window.innerWidth < 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      setIsMobile(check);
     };
 
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   return isMobile;
