@@ -1,4 +1,4 @@
-import { useEffect } from 'react'; 
+import { useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useGame } from '../context/GameContext';
 import { Board } from '../components/Game/Board';
@@ -13,7 +13,7 @@ export const GamePage = () => {
   const { settings, updateSetting } = useTheme();
   const { score, gameStatus, pauseGame } = useGame();
   const playerHeading = usePlayerHeading();
-  const isMobile = useIsMobile(); 
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (isMobile && settings.is3DMode && !settings.isSpectatorMode) {
@@ -27,8 +27,8 @@ export const GamePage = () => {
 
   return (
     <div className="relative w-full h-dvh overflow-hidden bg-black flex flex-col items-center justify-center">
-
-      <div className="absolute top-4 left-0 right-0 z-50 flex justify-between items-center px-4 w-full pointer-events-none safe-area-inset-top">
+      
+      <div className="absolute top-4 left-0 right-0 z-50 flex justify-between items-center px-4 w-full pointer-events-none safe-area-inset-top landscape:hidden md:landscape:flex">
         
         <div className="flex gap-2 pointer-events-auto">
              <h2 className="text-xl font-bold text-primary drop-shadow-md bg-black/40 px-3 py-1 rounded-full backdrop-blur border border-primary/20">
@@ -72,7 +72,7 @@ export const GamePage = () => {
       <div className={cn(
         "relative w-full h-full transition-all duration-300",
         !settings.is3DMode && "flex items-center justify-center",
-        !settings.is3DMode && "landscape:scale-90 sm:landscape:scale-100" 
+        !settings.is3DMode && "landscape:scale-50 sm:landscape:scale-90 md:landscape:scale-100" 
       )}>
         
         <GameOverlay /> 
@@ -87,6 +87,10 @@ export const GamePage = () => {
              <Board heading={playerHeading} />
           </div>
         )}
+      </div>
+
+      <div className="hidden landscape:block md:landscape:hidden absolute top-2 right-4 z-50 pointer-events-none">
+          <span className="text-primary font-bold text-sm bg-black/50 px-2 py-1 rounded">Score: {score}</span>
       </div>
 
     </div>

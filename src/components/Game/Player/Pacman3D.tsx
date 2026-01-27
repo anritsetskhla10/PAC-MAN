@@ -5,7 +5,7 @@ import { PointerLockControls } from '@react-three/drei';
 import type { PointerLockControls as PointerLockControlsImpl } from 'three-stdlib';
 import { useGame } from '../../../context/GameContext'; 
 import type { PlayerHeading } from '../../../hooks/usePlayerHeading';
-import { useIsMobile } from '../../../hooks/useIsMobile';
+import { useIsMobile } from '../../../hooks/useIsMobile'; // <---
 
 interface Pacman3DProps {
   isShowcase?: boolean;
@@ -17,7 +17,7 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
   const { playerPos, movePlayer, gameStatus } = useGame();
   const { camera, viewport } = useThree(); 
   const controlsRef = useRef<PointerLockControlsImpl>(null);
-
+  
   const isMobile = useIsMobile();
 
   const groupRef = useRef<Group>(null);       
@@ -46,6 +46,7 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
 
 
   useEffect(() => {
+    // isMobile-ზეც უნდა იმუშაოს როტაციამ
     if (isSpectator || isShowcase || isMobile) {
         let angle = 0;
         switch (heading) {
@@ -59,6 +60,7 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
   }, [heading, isSpectator, isShowcase, isMobile]);
 
 
+  // KEYBOARD MOVEMENTS 
   useEffect(() => {
     if (isShowcase) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -99,7 +101,9 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [camera, movePlayer, gameStatus, playerPos, isShowcase, isSpectator]);
 
+  // POINTER LOCK
   useEffect(() => {
+    //  მობილურზე არასდროს ჩავრთოთ მაუსის ლოქი 
     if (isShowcase || isSpectator || isMobile) {
          controlsRef.current?.unlock(); 
          return;
@@ -113,6 +117,7 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
     }
   }, [gameStatus, isShowcase, isSpectator, isMobile]);
 
+  //  MAIN LOOP 
   useFrame((state, delta) => {
     if (!groupRef.current) return;
 
@@ -127,9 +132,12 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
     groupRef.current.position.lerp(targetVec, 9.0 * delta);
     currentPosRef.current.lerp(targetVec, 9.0 * delta);
 
+    // კამერის ლოგიკა
     if (!isShowcase) {
+        //  მობილურზე ავტომატურად ზედხედი (Spectator)
         if (isSpectator || isMobile) {
             const isLandscape = viewport.width > viewport.height;
+            // მობილურზე და Landscape-ზე კამერა უფრო შორს უნდა იყოს
             const camHeight = isMobile ? (isLandscape ? 14 : 20) : 14; 
             const camDist = isMobile ? (isLandscape ? 8 : 12) : 8;
             
@@ -144,13 +152,14 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
                 camera.lookAt(groupRef.current.position); 
             }
         } else {
-            // First Person
+            // First Person (მხოლოდ დესკტოპზე)
             const fpsPos = new Vector3(groupRef.current.position.x, 0.6, groupRef.current.position.z);
             if (!isNaN(camera.position.x)) {
                 camera.position.lerp(fpsPos, 0.8);
             }
         }
     }
+
     if (isSpectator || isShowcase || isMobile) {
         const tRot = targetRotation.current;
         const cRot = groupRef.current.rotation.y;
@@ -228,7 +237,7 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
                 </group>
             </group>
             
-            {/* ARMS AND LEGS  */}
+            {/* ARMS AND LEGS */}
             <group ref={leftArmPivot} position={[-0.92, 1.15, 0]}> 
                 <mesh position={[0, -0.35, 0]} material={materials.skin}><capsuleGeometry args={[0.24, 0.4, 16, 32]} /></mesh>
                 <group position={[0, -0.8, 0]}>

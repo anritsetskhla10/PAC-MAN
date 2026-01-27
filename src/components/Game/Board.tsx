@@ -17,12 +17,16 @@ const GHOST_COLORS = ['#FF0000', '#FFB8FF', '#00FFFF', '#FFB852'];
 export const Board = ({ isMinimap = false, heading }: BoardProps) => {
   const { playerPos, ghostsPos, layout, movePlayer } = useGame(); 
   const [isMobile, setIsMobile] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 600);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    const handleResize = () => {
+        setIsMobile(window.innerWidth < 768);
+        setIsLandscape(window.innerWidth > window.innerHeight);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
@@ -40,7 +44,13 @@ export const Board = ({ isMinimap = false, heading }: BoardProps) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [playerPos, movePlayer, isMinimap]); 
 
-  const cellSize = isMinimap ? (isMobile ? 6 : 10) : (isMobile ? 18 : 28);
+  let cellSize = 28; 
+
+  if (isMinimap) {
+      cellSize = isMobile ? 6 : 10;
+  } else if (isMobile) {
+      cellSize = isLandscape ? 14 : 18; 
+  }
 
   return (
     <div className="relative flex justify-center">
