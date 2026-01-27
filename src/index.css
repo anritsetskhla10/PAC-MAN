@@ -35,9 +35,11 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
+  background-color: #000000; 
   overflow: hidden; 
   overscroll-behavior: none; 
   touch-action: none; 
   user-select: none;
   -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
