@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { TileType, GhostState } from '../../types';
 import { cn } from '../../utils/cn';
 import { useGame } from '../../context/GameContext';
@@ -8,27 +8,29 @@ import { Food2D } from '../Game/Foods/Food2D';
 import { Pacman2D } from '../Game/Player/Pacman2D';
 import type { PlayerHeading } from '../../hooks/usePlayerHeading'; 
 
+const MAP_COLS = 19;
+const MAP_ROWS = 22;
+
 interface BoardProps {
   isMinimap?: boolean;
   heading?: PlayerHeading; 
+  parentWidth?: number; 
+  parentHeight?: number; 
 }
+
 const GHOST_COLORS = ['#FF0000', '#FFB8FF', '#00FFFF', '#FFB852'];
 
-export const Board = ({ isMinimap = false, heading }: BoardProps) => {
+export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeight = 0 }: BoardProps) => {
   const { playerPos, ghostsPos, layout, movePlayer } = useGame(); 
-  const [isMobile, setIsMobile] = useState(false);
-  const [isLandscape, setIsLandscape] = useState(false);
+  
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1000);
 
   useEffect(() => {
-    const handleResize = () => {
-        setIsMobile(window.innerWidth < 768);
-        setIsLandscape(window.innerWidth > window.innerHeight);
-    };
-    handleResize();
-    
+    if (!isMinimap) return;
+    const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [isMinimap]);
 
   useEffect(() => {
     if (isMinimap) return;
@@ -36,7 +38,6 @@ export const Board = ({ isMinimap = false, heading }: BoardProps) => {
       let newX = playerPos.x;
       let newZ = playerPos.z;
       
-      // WASD + Arrows support
       if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') newZ -= 1;
       if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') newZ += 1;
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') newX -= 1;
@@ -48,16 +49,28 @@ export const Board = ({ isMinimap = false, heading }: BoardProps) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [playerPos, movePlayer, isMinimap]); 
 
-  let cellSize = 28; 
+  const cellSize = useMemo(() => {
+    if (isMinimap) {
+        return windowWidth < 768 ? 8 : 12; 
+    }
 
-  if (isMinimap) {
-      cellSize = isMobile ? 6 : 10;
-  } else if (isMobile) {
-      cellSize = isLandscape ? 12 : 20; 
-  }
+    if (parentWidth === 0 || parentHeight === 0) return 20;
+
+    const safeWidth = parentWidth - 10;
+    const safeHeight = parentHeight - 10;
+    const sizeW = Math.floor(safeWidth / MAP_COLS);
+    const sizeH = Math.floor(safeHeight / MAP_ROWS);
+    const optimalSize = Math.min(sizeW, sizeH);
+    return Math.max(12, Math.min(optimalSize, 45));
+
+  }, [isMinimap, windowWidth, parentWidth, parentHeight]);
+
+  const itemScale = cellSize / 28; 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
 
   return (
-    <div className="relative flex justify-center p-1">
+    <div className="relative flex justify-center p-1 transition-all duration-300">
       <div
         className={cn(
           "grid rounded-lg transition-all duration-300",
@@ -81,13 +94,12 @@ export const Board = ({ isMinimap = false, heading }: BoardProps) => {
             const isPower = tile === TileType.POWER_PELLET;
             const isFood = tile === TileType.FOOD;
             
-            // Scaling content inside cell
-            const scale = isMinimap ? 0.4 : (isMobile ? (isLandscape ? 0.55 : 0.65) : 1);
+            const scale = isMinimap ? 0.5 : (isMobile ? 0.75 : 1); 
             
             let foodSize = 0;
-            if (isStrawberry || isCherry) foodSize = 20 * scale;
-            if (isPower) foodSize = 16 * scale;
-            if (isFood) foodSize = 8 * scale;
+            if (isStrawberry || isCherry) foodSize = 20 * scale * itemScale; 
+            if (isPower) foodSize = 16 * scale * itemScale;
+            if (isFood) foodSize = 8 * scale * itemScale;
 
             return (
               <div
@@ -120,11 +132,11 @@ export const Board = ({ isMinimap = false, heading }: BoardProps) => {
 
                 {isGhostHere && (
                   ghost.state === GhostState.EATEN ? (
-                    <EyesIcon className={cn("z-30", isMinimap ? "w-2 h-2" : isMobile ? "w-3 h-3" : "w-6 h-6")} />
+                    <EyesIcon className={cn("z-30", isMinimap ? "w-full h-full p-0.5" : "w-[80%] h-[80%]")} />
                   ) : (
                     <GhostIcon 
                       color={ghost.state === GhostState.SCARED ? '#0000FF' : GHOST_COLORS[ghostIndex % GHOST_COLORS.length]}
-                      className={cn("z-30 animate-bounce drop-shadow-md", isMinimap ? "w-2 h-2" : isMobile ? "w-4 h-4" : "w-6 h-6")}
+                      className={cn("z-30 animate-bounce drop-shadow-md", isMinimap ? "w-full h-full p-0.5" : "w-[90%] h-[90%]")}
                     />
                   )
                 )}
