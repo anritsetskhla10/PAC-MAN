@@ -24,38 +24,40 @@ export const Header = () => {
     <>
       {/* HEADER BAR */}
       <header 
-        className={`w-full h-16 border-b backdrop-blur-md flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-100 transition-colors duration-300
+        className={`w-full min-h-16 h-auto border-b backdrop-blur-md flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-100 transition-colors duration-300 pt-[env(safe-area-inset-top)]
         ${isDark ? 'bg-neutral-900/90 border-white/10' : 'bg-white/90 border-gray-200'}`}
       >
-        
-        {/* Logo */}
-        <div className="text-xl font-bold text-primary tracking-wide z-101 flex items-center gap-2">
-          <span>PAC-MAN</span>
-          <span className="text-xs bg-primary text-black px-1.5 py-0.5 rounded font-bold">LAB</span>
+        <div className="w-full h-16 flex items-center justify-between">
+            
+            {/* Logo */}
+            <div className="text-xl font-bold text-primary tracking-wide z-101 flex items-center gap-2">
+              <span>PAC-MAN</span>
+              <span className="text-xs bg-primary text-black px-1.5 py-0.5 rounded font-bold">LAB</span>
+            </div>
+
+            {/* Desktop Nav */}
+            <nav className="hidden md:flex items-center gap-6">
+              <NavLinks linkClass={desktopLinkClass} onClick={() => {}} />
+            </nav>
+
+            {/* Mobile Hamburger Button */}
+            <button 
+              onClick={toggleMenu}
+              className="md:hidden z-101 p-2 text-primary focus:outline-none relative"
+              aria-label="Toggle Menu"
+            >
+              <div className="w-6 flex flex-col items-end gap-1.5">
+                <span className={`h-0.5 bg-current transition-all duration-300 ${isMenuOpen ? 'w-6 rotate-45 translate-y-2' : 'w-6'}`} />
+                <span className={`h-0.5 bg-current transition-all duration-300 ${isMenuOpen ? 'opacity-0' : 'w-4'}`} />
+                <span className={`h-0.5 bg-current transition-all duration-300 ${isMenuOpen ? 'w-6 -rotate-45 -translate-y-2' : 'w-5'}`} />
+              </div>
+            </button>
         </div>
-
-        {/* Desktop Nav (Hidden on Mobile)*/}
-        <nav className="hidden md:flex items-center gap-6">
-          <NavLinks linkClass={desktopLinkClass} onClick={() => {}} />
-        </nav>
-
-        {/* Mobile Hamburger Button */}
-        <button 
-          onClick={toggleMenu}
-          className="md:hidden z-101 p-2 text-primary focus:outline-none relative"
-          aria-label="Toggle Menu"
-        >
-          <div className="w-6 flex flex-col items-end gap-1.5">
-            <span className={`h-0.5 bg-current transition-all duration-300 ${isMenuOpen ? 'w-6 rotate-45 translate-y-2' : 'w-6'}`} />
-            <span className={`h-0.5 bg-current transition-all duration-300 ${isMenuOpen ? 'opacity-0' : 'w-4'}`} />
-            <span className={`h-0.5 bg-current transition-all duration-300 ${isMenuOpen ? 'w-6 -rotate-45 -translate-y-2' : 'w-5'}`} />
-          </div>
-        </button>
       </header>
 
       {/* Mobile Menu Overlay */}
       <div 
-        className={`fixed inset-0 bg-black/95 backdrop-blur-xl z-90 transition-all duration-300 md:hidden flex flex-col items-center justify-center gap-8 ${
+        className={`fixed inset-0 bg-black/95 backdrop-blur-xl z-90 transition-all duration-300 md:hidden flex flex-col items-center justify-center gap-8 pt-[env(safe-area-inset-top)] ${
           isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
         }`}
       >
