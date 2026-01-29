@@ -56,12 +56,12 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
 
     if (parentWidth === 0 || parentHeight === 0) return 20;
 
-    const safeWidth = parentWidth - 10;
-    const safeHeight = parentHeight - 10;
-    const sizeW = Math.floor(safeWidth / MAP_COLS);
-    const sizeH = Math.floor(safeHeight / MAP_ROWS);
+    const sizeW = Math.floor(parentWidth / MAP_COLS);
+    const sizeH = Math.floor(parentHeight / MAP_ROWS);
+    
     const optimalSize = Math.min(sizeW, sizeH);
-    return Math.max(12, Math.min(optimalSize, 45));
+    
+    return Math.max(12, Math.min(optimalSize, 85));
 
   }, [isMinimap, windowWidth, parentWidth, parentHeight]);
 
@@ -70,7 +70,7 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
 
 
   return (
-    <div className="relative flex justify-center p-1 transition-all duration-300">
+    <div className="relative flex justify-center items-center transition-all duration-300">
       <div
         className={cn(
           "grid rounded-lg transition-all duration-300",
@@ -94,7 +94,7 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
             const isPower = tile === TileType.POWER_PELLET;
             const isFood = tile === TileType.FOOD;
             
-            const scale = isMinimap ? 0.5 : (isMobile ? 0.75 : 1); 
+            const scale = isMinimap ? 0.5 : (isMobile ? 0.9 : 1); 
             
             let foodSize = 0;
             if (isStrawberry || isCherry) foodSize = 20 * scale * itemScale; 
@@ -113,7 +113,6 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
                   ),
                 )}
               >
-                
                 {!isPlayerHere && !isGhostHere && (
                     <>
                         {isStrawberry ? <Food2D type="strawberry" size={foodSize} /> :

@@ -28,10 +28,22 @@ export const GamePage = () => {
             });
         }
     };
-    // პატარა დაყოვნება, რომ რენდერი დასრულდეს
-    setTimeout(measureBoardArea, 100);
-    window.addEventListener('resize', measureBoardArea);
-    return () => window.removeEventListener('resize', measureBoardArea);
+
+    const handleResize = () => {
+        measureBoardArea(); 
+        setTimeout(measureBoardArea, 100);
+        setTimeout(measureBoardArea, 500); 
+    };
+
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
+    return () => {
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('orientationchange', handleResize);
+    };
   }, []);
 
   // Mobile 3D Auto-Spectator
@@ -53,19 +65,18 @@ export const GamePage = () => {
   return (
     <div className="fixed inset-0 w-full h-full bg-black overflow-hidden z-100 flex flex-col landscape:max-lg:flex-row pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
       
+      {/* SIDEBAR */}
       <div className={cn(
           "relative z-50 flex items-center justify-between p-3 bg-black/60 backdrop-blur-md border-white/10 shrink-0 transition-all",
-          
           "w-full border-b flex-row h-16 md:h-20",
-
           "landscape:max-lg:w-20 landscape:max-lg:h-full landscape:max-lg:flex-col landscape:max-lg:border-r landscape:max-lg:border-b-0 landscape:max-lg:py-6"
       )}>
         
+        {/* Controls*/}
         <div className="flex landscape:max-lg:flex-col gap-3 items-center">
              <Link to="/settings" className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors">
                 ⚙️
              </Link>
-
              <div 
                className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-primary/20 cursor-pointer hover:bg-white/10 transition-colors" 
                onClick={() => updateSetting('is3DMode', !settings.is3DMode)}
@@ -77,7 +88,7 @@ export const GamePage = () => {
             </div>
         </div>
         <div className="flex landscape:max-lg:flex-col items-center gap-2 landscape:max-lg:gap-1 landscape:max-lg:my-auto">
-           <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest landscape:max-lg:writing-vertical-rl landscape:max-lg:rotate-180">
+           <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest landscape:max-lg:writing-vertical-rl">
              Score
            </span>
            <div className="bg-primary/10 border border-primary/40 px-4 py-1 rounded-full shadow-[0_0_10px_rgba(0,212,255,0.2)]">
@@ -105,6 +116,7 @@ export const GamePage = () => {
         </div>
       </div>
 
+      {/* GAME AREA */}
       <div className="flex-1 relative w-full h-full bg-black overflow-hidden flex items-center justify-center">
         
         <div className="absolute inset-0 z-40 pointer-events-none">
@@ -114,7 +126,7 @@ export const GamePage = () => {
             </div>
         </div>
 
-        <div ref={boardContainerRef} className="w-full h-full flex items-center justify-center p-2 md:p-6 lg:p-8">
+        <div ref={boardContainerRef} className="w-full h-full flex items-center justify-center p-2 landscape:max-lg:p-0 md:p-6 lg:p-8">
             {settings.is3DMode ? (
                <div className="w-full h-full rounded-xl overflow-hidden border border-white/5 shadow-2xl relative bg-black/50">
                  <Board3D heading={playerHeading} />
