@@ -12,7 +12,7 @@ export const GameOverlay = () => {
       {gameStatus === 'idle' && (
         <div className="text-center flex flex-col items-center gap-6">
           <div className="space-y-2">
-            <h1 className="text-6xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-400 to-orange-500 drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]">
+            <h1 className="text-6xl font-black bg-clip-text bg-linear-to-r from-yellow-400 to-orange-500 drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]">
               PAC-MAN 3D
             </h1>
             <p className="text-white/60 text-lg tracking-widest uppercase">Ready to eat some dots?</p>
@@ -52,7 +52,7 @@ export const GameOverlay = () => {
       {/* --- VICTORY MENU --- */}
       {gameStatus === 'won' && (
         <div className="text-center space-y-6 animate-in zoom-in duration-500">
-          <h1 className="text-7xl font-black text-transparent bg-clip-text bg-linear-to-r from-green-400 to-emerald-600 drop-shadow-[0_0_25px_rgba(34,197,94,0.8)] animate-bounce">
+          <h1 className="text-7xl font-black  bg-clip-text bg-linear-to-r from-green-400 to-emerald-600 drop-shadow-[0_0_25px_rgba(34,197,94,0.8)] animate-bounce">
             VICTORY!
           </h1>
           <p className="text-green-200 text-xl tracking-[0.3em] uppercase">Stage Cleared</p>
