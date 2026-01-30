@@ -1,44 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useGame } from '../context/GameContext';
 
 export type PlayerHeading = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT';
 
-/**
- * Hook to capture the player's intended facing direction.
- * This is decoupled from the grid movement logic to ensure visual responsiveness
- * (e.g., turning to face a wall even if movement is blocked).
- */
 export const usePlayerHeading = () => {
-  // საწყისი პოზიცია მარჯვნივ
-  const [heading, setHeading] = useState<PlayerHeading>('RIGHT');
+  const { playerPos } = useGame();
+  
+  const [state, setState] = useState({
+    prevPos: playerPos,
+    heading: 'RIGHT' as PlayerHeading
+  });
 
-  useEffect(() => {
-    const handleInput = (e: KeyboardEvent) => {
-      // WASD და ისრების გაერთიანება
-      switch (e.code) {
-        case 'ArrowUp':
-        case 'KeyW':
-          setHeading('UP');
-          break;
-        case 'ArrowDown':
-        case 'KeyS':
-          setHeading('DOWN');
-          break;
-        case 'ArrowLeft':
-        case 'KeyA':
-          setHeading('LEFT');
-          break;
-        case 'ArrowRight':
-        case 'KeyD':
-          setHeading('RIGHT');
-          break;
-        default:
-          break;
-      }
-    };
+  if (playerPos !== state.prevPos) {
+    const dx = playerPos.x - state.prevPos.x;
+    const dz = playerPos.z - state.prevPos.z;
+    
+    let newHeading = state.heading;
 
-    window.addEventListener('keydown', handleInput);
-    return () => window.removeEventListener('keydown', handleInput);
-  }, []);
+    if (dx !== 0 || dz !== 0) {
+        const isTunnelJump = Math.abs(dx) > 1; 
 
-  return heading;
+        if (isTunnelJump) {
+             if (dx > 0) newHeading = 'LEFT';
+             else newHeading = 'RIGHT';
+        } else {
+             if (dx > 0) newHeading = 'RIGHT';
+             else if (dx < 0) newHeading = 'LEFT';
+             else if (dz > 0) newHeading = 'DOWN';
+             else if (dz < 0) newHeading = 'UP';
+        }
+    }
+    setState({
+      prevPos: playerPos,
+      heading: newHeading
+    });
+  }
+
+  return state.heading;
 };
