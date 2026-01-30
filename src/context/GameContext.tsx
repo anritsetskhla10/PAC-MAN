@@ -10,12 +10,16 @@ export interface GameContextType {
   layout: number[][];
   gameStatus: GameStatus; 
   remainingFood: number; 
+  lives: number; 
+  level: number;
 
   movePlayer: (x: number, z: number) => void;
-  startGame: () => void;
+  startGame: () => void; 
+  startRound: () => void;
   pauseGame: () => void;
   resumeGame: () => void;
-  restartGame: () => void;
+  restartGame: () => void; 
+  nextLevel: () => void; 
 }
 
 export const GameContext = createContext<GameContextType | undefined>(undefined);

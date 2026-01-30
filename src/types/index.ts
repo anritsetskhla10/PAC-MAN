@@ -24,6 +24,7 @@ export const TileType = {
   POWER_PELLET: 6,
   CHERRY: 7,
   STRAWBERRY: 8,
+  EXTRA_LIFE: 9,
 } as const;
 export type TileType = typeof TileType[keyof typeof TileType];
 
@@ -48,7 +49,7 @@ export interface Ghost {
   movementProgress: number; 
 }
 
-export type GameStatus = 'idle' | 'playing' | 'paused' | 'gameover' | 'won';
+export type GameStatus = 'idle' | 'ready' | 'playing' | 'paused' | 'gameover' | 'won';
 
 export interface ThemeSettings {
   wallColor: string;

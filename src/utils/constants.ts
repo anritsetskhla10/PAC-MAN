@@ -47,6 +47,7 @@ export const SCORES = {
   POWER_PELLET: 50,
   CHERRY: 100,
   STRAWBERRY: 300,
+  EXTRA_LIFE: 500,
 };
 
 export const GHOST_CONFIG = {

@@ -1,14 +1,14 @@
 import { useGame } from '../context/GameContext';
 
 export const GameOverlay = () => {
-  const { gameStatus, score, startGame, resumeGame, restartGame } = useGame();
+  const { gameStatus, score, level, startGame, resumeGame, restartGame, startRound, nextLevel } = useGame();
 
   if (gameStatus === 'playing') return null;
 
   return (
     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/85 backdrop-blur-sm animate-in fade-in duration-300">
       
-      {/* --- START MENU --- */}
+      {/*  IDLE / MAIN MENU  */}
       {gameStatus === 'idle' && (
         <div className="text-center flex flex-col items-center gap-6">
           <div className="space-y-2">
@@ -28,7 +28,24 @@ export const GameOverlay = () => {
         </div>
       )}
 
-      {/* --- PAUSE MENU --- */}
+      {/*  GET READY SCREEN (Manual Start)  */}
+      {gameStatus === 'ready' && (
+        <div className="text-center space-y-4 animate-pulse">
+            <h2 className="text-6xl md:text-8xl font-black text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.8)] tracking-widest">
+                GET READY!
+            </h2>
+            <p className="text-white/70 text-2xl uppercase tracking-[0.2em]">Level {level}</p>
+            
+            <button 
+                onClick={startRound}
+                className="mt-12 px-10 py-3 bg-transparent border-2 border-yellow-400 text-yellow-400 font-bold rounded-full hover:bg-yellow-400 hover:text-black transition-all text-xl cursor-pointer"
+            >
+                TAP TO START
+            </button>
+        </div>
+      )}
+
+      {/*  PAUSE MENU  */}
       {gameStatus === 'paused' && (
         <div className="text-center space-y-8">
           <h2 className="text-5xl font-bold text-blue-400 tracking-[0.2em] drop-shadow-[0_0_10px_blue]">PAUSED</h2>
@@ -43,38 +60,37 @@ export const GameOverlay = () => {
               onClick={restartGame}
               className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-lg transition-all shadow-lg hover:shadow-red-500/30"
             >
-              RESTART
+              QUIT GAME
             </button>
           </div>
         </div>
       )}
 
-      {/* --- VICTORY MENU --- */}
+      {/*  VICTORY / NEXT LEVEL MENU  */}
       {gameStatus === 'won' && (
         <div className="text-center space-y-6 animate-in zoom-in duration-500">
-          <h1 className="text-7xl font-black  bg-clip-text bg-linear-to-r from-green-400 to-emerald-600 drop-shadow-[0_0_25px_rgba(34,197,94,0.8)] animate-bounce">
-            VICTORY!
+          <h1 className="text-6xl md:text-7xl font-black bg-clip-text bg-linear-to-r from-green-400 to-emerald-600 drop-shadow-[0_0_25px_rgba(34,197,94,0.8)] animate-bounce">
+            LEVEL CLEARED!
           </h1>
-          <p className="text-green-200 text-xl tracking-[0.3em] uppercase">Stage Cleared</p>
           
           <div className="bg-white/10 p-8 rounded-2xl border border-green-500/30 backdrop-blur-md shadow-[0_0_30px_rgba(34,197,94,0.2)]">
-            <p className="text-white/70 text-sm uppercase tracking-wider mb-2">Final Score</p>
+            <p className="text-white/70 text-sm uppercase tracking-wider mb-2">Current Score</p>
             <p className="text-6xl font-black text-yellow-400 drop-shadow-lg">{score}</p>
           </div>
 
           <button 
-            onClick={restartGame}
+            onClick={nextLevel}
             className="px-12 py-4 bg-white text-black text-lg font-bold rounded-full hover:bg-green-400 hover:text-white hover:scale-105 transition-all shadow-[0_0_20px_white] hover:shadow-[0_0_40px_rgba(74,222,128,0.6)]"
           >
-            PLAY AGAIN
+            NEXT LEVEL
           </button>
         </div>
       )}
 
-      {/* --- GAME OVER MENU --- */}
+      {/*  GAME OVER MENU  */}
       {gameStatus === 'gameover' && (
         <div className="text-center space-y-6">
-          <h1 className="text-6xl font-bold text-red-600 drop-shadow-[0_0_25px_red] animate-pulse">GAME OVER</h1>
+          <h1 className="text-7xl font-bold text-red-600 drop-shadow-[0_0_25px_red] animate-pulse">GAME OVER</h1>
           
           <div className="bg-white/10 p-6 rounded-2xl border border-white/10 backdrop-blur-md">
             <p className="text-white/70 text-sm uppercase tracking-wider mb-2">Final Score</p>

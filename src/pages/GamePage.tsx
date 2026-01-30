@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom';
 
 export const GamePage = () => {
   const { settings, updateSetting } = useTheme();
-  const { score, gameStatus, pauseGame } = useGame();
+  const { score, gameStatus, pauseGame, lives, level } = useGame();
   const playerHeading = usePlayerHeading();
   const isMobile = useIsMobile();
   
@@ -72,7 +72,7 @@ export const GamePage = () => {
           "landscape:max-lg:w-20 landscape:max-lg:h-full landscape:max-lg:flex-col landscape:max-lg:border-r landscape:max-lg:border-b-0 landscape:max-lg:py-6"
       )}>
         
-        {/* Controls*/}
+        {/* Left Controls (Settings/Mode) */}
         <div className="flex landscape:max-lg:flex-col gap-3 items-center">
              <Link to="/settings" className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors">
                 ⚙️
@@ -87,17 +87,48 @@ export const GamePage = () => {
                 </span>
             </div>
         </div>
-        <div className="flex landscape:max-lg:flex-col items-center gap-2 landscape:max-lg:gap-1 landscape:max-lg:my-auto">
-           <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest landscape:max-lg:writing-vertical-rl">
-             Score
-           </span>
-           <div className="bg-primary/10 border border-primary/40 px-4 py-1 rounded-full shadow-[0_0_10px_rgba(0,212,255,0.2)]">
-              <span className="text-primary font-bold text-lg md:text-xl landscape:max-lg:writing-vertical-rl landscape:max-lg:rotate-180">
-                {score}
-              </span>
-          </div>
+
+        {/* Center Info (Lives, Level, Score) */}
+        <div className="flex landscape:max-lg:flex-col items-center gap-4 landscape:max-lg:gap-6 landscape:max-lg:my-auto">
+           
+           {/* Lives Display */}
+           <div className="flex flex-col items-center gap-0.5">
+                <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest landscape:max-lg:hidden">Lives</span>
+                <div className="flex gap-1">
+                    {[...Array(3)].map((_, i) => (
+                    <div 
+                        key={i} 
+                        className={`
+                        w-4 h-4 md:w-5 md:h-5 rounded-full border border-white/20 transition-all duration-300
+                        ${i < lives 
+                            ? 'bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.6)] scale-100' 
+                            : 'bg-white/5 opacity-20 scale-75'}
+                        `}
+                        style={i < lives ? { clipPath: 'polygon(100% 0%, 100% 100%, 50% 50%, 0% 100%, 0% 0%)', transform: 'rotate(-45deg)' } : {}}
+                    />
+                    ))}
+                </div>
+           </div>
+
+           {/* Score Display */}
+           <div className="flex flex-col items-center">
+                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest landscape:max-lg:writing-vertical-rl">Score</span>
+                <div className="bg-primary/10 border border-primary/40 px-4 py-1 rounded-full shadow-[0_0_10px_rgba(0,212,255,0.2)]">
+                    <span className="text-primary font-bold text-lg md:text-xl landscape:max-lg:writing-vertical-rl landscape:max-lg:rotate-180">
+                        {score}
+                    </span>
+                </div>
+           </div>
+
+           {/* Level Indicator */}
+           <div className="flex flex-col items-center">
+               <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest landscape:max-lg:hidden">Level</span>
+               <span className="text-white font-bold text-lg">{level}</span>
+           </div>
+
         </div>
 
+        {/* Right Controls (Pause/Camera) */}
         <div className="flex landscape:max-lg:flex-col gap-4 items-center">
            {settings.is3DMode && !isMobile && (
                 <button onClick={toggleCameraMode} className="text-2xl hover:scale-110 transition-transform" title="Change Camera">
