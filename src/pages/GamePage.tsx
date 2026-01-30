@@ -4,7 +4,7 @@ import { useGame } from '../context/GameContext';
 import { Board } from '../components/Game/Board';
 import { Board3D } from '../components/Game/3D/Board3D';
 import { GameOverlay } from '../components/GameOverlay';
-import { SwipeControls } from '../components/SwipeControls';
+import { MobileControls } from '../components/MobileControls';
 import { cn } from '../utils/cn';
 import { usePlayerHeading } from '../hooks/usePlayerHeading'; 
 import { useIsMobile } from '../hooks/useIsMobile'; 
@@ -122,7 +122,6 @@ export const GamePage = () => {
         <div className="absolute inset-0 z-40 pointer-events-none">
             <div className="pointer-events-auto w-full h-full">
                 <GameOverlay />
-                <SwipeControls />
             </div>
         </div>
 
@@ -140,6 +139,8 @@ export const GamePage = () => {
             )}
         </div>
       </div>
+
+      <MobileControls />
 
     </div>
   );
