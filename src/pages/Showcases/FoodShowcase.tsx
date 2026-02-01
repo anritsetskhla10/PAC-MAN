@@ -6,7 +6,7 @@ import { ModeToggle, SelectionButton, ShowcaseSectionTitle } from '../../compone
 import { Food3D } from '../../components/Game/Foods/Food3D';
 import { Food2D } from '../../components/Game/Foods/Food2D';
 
-type FoodType = 'dot' | 'power' | 'cherry' | 'strawberry';
+type FoodType = 'dot' | 'power' | 'cherry' | 'strawberry' | 'life';
 
 export const FoodShowcase = () => {
   const { settings } = useTheme();
@@ -21,11 +21,11 @@ export const FoodShowcase = () => {
 
       <ShowcaseSectionTitle title="Inspect Item" />
       <div className="flex flex-col gap-2">
-        {(['dot', 'power', 'cherry', 'strawberry'] as const).map((type) => (
+        {(['dot', 'power', 'cherry', 'strawberry', 'life'] as const).map((type) => (
            <SelectionButton
               key={type}
               label={type}
-              icon={type === 'cherry' ? '🍒' : type === 'strawberry' ? '🍓' : type === 'power' ? '⚡' : '•'}
+              icon={type === 'cherry' ? '🍒' : type === 'strawberry' ? '🍓' : type === 'power' ? '⚡' : type === 'life' ? '❤️' : '•'}
               color="red"
               isDark={isDark}
               isActive={foodType === type}

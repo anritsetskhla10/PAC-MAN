@@ -28,6 +28,17 @@ export const TileType = {
 } as const;
 export type TileType = typeof TileType[keyof typeof TileType];
 
+
+export type BonusType = 'CHERRY' | 'STRAWBERRY' | 'EXTRA_LIFE';
+
+export interface ActiveBonus {
+  type: BonusType;
+  x: number;
+  z: number;
+  points: number;
+  expiresAt: number; 
+}
+
 export const GhostState = {
   NORMAL: 'NORMAL',   
   SCARED: 'SCARED',   

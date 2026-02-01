@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { GameStatus, Ghost, Coordinate } from '../types'; 
+import type { GameStatus, Ghost, Coordinate, ActiveBonus } from '../types'; 
 
 export type Position = Coordinate;
 
@@ -12,6 +12,7 @@ export interface GameContextType {
   remainingFood: number; 
   lives: number; 
   level: number;
+  activeBonus: ActiveBonus | null;
 
   movePlayer: (x: number, z: number) => void;
   startGame: () => void; 

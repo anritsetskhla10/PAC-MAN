@@ -21,7 +21,7 @@ interface BoardProps {
 const GHOST_COLORS = ['#FF0000', '#FFB8FF', '#00FFFF', '#FFB852'];
 
 export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeight = 0 }: BoardProps) => {
-  const { playerPos, ghostsPos, layout, movePlayer } = useGame(); 
+  const { playerPos, ghostsPos, layout, movePlayer, activeBonus } = useGame(); 
   
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1000);
 
@@ -53,21 +53,15 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
     if (isMinimap) {
         return windowWidth < 768 ? 8 : 12; 
     }
-
     if (parentWidth === 0 || parentHeight === 0) return 20;
-
     const sizeW = Math.floor(parentWidth / MAP_COLS);
     const sizeH = Math.floor(parentHeight / MAP_ROWS);
-    
     const optimalSize = Math.min(sizeW, sizeH);
-    
     return Math.max(12, Math.min(optimalSize, 85));
-
   }, [isMinimap, windowWidth, parentWidth, parentHeight]);
 
   const itemScale = cellSize / 28; 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-
 
   return (
     <div className="relative flex justify-center items-center transition-all duration-300">
@@ -89,17 +83,17 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
             const ghost = ghostsPos[ghostIndex];
             const isGhostHere = ghostIndex !== -1;
 
-            const isStrawberry = tile === TileType.STRAWBERRY;
-            const isCherry = tile === TileType.CHERRY;
             const isPower = tile === TileType.POWER_PELLET;
             const isFood = tile === TileType.FOOD;
+
+            const isBonusHere = activeBonus && activeBonus.x === colIndex && activeBonus.z === rowIndex;
             
             const scale = isMinimap ? 0.5 : (isMobile ? 0.9 : 1); 
             
             let foodSize = 0;
-            if (isStrawberry || isCherry) foodSize = 20 * scale * itemScale; 
             if (isPower) foodSize = 16 * scale * itemScale;
             if (isFood) foodSize = 8 * scale * itemScale;
+            if (isBonusHere) foodSize = 24 * scale * itemScale;
 
             return (
               <div
@@ -115,11 +109,14 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
               >
                 {!isPlayerHere && !isGhostHere && (
                     <>
-                        {isStrawberry ? <Food2D type="strawberry" size={foodSize} /> :
-                         isCherry ? <Food2D type="cherry" size={foodSize} /> :
-                         isPower ? <Food2D type="power" size={foodSize} /> :
+                        {/* Static Items*/}
+                        {isPower ? <Food2D type="power" size={foodSize} /> :
                          isFood ? <Food2D type="dot" size={foodSize} /> : null
                         }
+                        
+                        {isBonusHere && activeBonus.type === 'CHERRY' && <Food2D type="cherry" size={foodSize} />}
+                        {isBonusHere && activeBonus.type === 'STRAWBERRY' && <Food2D type="strawberry" size={foodSize} />}
+                        {isBonusHere && activeBonus.type === 'EXTRA_LIFE' && <Food2D type="life" size={foodSize} />}
                     </>
                 )}
 

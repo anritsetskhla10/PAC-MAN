@@ -17,19 +17,18 @@ interface Board3DProps {
 }
 
 export const Board3D = ({ heading }: Board3DProps) => {
-  const { ghostsPos, layout } = useGame();
+  const { ghostsPos, layout, activeBonus } = useGame(); 
   const { settings } = useTheme();
   const isMobile = useIsMobile();
 
   return (
     <div className="relative w-full h-full bg-black overflow-hidden select-none">
       
-      {/* MINIMAP OVERLAY */}
+      {/* MINIMAP */}
       <div className="absolute top-16 left-2 sm:top-20 sm:left-4 z-40 pointer-events-none opacity-80 scale-50 sm:scale-75 origin-top-left transition-transform landscape:scale-[0.4] landscape:top-4">
         <Board isMinimap={true} />
       </div>
 
-      {/* CENTER CROSSHAIR (Optional UI element) */}
       {!isMobile && (
         <div className="absolute top-1/2 left-1/2 w-1 h-1 bg-white/50 rounded-full -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none mix-blend-difference" />
       )}
@@ -43,12 +42,11 @@ export const Board3D = ({ heading }: Board3DProps) => {
         frameloop="always"
       >
         <color attach="background" args={['#050505']} />
-        {/* Lights */}
         <hemisphereLight color="#ffffff" groundColor="#000000" intensity={0.7} />
         <ambientLight intensity={0.4} />
         
         {!isMobile && <fog attach="fog" args={['#050505', 0, 40]} />}
-        {/* Game Entities */}
+        
         <Pacman3D 
            isSpectator={settings.isSpectatorMode} 
            heading={heading} 
@@ -56,15 +54,22 @@ export const Board3D = ({ heading }: Board3DProps) => {
         
         <InstancedLevel />
 
-        {/* Consumables */}
+        {/* Consumables  */}
         {layout.map((row: number[], z: number) => 
           row.map((tile: number, x: number) => {
-            if (tile === TileType.STRAWBERRY) return <group key={`${x}-${z}`} position={[x, 0.5, z]}><Food3D consumableVariant="strawberry" /></group>;
-            if (tile === TileType.CHERRY) return <group key={`${x}-${z}`} position={[x, 0.5, z]}><Food3D consumableVariant="cherry" /></group>;
             if (tile === TileType.POWER_PELLET) return <group key={`${x}-${z}`} position={[x, 0.5, z]}><Food3D consumableVariant="power" /></group>;
             if (tile === TileType.FOOD) return <group key={`${x}-${z}`} position={[x, 0.5, z]}><Food3D consumableVariant="dot" /></group>;
             return null;
           })
+        )}
+
+        {/*  Dynamic Bonus Item */}
+        {activeBonus && (
+           <group position={[activeBonus.x, 0.5, activeBonus.z]}>
+               {activeBonus.type === 'CHERRY' && <Food3D consumableVariant="cherry" />}
+               {activeBonus.type === 'STRAWBERRY' && <Food3D consumableVariant="strawberry" />}
+               {activeBonus.type === 'EXTRA_LIFE' && <Food3D consumableVariant="life" />}
+           </group>
         )}
 
         {/* Ghosts */}

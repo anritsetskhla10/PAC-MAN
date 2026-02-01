@@ -1,17 +1,16 @@
 import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { GameContext, type Position } from './GameContext';
-import { type GameStatus, TileType, GhostState, type Ghost, type GlobalMode } from '../types';
-import { LEVEL_MAP, SCORES, GHOST_CONFIG, GHOST_SPEEDS, WAVE_TIMINGS, TUNNEL_ROW } from '../utils/constants'; 
+import { type GameStatus, TileType, GhostState, type Ghost, type GlobalMode, type ActiveBonus, type BonusType } from '../types';
+import { LEVEL_MAP, SCORES, GHOST_CONFIG, GHOST_SPEEDS, WAVE_TIMINGS, TUNNEL_ROW, SPAWN_POINTS } from '../utils/constants'; 
 import { calculateGhostNextMove } from '../utils/ghostLogic'; 
 import { useTheme } from './ThemeContext';
 
 const MAX_LIVES = 3;
 
-// Helper to get starting coordinates without resetting the map layout
+// HELPER FUNCTIONS 
 const getStartingCoordinates = () => {
     let pacmanStart: Position = { x: 1, z: 1 };
     const ghostsStart: Ghost[] = [];
-    
     LEVEL_MAP.forEach((row, rowIndex) => {
         row.forEach((tile, colIndex) => {
             if (tile === TileType.PACMAN_START) pacmanStart = { x: colIndex, z: rowIndex };
@@ -28,19 +27,19 @@ const getStartingCoordinates = () => {
     return { pacmanStart, ghostsStart };
 };
 
-// Full initialization helper
 const getInitialPositions = () => {
   const { pacmanStart, ghostsStart } = getStartingCoordinates();
   const initialLayout = LEVEL_MAP.map(row => [...row]); 
   let foodCount = 0; 
-
+  
   LEVEL_MAP.forEach((row) => {
     row.forEach((tile) => {
-      if (([TileType.FOOD, TileType.POWER_PELLET, TileType.CHERRY, TileType.STRAWBERRY] as number[]).includes(tile)) {
+      if (([TileType.FOOD, TileType.POWER_PELLET] as number[]).includes(tile)) {
         foodCount++;
       }
     });
   });
+  
   return { pacmanStart, ghostsStart, initialLayout, foodCount };
 };
 
@@ -48,10 +47,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const { pacmanStart, ghostsStart, initialLayout, foodCount } = getInitialPositions();
   const { settings } = useTheme();
 
-  // State
   const [lives, setLives] = useState<number>(MAX_LIVES);
   const [level, setLevel] = useState<number>(1);
-  
   const [playerPos, setPlayerPos] = useState<Position>(pacmanStart);
   const [ghostsPos, setGhostsPos] = useState<Ghost[]>(ghostsStart);
   const [layout, setLayout] = useState<number[][]>(initialLayout);
@@ -63,9 +60,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [globalMode, setGlobalMode] = useState<GlobalMode>('SCATTER');
   const [waveIndex, setWaveIndex] = useState(0);
 
+  const [activeBonus, setActiveBonus] = useState<ActiveBonus | null>(null);
+  const [extraLifeSpawned, setExtraLifeSpawned] = useState(false);
+
+  //  REFS
   const waveTimerRef = useRef<number>(0);
   const powerModeTimerRef = useRef<number | null>(null);
   const flashTimerRef = useRef<number | null>(null);
+  const bonusTimerRef = useRef<number | null>(null);
+  
   const playerDirRef = useRef<Position>({ x: 1, z: 0 }); 
   const playerPosRef = useRef(playerPos);
   const layoutRef = useRef(layout);
@@ -73,9 +76,32 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => { playerPosRef.current = playerPos; }, [playerPos]);
   useEffect(() => { layoutRef.current = layout; }, [layout]);
 
-  //  ACTIONS 
+  //SPAWN LOGIC
+  const spawnBonus = useCallback((type: BonusType) => {
+    if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
+    
+    const randomIndex = Math.floor(Math.random() * SPAWN_POINTS.length);
+    const spawnPos = SPAWN_POINTS[randomIndex];
 
-  //  Soft Reset (Respawn): Returns entities to start, keeps score/dots
+    let points = 0;
+    if (type === 'CHERRY') points = 100;
+    if (type === 'STRAWBERRY') points = 300;
+    if (type === 'EXTRA_LIFE') points = 200;
+
+    setActiveBonus({
+        type,
+        x: spawnPos.x,
+        z: spawnPos.z,
+        points,
+        expiresAt: Date.now() + 15000 
+    });
+
+    bonusTimerRef.current = setTimeout(() => {
+        setActiveBonus(null);
+    }, 15000);
+  }, []);
+
+  //  ACTIONS
   const softReset = useCallback(() => {
      const { pacmanStart, ghostsStart } = getStartingCoordinates();
      setPlayerPos(pacmanStart);
@@ -84,9 +110,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
      setGlobalMode('SCATTER');
      setWaveIndex(0);
      waveTimerRef.current = 0;
+     setActiveBonus(null); 
+     if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
   }, []);
 
-  // Start Game: Go to "Ready" screen
   const startGame = () => {
     if (gameStatus === 'idle' || gameStatus === 'gameover' || gameStatus === 'won') {
         restartGame();
@@ -95,7 +122,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Start Round: Manual Trigger from "Ready" screen
   const startRound = () => {
     setGameStatus('playing');
   };
@@ -103,10 +129,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const pauseGame = () => { if (gameStatus === 'playing') setGameStatus('paused'); };
   const resumeGame = () => { if (gameStatus === 'paused') setGameStatus('playing'); };
   
-  //  Hard Reset: Full Restart
   const restartGame = () => {
     if (powerModeTimerRef.current) clearTimeout(powerModeTimerRef.current);
     if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+    if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
 
     const freshData = getInitialPositions();
     setPlayerPos(freshData.pacmanStart);
@@ -119,6 +145,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setLevel(1);         
     setGhostsEatenBatch(0);
     
+    setActiveBonus(null);
+    setExtraLifeSpawned(false);
+    
     setGameStatus('ready'); 
     setGlobalMode('SCATTER');
     setWaveIndex(0);
@@ -126,33 +155,18 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     playerDirRef.current = { x: 1, z: 0 };
   };
 
-  // Next Level Logic: Spawns extra life if needed
   const nextLevel = () => {
       const freshData = getInitialPositions();
-      const newLayout = freshData.initialLayout.map(row => [...row]);
-      let newFoodCount = freshData.foodCount;
-
-      // Logic: Spawn extra life if lives < MAX_LIVES
-      if (lives < MAX_LIVES) {
-          // Attempt to spawn at coordinates [15, 9] (Adjust based on your map)
-          // Ensure it's not a wall or ghost house
-          const spawnZ = 15;
-          const spawnX = 9;
-
-          if (newLayout[spawnZ] && newLayout[spawnZ][spawnX] !== TileType.WALL && newLayout[spawnZ][spawnX] !== TileType.GHOST_HOUSE) {
-             // If replacing food, decrease count
-             if (newLayout[spawnZ][spawnX] === TileType.FOOD) newFoodCount--;
-             
-             newLayout[spawnZ][spawnX] = TileType.EXTRA_LIFE;
-          }
-      }
-
       setPlayerPos(freshData.pacmanStart);
       setGhostsPos(freshData.ghostsStart);
-      setLayout(newLayout);
-      setRemainingFood(newFoodCount);
+      setLayout(freshData.initialLayout);
+      setRemainingFood(freshData.foodCount);
       setDotsEaten(0);
       setLevel(prev => prev + 1);
+      
+      setActiveBonus(null);
+      if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
+      setExtraLifeSpawned(false);
       
       setGameStatus('ready'); 
       setGlobalMode('SCATTER');
@@ -172,13 +186,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       return GHOST_SPEEDS.NORMAL;
   };
 
-  //  POWER MODE 
   const activatePowerMode = () => {
     if (powerModeTimerRef.current) clearTimeout(powerModeTimerRef.current);
     if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
-
     setGhostsEatenBatch(0);
-
     setGhostsPos(prev => prev.map(g => {
         if (g.state === GhostState.EATEN || g.state === GhostState.EYES) return g;
         return { 
@@ -188,17 +199,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             movementProgress: 1 - g.movementProgress 
         };
     }));
-
     const DURATION = 7000;
     const FLASH_START = DURATION - 2000; 
-
     flashTimerRef.current = setTimeout(() => {
         setGhostsPos(prev => prev.map(g => {
             if (g.state === GhostState.SCARED) return { ...g, state: GhostState.FLASHING };
             return g;
         }));
     }, FLASH_START);
-
     powerModeTimerRef.current = setTimeout(() => {
         setGhostsPos(prev => prev.map(g => {
             if (g.state === GhostState.SCARED || g.state === GhostState.FLASHING) {
@@ -210,11 +218,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }, DURATION);
   };
 
-  //  MOVE PLAYER 
+  // MOVE PLAYER
   const movePlayer = useCallback((targetX: number, targetZ: number) => {
     if (gameStatus !== 'playing') return;
     
-    // Tunnel
+    // Tunnel logic
     if (targetZ === TUNNEL_ROW) {
         if (targetX < 0) targetX = 18;
         else if (targetX > 18) targetX = 0;
@@ -227,27 +235,39 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const dz = targetZ - playerPos.z;
     if (dx !== 0 || dz !== 0) playerDirRef.current = { x: dx, z: dz };
 
+    setPlayerPos({ x: targetX, z: targetZ });
+
+    // INTERACTIONS
     const tile = layout[targetZ][targetX];
-    const isInteractable = ([TileType.FOOD, TileType.POWER_PELLET, TileType.CHERRY, TileType.STRAWBERRY, TileType.EXTRA_LIFE] as number[]).includes(tile);
+    const isInteractable = ([TileType.FOOD, TileType.POWER_PELLET] as number[]).includes(tile);
 
     if (isInteractable) {
       let pts = 0;
-      if (tile === TileType.FOOD) { pts = SCORES.DOT; setDotsEaten(prev => prev + 1); } 
+      let newDots = dotsEaten; 
+
+      if (tile === TileType.FOOD) { 
+          pts = SCORES.DOT; 
+          newDots = dotsEaten + 1;
+          setDotsEaten(newDots); 
+      } 
       if (tile === TileType.POWER_PELLET) { 
           pts = SCORES.POWER_PELLET; 
-          setDotsEaten(prev => prev + 1); 
+          newDots = dotsEaten + 1;
+          setDotsEaten(newDots); 
           activatePowerMode(); 
       }
       
-      // Extra Life Logic
-      if (tile === TileType.EXTRA_LIFE) {
-          pts = SCORES.EXTRA_LIFE;
-          setLives(prev => Math.min(prev + 1, MAX_LIVES));
-          if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      // TRIGGER LOGIC 
+      if (newDots !== dotsEaten) {
+          if (newDots === 50) spawnBonus('CHERRY');
+          if (newDots === 900) spawnBonus('STRAWBERRY');
+          
+          // Life Spawn
+          if (newDots === 100 && !extraLifeSpawned && lives < MAX_LIVES) {
+              spawnBonus('EXTRA_LIFE');
+              setExtraLifeSpawned(true);
+          }
       }
-
-      if (tile === TileType.CHERRY) pts = SCORES.CHERRY;
-      if (tile === TileType.STRAWBERRY) pts = SCORES.STRAWBERRY;
       
       setScore(s => s + pts);
       
@@ -257,19 +277,34 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         return nl;
       });
 
-      // Only decrease food count for actual food items, not Extra Life
-      if (tile !== TileType.EXTRA_LIFE) {
-          setRemainingFood(prev => {
-              const newState = prev - 1;
-              if (newState <= 0) {
-                   setGameStatus('won'); 
-              }
-              return newState;
-          });
-      }
+      setRemainingFood(prev => {
+          const newState = prev - 1;
+          if (newState <= 0) {
+                setGameStatus('won'); 
+          }
+          return newState;
+      });
     }
-    setPlayerPos({ x: targetX, z: targetZ });
-  }, [layout, gameStatus, playerPos]);
+
+    // BONUS ITEM INTERACTION
+    setActiveBonus(currentBonus => {
+        if (currentBonus && currentBonus.x === targetX && currentBonus.z === targetZ) {
+            setScore(s => s + currentBonus.points);
+            
+            if (currentBonus.type === 'EXTRA_LIFE') {
+                setLives(l => Math.min(l + 1, MAX_LIVES)); 
+            }
+
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            
+            if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
+            return null; 
+        }
+        return currentBonus;
+    });
+
+  }, [layout, gameStatus, playerPos, dotsEaten, lives, extraLifeSpawned, spawnBonus]);
+
 
   //  GAME LOOP 
   useEffect(() => {
@@ -309,9 +344,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
                  const dist = Math.abs(g.x - g.startX) + Math.abs(g.z - g.startZ);
                  if (dist < 0.5) return { ...g, state: GhostState.NORMAL, movementProgress: 0 };
              }
-
              const isElroy = g.color === GHOST_CONFIG.BLINKY.color && remainingFood <= 20;
-             // Using dotsEaten for consistency
              const checkCanLeave = (ghost: Ghost, eatenCount: number) => {
                 if (ghost.color === GHOST_CONFIG.BLINKY.color) return true;
                 if (ghost.color === GHOST_CONFIG.PINKY.color && eatenCount >= 5) return true;
@@ -358,7 +391,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const ghost = ghostsPos[hitIndex];
         
         const timerId = setTimeout(() => {
-            
             if (ghost.state === GhostState.NORMAL) {
                 if (lives > 1) {
                     setLives(prev => prev - 1);
@@ -374,10 +406,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             else if (ghost.state === GhostState.SCARED || ghost.state === GhostState.FLASHING) {
                  const comboMultiplier = Math.pow(2, ghostsEatenBatch);
                  const points = 200 * comboMultiplier;
-                 
                  setScore(s => s + points);
                  setGhostsEatenBatch(prev => prev + 1);
-                 
                  setGhostsPos(prev => {
                     const ng = [...prev];
                     if (ng[hitIndex]) {
@@ -387,12 +417,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
                 });
             }
         }, 0);
-
         return () => clearTimeout(timerId);
     }
   }, [playerPos, ghostsPos, gameStatus, ghostsEatenBatch, lives, softReset]);
 
-  // Escape key handler
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.code === 'Escape') {
@@ -406,7 +434,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <GameContext.Provider value={{ 
-      playerPos, ghostsPos, score, layout, gameStatus, remainingFood, lives, level,
+      playerPos, ghostsPos, score, layout, gameStatus, remainingFood, lives, level, activeBonus,
       movePlayer, startGame, startRound, pauseGame, resumeGame, restartGame, nextLevel 
     }}>
       {children}
