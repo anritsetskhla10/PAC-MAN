@@ -9,10 +9,11 @@ import { cn } from '../utils/cn';
 import { usePlayerHeading } from '../hooks/usePlayerHeading'; 
 import { useIsMobile } from '../hooks/useIsMobile'; 
 import { Link } from 'react-router-dom'; 
+import { formatTime } from '../utils/formatTime'; 
 
 export const GamePage = () => {
   const { settings, updateSetting } = useTheme();
-  const { score, gameStatus, pauseGame, lives, level } = useGame();
+  const { score, gameStatus, pauseGame, lives, level, elapsedTime } = useGame();
   const playerHeading = usePlayerHeading();
   const isMobile = useIsMobile();
   
@@ -118,6 +119,14 @@ export const GamePage = () => {
                         {score}
                     </span>
                 </div>
+           </div>
+
+           {/* Timer Display */}
+           <div className="flex flex-col items-center">
+                <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest landscape:max-lg:hidden">Time</span>
+                <span className="text-white font-mono font-bold text-lg tabular-nums tracking-wider">
+                    {formatTime(elapsedTime)}
+                </span>
            </div>
 
            {/* Level Indicator */}
