@@ -13,6 +13,8 @@ export interface GameContextType {
   lives: number; 
   level: number;
   activeBonus: ActiveBonus | null;
+  
+  elapsedTime: number;
 
   movePlayer: (x: number, z: number) => void;
   startGame: () => void; 

@@ -63,6 +63,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [activeBonus, setActiveBonus] = useState<ActiveBonus | null>(null);
   const [extraLifeSpawned, setExtraLifeSpawned] = useState(false);
 
+  const [elapsedTime, setElapsedTime] = useState<number>(0);
+
   //  REFS
   const waveTimerRef = useRef<number>(0);
   const powerModeTimerRef = useRef<number | null>(null);
@@ -75,6 +77,21 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => { playerPosRef.current = playerPos; }, [playerPos]);
   useEffect(() => { layoutRef.current = layout; }, [layout]);
+
+  // timer logic
+  useEffect(() => {
+    let intervalId: number;
+
+    if (gameStatus === 'playing') {
+      intervalId = window.setInterval(() => {
+        setElapsedTime((prev) => prev + 1);
+      }, 1000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [gameStatus]);
 
   //SPAWN LOGIC
   const spawnBonus = useCallback((type: BonusType) => {
@@ -148,6 +165,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setActiveBonus(null);
     setExtraLifeSpawned(false);
     
+    //time reset when restarting game
+    setElapsedTime(0);
+
     setGameStatus('ready'); 
     setGlobalMode('SCATTER');
     setWaveIndex(0);
@@ -262,7 +282,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           if (newDots === 50) spawnBonus('CHERRY');
           if (newDots === 900) spawnBonus('STRAWBERRY');
           
-          // Life Spawn
           if (newDots === 100 && !extraLifeSpawned && lives < MAX_LIVES) {
               spawnBonus('EXTRA_LIFE');
               setExtraLifeSpawned(true);
@@ -434,7 +453,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <GameContext.Provider value={{ 
-      playerPos, ghostsPos, score, layout, gameStatus, remainingFood, lives, level, activeBonus,
+      playerPos, ghostsPos, score, layout, gameStatus, remainingFood, lives, level, activeBonus, elapsedTime,
       movePlayer, startGame, startRound, pauseGame, resumeGame, restartGame, nextLevel 
     }}>
       {children}

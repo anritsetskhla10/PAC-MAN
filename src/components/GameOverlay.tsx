@@ -1,14 +1,15 @@
 import { useGame } from '../context/GameContext';
+import { formatTime } from '../utils/formatTime'; 
 
 export const GameOverlay = () => {
-  const { gameStatus, score, level, startGame, resumeGame, restartGame, startRound, nextLevel } = useGame();
+  const { gameStatus, score, level, elapsedTime, startGame, resumeGame, restartGame, startRound, nextLevel } = useGame();
 
   if (gameStatus === 'playing') return null;
 
   return (
     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/85 backdrop-blur-sm animate-in fade-in duration-300">
       
-      {/*  IDLE / MAIN MENU  */}
+      {/* IDLE / MAIN MENU  */}
       {gameStatus === 'idle' && (
         <div className="text-center flex flex-col items-center gap-6">
           <div className="space-y-2">
@@ -28,7 +29,7 @@ export const GameOverlay = () => {
         </div>
       )}
 
-      {/*  GET READY SCREEN (Manual Start)  */}
+      {/* GET READY SCREEN  */}
       {gameStatus === 'ready' && (
         <div className="text-center space-y-4 animate-pulse">
             <h2 className="text-6xl md:text-8xl font-black text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.8)] tracking-widest">
@@ -45,7 +46,7 @@ export const GameOverlay = () => {
         </div>
       )}
 
-      {/*  PAUSE MENU  */}
+      {/* PAUSE MENU  */}
       {gameStatus === 'paused' && (
         <div className="text-center space-y-8">
           <h2 className="text-5xl font-bold text-blue-400 tracking-[0.2em] drop-shadow-[0_0_10px_blue]">PAUSED</h2>
@@ -66,7 +67,7 @@ export const GameOverlay = () => {
         </div>
       )}
 
-      {/*  VICTORY / NEXT LEVEL MENU  */}
+      {/* VICTORY / NEXT LEVEL MENU  */}
       {gameStatus === 'won' && (
         <div className="text-center space-y-6 animate-in zoom-in duration-500">
           <h1 className="text-6xl md:text-7xl font-black bg-clip-text bg-linear-to-r from-green-400 to-emerald-600 drop-shadow-[0_0_25px_rgba(34,197,94,0.8)] animate-bounce">
@@ -74,8 +75,19 @@ export const GameOverlay = () => {
           </h1>
           
           <div className="bg-white/10 p-8 rounded-2xl border border-green-500/30 backdrop-blur-md shadow-[0_0_30px_rgba(34,197,94,0.2)]">
-            <p className="text-white/70 text-sm uppercase tracking-wider mb-2">Current Score</p>
-            <p className="text-6xl font-black text-yellow-400 drop-shadow-lg">{score}</p>
+            <div className="grid grid-cols-2 gap-8 text-center">
+                <div>
+                    <p className="text-white/70 text-sm uppercase tracking-wider mb-2">Current Score</p>
+                    <p className="text-6xl font-black text-yellow-400 drop-shadow-lg">{score}</p>
+                </div>
+                {/* Time Display */}
+                <div>
+                    <p className="text-white/70 text-sm uppercase tracking-wider mb-2">Time</p>
+                    <p className="text-6xl font-black text-blue-400 font-mono drop-shadow-lg">
+                        {formatTime(elapsedTime)}
+                    </p>
+                </div>
+            </div>
           </div>
 
           <button 
@@ -87,14 +99,25 @@ export const GameOverlay = () => {
         </div>
       )}
 
-      {/*  GAME OVER MENU  */}
+      {/* GAME OVER MENU  */}
       {gameStatus === 'gameover' && (
         <div className="text-center space-y-6">
           <h1 className="text-7xl font-bold text-red-600 drop-shadow-[0_0_25px_red] animate-pulse">GAME OVER</h1>
           
           <div className="bg-white/10 p-6 rounded-2xl border border-white/10 backdrop-blur-md">
-            <p className="text-white/70 text-sm uppercase tracking-wider mb-2">Final Score</p>
-            <p className="text-5xl font-bold text-yellow-400">{score}</p>
+             <div className="flex justify-between items-center gap-12">
+                <div className="text-center">
+                    <p className="text-white/70 text-sm uppercase tracking-wider mb-2">Final Score</p>
+                    <p className="text-5xl font-bold text-yellow-400">{score}</p>
+                </div>
+                {/*  Time Display */}
+                <div className="text-center">
+                    <p className="text-white/70 text-sm uppercase tracking-wider mb-2">Total Time</p>
+                    <p className="text-5xl font-bold text-red-400 font-mono">
+                        {formatTime(elapsedTime)}
+                    </p>
+                </div>
+             </div>
           </div>
 
           <button 
