@@ -2,13 +2,14 @@ import { useEffect, useMemo, useRef } from 'react';
 import { InstancedMesh, Object3D } from 'three';
 import * as THREE from 'three';
 import { useTheme } from '../context/ThemeContext';
-import { LEVEL_MAP } from '../utils/constants';
+import { useGame } from '../context/GameContext'; 
 import { TileType } from '../types';
 
 type Position3D = [number, number, number];
 
 export const InstancedLevel = () => {
   const { settings } = useTheme();
+  const { layout } = useGame(); 
 
   const wallsRef = useRef<InstancedMesh>(null);
   const floorsRef = useRef<InstancedMesh>(null);
@@ -19,7 +20,7 @@ export const InstancedLevel = () => {
     const walls: Position3D[] = [];
     const floors: Position3D[] = [];
 
-    LEVEL_MAP.forEach((row, z) => {
+    layout.forEach((row, z) => {
       row.forEach((tile, x) => {
         floors.push([x, 0, z]);
         if (tile === TileType.WALL) {
@@ -28,7 +29,7 @@ export const InstancedLevel = () => {
       });
     });
     return { wallPositions: walls, floorPositions: floors };
-  }, []);
+  }, [layout]); 
 
   useEffect(() => {
     if (!wallsRef.current || !floorsRef.current) return;

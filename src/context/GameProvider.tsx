@@ -1,17 +1,18 @@
 import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { GameContext, type Position } from './GameContext';
 import { type GameStatus, TileType, GhostState, type Ghost, type GlobalMode, type ActiveBonus, type BonusType } from '../types';
-import { LEVEL_MAP, SCORES, GHOST_CONFIG, GHOST_SPEEDS, WAVE_TIMINGS, TUNNEL_ROW, SPAWN_POINTS } from '../utils/constants'; 
+import { LEVEL_MAPS, SCORES, GHOST_CONFIG, GHOST_SPEEDS, WAVE_TIMINGS, TUNNEL_ROW, SPAWN_POINTS } from '../utils/constants';
 import { calculateGhostNextMove } from '../utils/ghostLogic'; 
 import { useTheme } from './ThemeContext';
 
 const MAX_LIVES = 3;
 
-// HELPER FUNCTIONS 
-const getStartingCoordinates = () => {
+// HELPER FUNCTIONS
+const getStartingCoordinates = (currentMap: number[][]) => {
     let pacmanStart: Position = { x: 1, z: 1 };
     const ghostsStart: Ghost[] = [];
-    LEVEL_MAP.forEach((row, rowIndex) => {
+    
+    currentMap.forEach((row, rowIndex) => {
         row.forEach((tile, colIndex) => {
             if (tile === TileType.PACMAN_START) pacmanStart = { x: colIndex, z: rowIndex };
             if (tile === TileType.GHOST_START) {
@@ -27,12 +28,16 @@ const getStartingCoordinates = () => {
     return { pacmanStart, ghostsStart };
 };
 
-const getInitialPositions = () => {
-  const { pacmanStart, ghostsStart } = getStartingCoordinates();
-  const initialLayout = LEVEL_MAP.map(row => [...row]); 
+const getInitialPositions = (levelIndex: number = 1) => {
+  // Cycle through maps (Level 1 -> Map 0, Level 2 -> Map 1, etc.)
+  const mapIndex = (levelIndex - 1) % LEVEL_MAPS.length;
+  const selectedMap = LEVEL_MAPS[mapIndex];
+
+  const { pacmanStart, ghostsStart } = getStartingCoordinates(selectedMap);
+  const initialLayout = selectedMap.map(row => [...row]); 
   let foodCount = 0; 
   
-  LEVEL_MAP.forEach((row) => {
+  selectedMap.forEach((row) => {
     row.forEach((tile) => {
       if (([TileType.FOOD, TileType.POWER_PELLET] as number[]).includes(tile)) {
         foodCount++;
@@ -44,7 +49,7 @@ const getInitialPositions = () => {
 };
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {
-  const { pacmanStart, ghostsStart, initialLayout, foodCount } = getInitialPositions();
+  const { pacmanStart, ghostsStart, initialLayout, foodCount } = getInitialPositions(1);
   const { settings } = useTheme();
 
   const [lives, setLives] = useState<number>(MAX_LIVES);
@@ -120,7 +125,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   //  ACTIONS
   const softReset = useCallback(() => {
-     const { pacmanStart, ghostsStart } = getStartingCoordinates();
+     const mapIndex = (level - 1) % LEVEL_MAPS.length;
+     const currentMap = LEVEL_MAPS[mapIndex];
+     
+     const { pacmanStart, ghostsStart } = getStartingCoordinates(currentMap);
+     
      setPlayerPos(pacmanStart);
      setGhostsPos(ghostsStart);
      playerDirRef.current = { x: 1, z: 0 };
@@ -129,7 +138,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
      waveTimerRef.current = 0;
      setActiveBonus(null); 
      if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
-  }, []);
+  }, [level]); 
 
   const startGame = () => {
     if (gameStatus === 'idle' || gameStatus === 'gameover' || gameStatus === 'won') {
@@ -151,7 +160,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
     if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
 
-    const freshData = getInitialPositions();
+    // Reset to Level 1 Map
+    const freshData = getInitialPositions(1);
     setPlayerPos(freshData.pacmanStart);
     setGhostsPos(freshData.ghostsStart);
     setLayout(freshData.initialLayout);
@@ -165,7 +175,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setActiveBonus(null);
     setExtraLifeSpawned(false);
     
-    //time reset when restarting game
     setElapsedTime(0);
 
     setGameStatus('ready'); 
@@ -176,13 +185,17 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const nextLevel = () => {
-      const freshData = getInitialPositions();
+      const nextLevelIndex = level + 1;
+      
+      const freshData = getInitialPositions(nextLevelIndex);
+      
       setPlayerPos(freshData.pacmanStart);
       setGhostsPos(freshData.ghostsStart);
       setLayout(freshData.initialLayout);
       setRemainingFood(freshData.foodCount);
       setDotsEaten(0);
-      setLevel(prev => prev + 1);
+      
+      setLevel(nextLevelIndex);
       
       setActiveBonus(null);
       if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
@@ -280,7 +293,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       // TRIGGER LOGIC 
       if (newDots !== dotsEaten) {
           if (newDots === 50) spawnBonus('CHERRY');
-          if (newDots === 900) spawnBonus('STRAWBERRY');
+          if (newDots === 70) spawnBonus('STRAWBERRY');
           
           if (newDots === 100 && !extraLifeSpawned && lives < MAX_LIVES) {
               spawnBonus('EXTRA_LIFE');
