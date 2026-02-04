@@ -18,6 +18,11 @@ export const defaultSettings: ThemeSettings = {
   ghostColor: '#FF0000',
   difficulty: 'MEDIUM',
   playerModel: 'classic',
+  audio: {
+    masterMuted: false,
+    musicVolume: 0.5,
+    sfxVolume: 1.0,
+  }
 };
 
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);

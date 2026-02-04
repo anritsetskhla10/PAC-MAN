@@ -73,4 +73,9 @@ export interface ThemeSettings {
   ghostColor: string;
   difficulty: Difficulty;
   playerModel: 'classic' | 'avatar'; 
+  audio: {
+    masterMuted: boolean;
+    musicVolume: number;
+    sfxVolume: number;
+  };
 }
