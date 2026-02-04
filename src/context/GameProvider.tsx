@@ -4,14 +4,13 @@ import { type GameStatus, TileType, GhostState, type Ghost, type GlobalMode, typ
 import { LEVEL_MAPS, SCORES, GHOST_CONFIG, GHOST_SPEEDS, WAVE_TIMINGS, TUNNEL_ROW, SPAWN_POINTS } from '../utils/constants';
 import { calculateGhostNextMove } from '../utils/ghostLogic'; 
 import { useTheme } from './ThemeContext';
+import { useGameAudio } from '../hooks/useGameAudio'; 
 
 const MAX_LIVES = 3;
 
-// HELPER FUNCTIONS
 const getStartingCoordinates = (currentMap: number[][]) => {
     let pacmanStart: Position = { x: 1, z: 1 };
     const ghostsStart: Ghost[] = [];
-    
     currentMap.forEach((row, rowIndex) => {
         row.forEach((tile, colIndex) => {
             if (tile === TileType.PACMAN_START) pacmanStart = { x: colIndex, z: rowIndex };
@@ -29,14 +28,11 @@ const getStartingCoordinates = (currentMap: number[][]) => {
 };
 
 const getInitialPositions = (levelIndex: number = 1) => {
-  // Cycle through maps (Level 1 -> Map 0, Level 2 -> Map 1, etc.)
   const mapIndex = (levelIndex - 1) % LEVEL_MAPS.length;
   const selectedMap = LEVEL_MAPS[mapIndex];
-
   const { pacmanStart, ghostsStart } = getStartingCoordinates(selectedMap);
   const initialLayout = selectedMap.map(row => [...row]); 
   let foodCount = 0; 
-  
   selectedMap.forEach((row) => {
     row.forEach((tile) => {
       if (([TileType.FOOD, TileType.POWER_PELLET] as number[]).includes(tile)) {
@@ -44,13 +40,13 @@ const getInitialPositions = (levelIndex: number = 1) => {
       }
     });
   });
-  
   return { pacmanStart, ghostsStart, initialLayout, foodCount };
 };
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const { pacmanStart, ghostsStart, initialLayout, foodCount } = getInitialPositions(1);
   const { settings } = useTheme();
+  const { playChomp, playDeath, playIntro, playEatGhost, playExtraLife, playFruit, playLevelUp } = useGameAudio();
 
   const [lives, setLives] = useState<number>(MAX_LIVES);
   const [level, setLevel] = useState<number>(1);
@@ -70,7 +66,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   const [elapsedTime, setElapsedTime] = useState<number>(0);
 
-  //  REFS
   const waveTimerRef = useRef<number>(0);
   const powerModeTimerRef = useRef<number | null>(null);
   const flashTimerRef = useRef<number | null>(null);
@@ -83,22 +78,18 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => { playerPosRef.current = playerPos; }, [playerPos]);
   useEffect(() => { layoutRef.current = layout; }, [layout]);
 
-  // timer logic
   useEffect(() => {
     let intervalId: number;
-
     if (gameStatus === 'playing') {
       intervalId = window.setInterval(() => {
         setElapsedTime((prev) => prev + 1);
       }, 1000);
     }
-
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
   }, [gameStatus]);
 
-  //SPAWN LOGIC
   const spawnBonus = useCallback((type: BonusType) => {
     if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
     
@@ -123,11 +114,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }, 15000);
   }, []);
 
-  //  ACTIONS
   const softReset = useCallback(() => {
      const mapIndex = (level - 1) % LEVEL_MAPS.length;
      const currentMap = LEVEL_MAPS[mapIndex];
-     
      const { pacmanStart, ghostsStart } = getStartingCoordinates(currentMap);
      
      setPlayerPos(pacmanStart);
@@ -145,6 +134,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         restartGame();
     } else {
         setGameStatus('ready');
+        playIntro();
     }
   };
 
@@ -160,7 +150,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
     if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
 
-    // Reset to Level 1 Map
     const freshData = getInitialPositions(1);
     setPlayerPos(freshData.pacmanStart);
     setGhostsPos(freshData.ghostsStart);
@@ -182,11 +171,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setWaveIndex(0);
     waveTimerRef.current = 0;
     playerDirRef.current = { x: 1, z: 0 };
+
+    playIntro(); 
   };
 
   const nextLevel = () => {
       const nextLevelIndex = level + 1;
-      
       const freshData = getInitialPositions(nextLevelIndex);
       
       setPlayerPos(freshData.pacmanStart);
@@ -206,6 +196,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       setWaveIndex(0);
       waveTimerRef.current = 0;
       playerDirRef.current = { x: 1, z: 0 };
+      playLevelUp(); 
   };
 
   const getGhostSpeed = (ghost: Ghost, remainingFood: number) => {
@@ -251,11 +242,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }, DURATION);
   };
 
-  // MOVE PLAYER
   const movePlayer = useCallback((targetX: number, targetZ: number) => {
     if (gameStatus !== 'playing') return;
     
-    // Tunnel logic
     if (targetZ === TUNNEL_ROW) {
         if (targetX < 0) targetX = 18;
         else if (targetX > 18) targetX = 0;
@@ -270,7 +259,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     setPlayerPos({ x: targetX, z: targetZ });
 
-    // INTERACTIONS
     const tile = layout[targetZ][targetX];
     const isInteractable = ([TileType.FOOD, TileType.POWER_PELLET] as number[]).includes(tile);
 
@@ -282,15 +270,16 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           pts = SCORES.DOT; 
           newDots = dotsEaten + 1;
           setDotsEaten(newDots); 
+          playChomp(); 
       } 
       if (tile === TileType.POWER_PELLET) { 
           pts = SCORES.POWER_PELLET; 
           newDots = dotsEaten + 1;
           setDotsEaten(newDots); 
           activatePowerMode(); 
+          playChomp(); 
       }
       
-      // TRIGGER LOGIC 
       if (newDots !== dotsEaten) {
           if (newDots === 50) spawnBonus('CHERRY');
           if (newDots === 70) spawnBonus('STRAWBERRY');
@@ -298,6 +287,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           if (newDots === 100 && !extraLifeSpawned && lives < MAX_LIVES) {
               spawnBonus('EXTRA_LIFE');
               setExtraLifeSpawned(true);
+              playExtraLife(); 
           }
       }
       
@@ -318,13 +308,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       });
     }
 
-    // BONUS ITEM INTERACTION
     setActiveBonus(currentBonus => {
         if (currentBonus && currentBonus.x === targetX && currentBonus.z === targetZ) {
             setScore(s => s + currentBonus.points);
-            
             if (currentBonus.type === 'EXTRA_LIFE') {
                 setLives(l => Math.min(l + 1, MAX_LIVES)); 
+                playExtraLife(); 
+            } else {
+                playFruit(); 
             }
 
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
@@ -335,15 +326,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         return currentBonus;
     });
 
-  }, [layout, gameStatus, playerPos, dotsEaten, lives, extraLifeSpawned, spawnBonus]);
+  }, [layout, gameStatus, playerPos, dotsEaten, lives, extraLifeSpawned, spawnBonus, playChomp, playExtraLife, playFruit]);
 
 
-  //  GAME LOOP 
   useEffect(() => {
     if (gameStatus !== 'playing') return;
 
     const interval = setInterval(() => {
-      // Wave Logic
       if (waveIndex < WAVE_TIMINGS.length) {
           const currentWave = WAVE_TIMINGS[waveIndex];
           if (currentWave.duration !== -1) {
@@ -363,7 +352,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           }
       }
 
-      // Move Ghosts
       setGhostsPos(prev => {
         return prev.map((g) => {
           const speed = getGhostSpeed(g, remainingFood);
@@ -371,7 +359,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
           if (newProgress >= 1) {
              newProgress -= 1; 
-
              if (g.state === GhostState.EATEN || g.state === GhostState.EYES) {
                  const dist = Math.abs(g.x - g.startX) + Math.abs(g.z - g.startZ);
                  if (dist < 0.5) return { ...g, state: GhostState.NORMAL, movementProgress: 0 };
@@ -411,7 +398,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     return () => clearInterval(interval);
   }, [gameStatus, settings.difficulty, remainingFood, globalMode, waveIndex, dotsEaten]);
 
-  //  COLLISION LOGIC 
  useEffect(() => {
     if (gameStatus !== 'playing') return;
     
@@ -425,17 +411,20 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const timerId = setTimeout(() => {
             if (ghost.state === GhostState.NORMAL) {
                 if (lives > 1) {
+                    playDeath(); 
                     setLives(prev => prev - 1);
                     setGameStatus('ready'); 
                     softReset(); 
                     if (navigator.vibrate) navigator.vibrate(500); 
                 } else {
+                    playDeath(); 
                     setLives(0);
                     setGameStatus('gameover');
                     if (navigator.vibrate) navigator.vibrate(1000);
                 }
             } 
             else if (ghost.state === GhostState.SCARED || ghost.state === GhostState.FLASHING) {
+                 playEatGhost(); 
                  const comboMultiplier = Math.pow(2, ghostsEatenBatch);
                  const points = 200 * comboMultiplier;
                  setScore(s => s + points);
@@ -451,7 +440,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         }, 0);
         return () => clearTimeout(timerId);
     }
-  }, [playerPos, ghostsPos, gameStatus, ghostsEatenBatch, lives, softReset]);
+  }, [playerPos, ghostsPos, gameStatus, ghostsEatenBatch, lives, softReset, playDeath, playEatGhost]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
