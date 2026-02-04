@@ -3,7 +3,7 @@ import type { ThemeSettings } from '../types';
 
 export interface ThemeContextType {
   settings: ThemeSettings;
-  updateSetting: (key: keyof ThemeSettings, value: string | boolean | number) => void;
+  updateSetting: <K extends keyof ThemeSettings>(key: K, value: ThemeSettings[K]) => void;
   resetTheme: () => void;
 }
 

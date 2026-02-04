@@ -32,14 +32,19 @@ export const Food3D = ({ consumableVariant }: Food3DProps) => {
   const { settings } = useTheme();
   
   const themeDerivedPelletColor = settings?.foodColor ?? '#fef08a';
-  const isSfxEnabled = !settings.audio.masterMuted && settings.audio.sfxVolume > 0;
+  
+  // Audio Logic
+  const masterMuted = settings.audio.masterMuted;
+  const sfxVolume = settings.audio.sfxVolume;
+  const isSfxEnabled = !masterMuted && sfxVolume > 0;
   const isBonus = ['cherry', 'strawberry', 'life'].includes(consumableVariant);
 
   useEffect(() => {
     if (audioRef.current) {
-        audioRef.current.setVolume(settings.audio.sfxVolume * 0.8);
+        const targetVol = isSfxEnabled ? sfxVolume * 0.8 : 0;
+        audioRef.current.setVolume(targetVol);
     }
-  }, [settings.audio.sfxVolume, isSfxEnabled]);
+  }, [sfxVolume, isSfxEnabled]);
 
   useFrame((state) => {
     if (!meshGroupRef.current) return;
@@ -53,17 +58,17 @@ export const Food3D = ({ consumableVariant }: Food3DProps) => {
   });
 
   const heartGeometry = useMemo(() => {
-    const x = 0, y = 0;
-    const heartShape = new Shape();
-    heartShape.moveTo( x + 0.25, y + 0.25 );
-    heartShape.bezierCurveTo( x + 0.25, y + 0.25, x + 0.20, y, x, y );
-    heartShape.bezierCurveTo( x - 0.30, y, x - 0.30, y + 0.35, x - 0.30, y + 0.35 );
-    heartShape.bezierCurveTo( x - 0.30, y + 0.55, x - 0.10, y + 0.77, x + 0.25, y + 0.95 );
-    heartShape.bezierCurveTo( x + 0.60, y + 0.77, x + 0.80, y + 0.55, x + 0.80, y + 0.35 );
-    heartShape.bezierCurveTo( x + 0.80, y + 0.35, x + 0.80, y, x + 0.50, y );
-    heartShape.bezierCurveTo( x + 0.35, y, x + 0.25, y + 0.25, x + 0.25, y + 0.25 );
-    const extrudeSettings = { depth: 0.2, bevelEnabled: true, bevelSegments: 2, steps: 2, bevelSize: 0.05, bevelThickness: 0.05 };
-    return new ExtrudeGeometry( heartShape, extrudeSettings );
+      const x = 0, y = 0;
+      const heartShape = new Shape();
+      heartShape.moveTo( x + 0.25, y + 0.25 );
+      heartShape.bezierCurveTo( x + 0.25, y + 0.25, x + 0.20, y, x, y );
+      heartShape.bezierCurveTo( x - 0.30, y, x - 0.30, y + 0.35, x - 0.30, y + 0.35 );
+      heartShape.bezierCurveTo( x - 0.30, y + 0.55, x - 0.10, y + 0.77, x + 0.25, y + 0.95 );
+      heartShape.bezierCurveTo( x + 0.60, y + 0.77, x + 0.80, y + 0.55, x + 0.80, y + 0.35 );
+      heartShape.bezierCurveTo( x + 0.80, y + 0.35, x + 0.80, y, x + 0.50, y );
+      heartShape.bezierCurveTo( x + 0.35, y, x + 0.25, y + 0.25, x + 0.25, y + 0.25 );
+      const extrudeSettings = { depth: 0.2, bevelEnabled: true, bevelSegments: 2, steps: 2, bevelSize: 0.05, bevelThickness: 0.05 };
+      return new ExtrudeGeometry( heartShape, extrudeSettings );
   }, []);
 
   const renderMesh = () => {
@@ -95,7 +100,7 @@ export const Food3D = ({ consumableVariant }: Food3DProps) => {
   return (
     <group ref={meshGroupRef}>
         {renderMesh()}
-        {isSfxEnabled && isBonus && (
+        {isBonus && (
            <PositionalAudio
              ref={audioRef}
              url={soundFile} 

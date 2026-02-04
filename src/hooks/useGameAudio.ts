@@ -6,62 +6,59 @@ export const useGameAudio = () => {
   const { settings } = useTheme();
   const { masterMuted, sfxVolume, musicVolume } = settings.audio;
 
-  //  Music 
+  const effectiveMusicVol = masterMuted ? 0 : musicVolume;
+  const effectiveSfxVol = masterMuted ? 0 : sfxVolume;
+
   const [playIntroRaw, { stop: stopIntro }] = useSound('/sounds/intro.mp3', { 
-    volume: masterMuted ? 0 : musicVolume 
+    volume: effectiveMusicVol
   });
 
-  // Chomp
-  const [playChomp] = useSound('/sounds/chomp.mp3', { 
-    volume: masterMuted ? 0 : sfxVolume * 0.4, 
-    interrupt: true 
-  });
-  
-  // Death
-  const [playDeath] = useSound('/sounds/death.wav', { 
-    volume: masterMuted ? 0 : sfxVolume * 0.5 
-  });
-  
-  // Eat Ghost
-  const [playEatGhost] = useSound('/sounds/eat_ghost.wav', { 
-    volume: masterMuted ? 0 : sfxVolume * 0.5 
-  });
-  
-  // Extra Life 
-  const [playExtraLife] = useSound('/sounds/extra_life.wav', { 
-    volume: masterMuted ? 0 : sfxVolume * 0.6 
-  });
-
-  // Eat Fruit
-  const [playFruit] = useSound('/sounds/eat_fruit.wav', { 
-    volume: masterMuted ? 0 : sfxVolume * 0.6 
-  });
-  // Level Up 
   const [playLevelUp] = useSound('/sounds/level_up.mp3', { 
-    volume: 0.5, 
+    volume: effectiveMusicVol * 0.8, 
+  });
+
+  const [playChomp] = useSound('/sounds/chomp.mp3', { 
+    volume: effectiveSfxVol * 1, 
+    interrupt: true,
+  });
+  
+  const [playDeath] = useSound('/sounds/death.wav', { 
+    volume: effectiveSfxVol * 0.6 
+  });
+  
+  const [playEatGhost] = useSound('/sounds/eat_ghost.wav', { 
+    volume: effectiveSfxVol * 0.6 
+  });
+  
+  const [playExtraLife] = useSound('/sounds/extra_life.wav', { 
+    volume: effectiveSfxVol * 0.7 
+  });
+
+  const [playFruit] = useSound('/sounds/eat_fruit.wav', { 
+    volume: effectiveSfxVol * 0.6 
   });
 
   const playIntro = useCallback(() => {
-    if (!masterMuted && musicVolume > 0) {
+    if (effectiveMusicVol > 0) {
       stopIntro();
       playIntroRaw();
     }
-  }, [masterMuted, musicVolume, playIntroRaw, stopIntro]);
+  }, [effectiveMusicVol, playIntroRaw, stopIntro]);
 
   useEffect(() => {
-    if (masterMuted || musicVolume === 0) {
+    if (effectiveMusicVol === 0) {
         stopIntro();
     }
-  }, [masterMuted, musicVolume, stopIntro]);
+  }, [effectiveMusicVol, stopIntro]);
 
   return {
     playIntro,
     stopIntro,
-    playChomp: !masterMuted && sfxVolume > 0 ? playChomp : () => {},
-    playDeath: !masterMuted && sfxVolume > 0 ? playDeath : () => {},
-    playEatGhost: !masterMuted && sfxVolume > 0 ? playEatGhost : () => {},
-    playExtraLife: !masterMuted && sfxVolume > 0 ? playExtraLife : () => {},
-    playFruit: !masterMuted && sfxVolume > 0 ? playFruit : () => {},
-    playLevelUp: !masterMuted && musicVolume > 0 ? playLevelUp : () => {}, 
+    playChomp: effectiveSfxVol > 0 ? playChomp : () => {},
+    playDeath: effectiveSfxVol > 0 ? playDeath : () => {},
+    playEatGhost: effectiveSfxVol > 0 ? playEatGhost : () => {},
+    playExtraLife: effectiveSfxVol > 0 ? playExtraLife : () => {},
+    playFruit: effectiveSfxVol > 0 ? playFruit : () => {},
+    playLevelUp: effectiveMusicVol > 0 ? playLevelUp : () => {}, 
   };
 };
