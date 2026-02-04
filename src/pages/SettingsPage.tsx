@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
-import { SettingsSection, ToggleSwitch, DifficultyButton, ColorSwatchGroup } from '../components/UI/SettingsComponents';
+import { SettingsSection, ToggleSwitch, RangeSlider, DifficultyButton, ColorSwatchGroup } from '../components/UI/SettingsComponents';
 import type { Difficulty } from '../types';
 
 const THEME_PALETTES = {
@@ -11,6 +11,11 @@ const THEME_PALETTES = {
 
 export const SettingsPage = () => {
   const { settings, updateSetting, resetTheme } = useTheme();
+
+  const updateAudio = (key: string, val: number | boolean) => {
+      const currentAudio = settings.audio || { masterMuted: false, musicVolume: 0.5, sfxVolume: 1.0 };
+      updateSetting('audio', { ...currentAudio, [key]: val });
+  };
 
   // Dark Mode Logic
   useEffect(() => {
@@ -29,20 +34,46 @@ export const SettingsPage = () => {
         
         {/* HEADER SECTION */}
         <div className="flex items-center justify-between mb-10">
-            <h2 className="text-3xl font-black">
+            <h2 className="text-3xl font-black text-text-main">
                 Settings
             </h2>
             <button 
                 onClick={resetTheme}
-                className="text-xs font-bold text-red-400 hover:text-red-300 transition-colors px-4 py-2 rounded-full bg-red-500/10 hover:bg-red-500/20"
+                className="text-xs font-bold text-red-500 hover:text-white border border-red-500/30 hover:bg-red-500 px-4 py-2 rounded-full transition-all uppercase tracking-wider"
             >
                 RESET DEFAULT
             </button>
         </div>
 
-        {/* --- 1. DIFFICULTY --- */}
+        {/* AUDIO CONFIGURATION*/}
+        <SettingsSection title="Audio Configuration">
+             <div className="bg-bg-card rounded-2xl p-5 border border-border-color/40 shadow-sm space-y-2">
+                <ToggleSwitch 
+                    label="Master Sound" 
+                    isOn={!settings.audio.masterMuted} 
+                    onToggle={() => updateAudio('masterMuted', !settings.audio.masterMuted)} 
+                />
+                
+                {/* Sliders Container */}
+                <div className={`transition-all duration-300 ${settings.audio.masterMuted ? 'opacity-40 grayscale pointer-events-none' : 'opacity-100'}`}>
+                    <div className="h-px bg-border-color/30 my-3" />
+                    <RangeSlider 
+                        label="Music Volume" 
+                        value={settings.audio.musicVolume} 
+                        onChange={(v) => updateAudio('musicVolume', v)}
+                    />
+                    <RangeSlider 
+                        label="SFX Volume" 
+                        value={settings.audio.sfxVolume} 
+                        onChange={(v) => updateAudio('sfxVolume', v)}
+                    />
+                </div>
+            </div>
+        </SettingsSection>
+
+        {/*DIFFICULTY*/}
         <SettingsSection title="Game Difficulty">
-            <div className="grid grid-cols-3 gap-3 p-1 bg-white/5 rounded-2xl border border-white/5">
+            <div className="grid grid-cols-3 gap-3 p-1.5 bg-bg-card/50 rounded-2xl border border-border-color/40">
             {(['EASY', 'MEDIUM', 'HARD'] as Difficulty[]).map((level) => (
                 <DifficultyButton 
                     key={level}
@@ -54,7 +85,7 @@ export const SettingsPage = () => {
             </div>
         </SettingsSection>
 
-        {/* --- 2. GRAPHICS --- */}
+        {/* GRAPHICS & CAMERA */}
         <SettingsSection title="Graphics & Camera">
             <div className="space-y-1">
                 <ToggleSwitch 
@@ -83,7 +114,7 @@ export const SettingsPage = () => {
             )}
         </SettingsSection>
 
-        {/* --- 3. COLORS --- */}
+        {/* COLORS */}
         <SettingsSection title="Customization">
             <div className="space-y-6">
                 <ColorSwatchGroup 
