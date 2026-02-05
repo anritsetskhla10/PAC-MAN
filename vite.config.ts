@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'Pac-Man 3D Lab',
-        short_name: 'PacMan3D',
+        name: 'Pac-Man Lab',
+        short_name: 'PacManLab',
         description: '3D Pac-Man Game',
         theme_color: '#000000',
         background_color: '#000000',
