@@ -1,5 +1,6 @@
 import { type ReactNode, useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 interface ShowcaseLayoutProps {
   title: string;
@@ -10,6 +11,7 @@ interface ShowcaseLayoutProps {
 
 export const ShowcaseLayout = ({ title, icon, sidebarContent, mainContent }: ShowcaseLayoutProps) => {
   const { settings } = useTheme();
+  const { t } = useTranslation();
   const isDark = settings.isDarkMode;
   const [isPanelOpen, setIsPanelOpen] = useState(true); 
 
@@ -18,7 +20,6 @@ export const ShowcaseLayout = ({ title, icon, sidebarContent, mainContent }: Sho
       ${isDark ? 'bg-neutral-900' : 'bg-gray-50'}`}
     >
       
-      {/*  MAIN CONTENT (3D View) */}
       <div className="absolute inset-0 z-0 flex items-center justify-center">
          {/* Background Gradient */}
          <div className={`absolute inset-0 transition-opacity duration-300 pointer-events-none ${
@@ -32,7 +33,7 @@ export const ShowcaseLayout = ({ title, icon, sidebarContent, mainContent }: Sho
         </div>
       </div>
 
-      {/*  FLOATING TOGGLE BUTTON */}
+      {/* FLOATING TOGGLE BUTTON */}
       <button
         onClick={() => setIsPanelOpen(!isPanelOpen)}
         className={`absolute top-4 left-4 z-30 p-3 rounded-full shadow-xl transition-all duration-300 hover:scale-110 flex items-center justify-center
@@ -90,7 +91,7 @@ export const ShowcaseLayout = ({ title, icon, sidebarContent, mainContent }: Sho
             <div className={`mt-4 pt-4 border-t text-xs text-center
                ${isDark ? 'border-white/10 text-gray-500' : 'border-black/5 text-gray-400'}
             `}>
-               Press 'X' to close this panel
+               {t('showcase.close_hint')}
             </div>
          </div>
       </div>

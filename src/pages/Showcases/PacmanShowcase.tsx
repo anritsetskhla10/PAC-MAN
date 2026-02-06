@@ -4,9 +4,11 @@ import { ShowcaseCanvas } from '../../components/UI/ShowcaseCanvas';
 import { ModeToggle, SelectionButton, ShowcaseSectionTitle } from '../../components/UI/ShowcaseUI';
 import { Pacman3D } from '../../components/Game/Player/Pacman3D';
 import { Pacman2D } from '../../components/Game/Player/Pacman2D';
+import { useTranslation } from 'react-i18next';
 
 export const PacmanShowcase = () => {
   const { settings, updateSetting } = useTheme();
+  const { t } = useTranslation();
   const isDark = settings.isDarkMode;
   const is3D = settings.is3DMode;
   
@@ -17,13 +19,13 @@ export const PacmanShowcase = () => {
       <ModeToggle is3D={is3D} onToggle={(v) => updateSetting('is3DMode', v)} isDark={isDark} />
 
       <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl text-sm text-blue-400 mb-6">
-          <p>The selected model will be used in the game.</p>
+          <p>{t('showcase.model_disclaimer')}</p>
       </div>
 
-      <ShowcaseSectionTitle title="Select Character" />
+      <ShowcaseSectionTitle title={t('showcase.select_char')} />
       <div className="flex flex-col gap-2">
         <SelectionButton 
-            label="Classic Pacman" icon="🟡" color="yellow" isDark={isDark}
+            label={t('items.classic_pacman')} icon="🟡" color="yellow" isDark={isDark}
             isActive={model === 'classic'} 
             onClick={() => updateSetting('playerModel', 'classic')} 
         />
@@ -45,7 +47,7 @@ export const PacmanShowcase = () => {
 
   return (
     <ShowcaseLayout 
-      title="Pacman Lab" 
+      title={t('nav.pacman_lab')} 
       icon="🟡" 
       sidebarContent={Sidebar} 
       mainContent={MainContent} 

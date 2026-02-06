@@ -1,0 +1,67 @@
+{
+  "nav": {
+    "game": "Game",
+    "ghost_lab": "Ghost Lab",
+    "pacman_lab": "Pacman Lab",
+    "food_lab": "Food Lab",
+    "settings": "Settings"
+  },
+  "settings": {
+    "title": "Settings",
+    "reset": "Reset Default",
+    "audio": "Audio Configuration",
+    "master_sound": "Master Sound",
+    "music_vol": "Music Volume",
+    "sfx_vol": "SFX Volume",
+    "difficulty": "Game Difficulty",
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard",
+    "graphics": "Graphics & Camera",
+    "dark_mode": "Dark Mode",
+    "3d_graphics": "3D Graphics",
+    "camera": "Camera Perspective",
+    "first_person": "First Person",
+    "overview": "Overview",
+    "customization": "Customization",
+    "wall_color": "Wall Color",
+    "food_color": "Food Color",
+    "background": "Background"
+  },
+  "game": {
+    "title": "PAC-MAN 3D",
+    "subtitle": "Ready to eat some dots?",
+    "start_btn": "START GAME",
+    "get_ready": "GET READY!",
+    "level": "Level",
+    "tap_start": "TAP TO START",
+    "paused": "PAUSED",
+    "resume": "RESUME",
+    "quit": "QUIT GAME",
+    "level_cleared": "LEVEL CLEARED!",
+    "current_score": "Current Score",
+    "time": "Time",
+    "next_level": "NEXT LEVEL",
+    "game_over": "GAME OVER",
+    "final_score": "Final Score",
+    "total_time": "Total Time",
+    "try_again": "TRY AGAIN",
+    "lives": "Lives",
+    "score": "Score"
+  },
+  "showcase": {
+    "inspect": "Inspect Item",
+    "choose_style": "Choose Style",
+    "choose_color": "Choose Color",
+    "select_char": "Select Character",
+    "visual_disclaimer": "* Visual inspection only. Does not affect gameplay settings.",
+    "model_disclaimer": "The selected model will be used in the game.",
+    "close_hint": "Press 'X' to close this panel"
+  },
+  "items": {
+    "classic_ghost": "Classic Scary",
+    "reaper_ghost": "Dark Reaper",
+    "eyes_ghost": "Eaten Eyes",
+    "classic_pacman": "Classic Pacman"
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "nav": {
+    "game": "თამაში",
+    "ghost_lab": "მოჩვენებები",
+    "pacman_lab": "პაკმენი",
+    "food_lab": "საკვები",
+    "settings": "პარამეტრები"
+  },
+  "settings": {
+    "title": "პარამეტრები",
+    "reset": "ნაგულისხმევზე დაბრუნება",
+    "audio": "ხმის პარამეტრები",
+    "master_sound": "მთავარი ხმა",
+    "music_vol": "მუსიკა",
+    "sfx_vol": "ეფექტები",
+    "difficulty": "სირთულე",
+    "easy": "მარტივი",
+    "medium": "საშუალო",
+    "hard": "რთული",
+    "graphics": "გრაფიკა და კამერა",
+    "dark_mode": "ღამის რეჟიმი",
+    "3d_graphics": "3D გრაფიკა",
+    "camera": "კამერის ხედვა",
+    "first_person": "პირველი პირი",
+    "overview": "ზედხედი",
+    "customization": "ვიზუალიზაცია",
+    "wall_color": "კედლის ფერი",
+    "food_color": "საკვების ფერი",
+    "background": "ფონი"
+  },
+  "game": {
+    "title": "PAC-MAN 3D",
+    "subtitle": "მზად ხარ ჭამისთვის?",
+    "start_btn": "თამაშის დაწყება",
+    "get_ready": "მოემზადე!",
+    "level": "დონე",
+    "tap_start": "დააჭირე დასაწყებად",
+    "paused": "პაუზა",
+    "resume": "გაგრძელება",
+    "quit": "გასვლა",
+    "level_cleared": "დონე გავლილია!",
+    "current_score": "მიმდინარე ქულა",
+    "time": "დრო",
+    "next_level": "შემდეგი დონე",
+    "game_over": "თამაში დასრულდა",
+    "final_score": "საბოლოო ქულა",
+    "total_time": "მთლიანი დრო",
+    "try_again": "სცადე თავიდან",
+    "lives": "სიცოცხლე",
+    "score": "ქულა"
+  },
+  "showcase": {
+    "inspect": "ნივთის დათვალიერება",
+    "choose_style": "სტილის არჩევა",
+    "choose_color": "ფერის არჩევა",
+    "select_char": "პერსონაჟის არჩევა",
+    "visual_disclaimer": "* მხოლოდ ვიზუალური დათვალიერება. არ მოქმედებს პარამეტრებზე.",
+    "model_disclaimer": "არჩეული მოდელი გამოყენებული იქნება თამაშში.",
+    "close_hint": "დააჭირე 'X'-ს პანელის დასახურად"
+  },
+  "items": {
+    "classic_ghost": "კლასიკური",
+    "reaper_ghost": "მომკელი",
+    "eyes_ghost": "თვალები",
+    "classic_pacman": "კლასიკური პაკმენი"
+  }
+}

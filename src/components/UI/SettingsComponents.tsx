@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 // --- WRAPPER FOR SECTIONS ---
 export const SettingsSection = ({ title, children }: { title: string, children: React.ReactNode }) => (
@@ -106,6 +107,31 @@ export const ColorSwatchGroup = ({ label, colors, selectedColor, onSelect }: Col
           );
         })}
       </div>
+    </div>
+  );
+};
+
+export const LanguageSwitcher = () => {
+  const { i18n } = useTranslation();
+
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+  };
+
+  return (
+    <div className="flex gap-2 justify-end mb-4">
+       <button 
+         onClick={() => changeLanguage('en')}
+         className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${i18n.language === 'en' ? 'bg-primary text-black' : 'bg-gray-200 dark:bg-white/10 text-gray-500'}`}
+       >
+         ENG
+       </button>
+       <button 
+         onClick={() => changeLanguage('ka')}
+         className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${i18n.language === 'ka' ? 'bg-primary text-black' : 'bg-gray-200 dark:bg-white/10 text-gray-500'}`}
+       >
+         GEO
+       </button>
     </div>
   );
 };

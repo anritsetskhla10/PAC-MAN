@@ -1,10 +1,22 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation } from 'react-i18next'; 
+
+const NavLinksList = ({ linkClass, onClick, t }: { linkClass: (props: { isActive: boolean }) => string, onClick: () => void, t: (key: string) => string }) => (
+  <>
+    <NavLink to="/" onClick={onClick} className={linkClass}>{t('nav.game')}</NavLink>
+    <NavLink to="/ghost-lab" onClick={onClick} className={linkClass}>{t('nav.ghost_lab')}</NavLink>
+    <NavLink to="/pacman-lab" onClick={onClick} className={linkClass}>{t('nav.pacman_lab')}</NavLink>
+    <NavLink to="/food-lab" onClick={onClick} className={linkClass}>{t('nav.food_lab')}</NavLink>
+    <NavLink to="/settings" onClick={onClick} className={linkClass}>{t('nav.settings')}</NavLink>
+  </>
+);
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { settings } = useTheme();
+  const { t } = useTranslation();
   const isDark = settings.isDarkMode;
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -22,25 +34,20 @@ export const Header = () => {
 
   return (
     <>
-      {/* HEADER BAR */}
       <header 
         className={`w-full min-h-16 h-auto border-b backdrop-blur-md flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-100 transition-colors duration-300 pt-[env(safe-area-inset-top)]
         ${isDark ? 'bg-neutral-900/90 border-white/10' : 'bg-white/90 border-gray-200'}`}
       >
         <div className="w-full h-16 flex items-center justify-between">
-            
-            {/* Logo */}
             <div className="text-xl font-bold text-primary tracking-wide z-101 flex items-center gap-2">
               <span>PAC-MAN</span>
               <span className="text-xs bg-primary text-black px-1.5 py-0.5 rounded font-bold">LAB</span>
             </div>
 
-            {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-6">
-              <NavLinks linkClass={desktopLinkClass} onClick={() => {}} />
+              <NavLinksList linkClass={desktopLinkClass} onClick={() => {}} t={t} />
             </nav>
 
-            {/* Mobile Hamburger Button */}
             <button 
               onClick={toggleMenu}
               className="md:hidden z-101 p-2 text-primary focus:outline-none relative"
@@ -55,26 +62,15 @@ export const Header = () => {
         </div>
       </header>
 
-      {/* Mobile Menu Overlay */}
       <div 
         className={`fixed inset-0 bg-black/95 backdrop-blur-xl z-90 transition-all duration-300 md:hidden flex flex-col items-center justify-center gap-8 pt-[env(safe-area-inset-top)] ${
           isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
         }`}
       >
          <div className="flex flex-col items-center gap-6 text-center">
-            <NavLinks linkClass={mobileLinkClass} onClick={closeMenu} />
+            <NavLinksList linkClass={mobileLinkClass} onClick={closeMenu} t={t} />
          </div>
       </div>
     </>
   );
 };
-
-const NavLinks = ({ linkClass, onClick }: { linkClass: (state: { isActive: boolean }) => string, onClick: () => void }) => (
-  <>
-    <NavLink to="/" onClick={onClick} className={linkClass}>Game</NavLink>
-    <NavLink to="/ghost-lab" onClick={onClick} className={linkClass}>Ghost Lab</NavLink>
-    <NavLink to="/pacman-lab" onClick={onClick} className={linkClass}>Pacman Lab</NavLink>
-    <NavLink to="/food-lab" onClick={onClick} className={linkClass}>Food Lab</NavLink>
-    <NavLink to="/settings" onClick={onClick} className={linkClass}>Settings</NavLink>
-  </>
-);
