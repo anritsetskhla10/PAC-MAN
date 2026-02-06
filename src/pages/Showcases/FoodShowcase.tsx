@@ -5,11 +5,13 @@ import { ShowcaseCanvas } from '../../components/UI/ShowcaseCanvas';
 import { ModeToggle, SelectionButton, ShowcaseSectionTitle } from '../../components/UI/ShowcaseUI';
 import { Food3D } from '../../components/Game/Foods/Food3D';
 import { Food2D } from '../../components/Game/Foods/Food2D';
+import { useTranslation } from 'react-i18next';
 
 type FoodType = 'dot' | 'power' | 'cherry' | 'strawberry' | 'life';
 
 export const FoodShowcase = () => {
   const { settings } = useTheme();
+  const { t } = useTranslation();
   const isDark = settings.isDarkMode;
   
   const [foodType, setFoodType] = useState<FoodType>('cherry');
@@ -19,7 +21,7 @@ export const FoodShowcase = () => {
     <div>
       <ModeToggle is3D={localIs3D} onToggle={setLocalIs3D} isDark={isDark} />
 
-      <ShowcaseSectionTitle title="Inspect Item" />
+      <ShowcaseSectionTitle title={t('showcase.inspect')} />
       <div className="flex flex-col gap-2">
         {(['dot', 'power', 'cherry', 'strawberry', 'life'] as const).map((type) => (
            <SelectionButton
@@ -35,7 +37,7 @@ export const FoodShowcase = () => {
       </div>
       
       <div className="mt-6 text-xs text-gray-400 text-center">
-        * Visual inspection only. Does not affect gameplay settings.
+        {t('showcase.visual_disclaimer')}
       </div>
     </div>
   );
@@ -54,7 +56,7 @@ export const FoodShowcase = () => {
 
   return (
     <ShowcaseLayout 
-      title="Food Lab" 
+      title={t('nav.food_lab')} 
       icon="🍒" 
       sidebarContent={Sidebar} 
       mainContent={MainContent} 

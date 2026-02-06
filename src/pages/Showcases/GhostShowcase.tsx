@@ -6,9 +6,11 @@ import { ModeToggle, SelectionButton, ColorButton, ShowcaseSectionTitle } from '
 import { ClassicGhost } from '../../components/Game/3D/Ghosts/ClassicGhost';
 import { ReaperGhost } from '../../components/Game/3D/Ghosts/ReaperGhost';
 import { Eyes3D } from '../../components/Game/3D/Ghosts/Eyes3D';
+import { useTranslation } from 'react-i18next';
 
 export const GhostShowcase = () => {
   const { settings, updateSetting } = useTheme();
+  const { t } = useTranslation();
   
   const variant = settings.ghostVariant; 
   const ghostColor = settings.ghostColor; 
@@ -25,25 +27,25 @@ export const GhostShowcase = () => {
     <div>
        <ModeToggle is3D={is3D} onToggle={(v) => updateSetting('is3DMode', v)} isDark={isDark} />
 
-       <ShowcaseSectionTitle title="Choose Style" />
+       <ShowcaseSectionTitle title={t('showcase.choose_style')} />
        <div className="flex flex-col gap-2 mb-6">
           <SelectionButton 
-            label="Classic Scary" icon="👻" color="blue" isDark={isDark}
+            label={t('items.classic_ghost')} icon="👻" color="blue" isDark={isDark}
             isActive={variant === 1} onClick={() => updateSetting('ghostVariant', 1)} 
           />
           <SelectionButton 
-            label="Dark Reaper" icon="💀" color="purple" isDark={isDark}
+            label={t('items.reaper_ghost')} icon="💀" color="purple" isDark={isDark}
             isActive={variant === 2} onClick={() => updateSetting('ghostVariant', 2)} 
           />
           <SelectionButton 
-            label="Eaten Eyes" icon="👀" color="indigo" isDark={isDark}
+            label={t('items.eyes_ghost')} icon="👀" color="indigo" isDark={isDark}
             isActive={variant === 3} onClick={() => updateSetting('ghostVariant', 3)} 
           />
        </div>
 
        {variant !== 3 && (
          <>
-            <ShowcaseSectionTitle title="Choose Color" />
+            <ShowcaseSectionTitle title={t('showcase.choose_color')} />
             <div className="flex gap-3 flex-wrap">
               {colors.map(c => (
                 <ColorButton 
@@ -68,7 +70,7 @@ export const GhostShowcase = () => {
 
   return (
     <ShowcaseLayout 
-      title="Ghost Lab" 
+      title={t('nav.ghost_lab')} 
       icon="🧪" 
       sidebarContent={Sidebar} 
       mainContent={MainContent} 

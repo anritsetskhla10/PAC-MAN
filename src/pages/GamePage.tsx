@@ -10,12 +10,14 @@ import { usePlayerHeading } from '../hooks/usePlayerHeading';
 import { useIsMobile } from '../hooks/useIsMobile'; 
 import { Link } from 'react-router-dom'; 
 import { formatTime } from '../utils/formatTime'; 
+import { useTranslation } from 'react-i18next';
 
 export const GamePage = () => {
   const { settings, updateSetting } = useTheme();
   const { score, gameStatus, pauseGame, lives, level, elapsedTime } = useGame();
   const playerHeading = usePlayerHeading();
   const isMobile = useIsMobile();
+  const { t } = useTranslation();
   
   const boardContainerRef = useRef<HTMLDivElement>(null);
   const [boardDimensions, setBoardDimensions] = useState({ width: 0, height: 0 });
@@ -94,7 +96,9 @@ export const GamePage = () => {
            
            {/* Lives Display */}
            <div className="flex flex-col items-center gap-0.5">
-                <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest landscape:max-lg:hidden">Lives</span>
+                <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest landscape:max-lg:hidden">
+                    {t('game.lives')}
+                </span>
                 <div className="flex gap-1">
                     {[...Array(3)].map((_, i) => (
                     <div 
@@ -113,7 +117,9 @@ export const GamePage = () => {
 
            {/* Score Display */}
            <div className="flex flex-col items-center">
-                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest landscape:max-lg:writing-vertical-rl">Score</span>
+                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest landscape:max-lg:writing-vertical-rl">
+                    {t('game.score')}
+                </span>
                 <div className="bg-primary/10 border border-primary/40 px-4 py-1 rounded-full shadow-[0_0_10px_rgba(0,212,255,0.2)]">
                     <span className="text-primary font-bold text-lg md:text-xl landscape:max-lg:writing-vertical-rl landscape:max-lg:rotate-180">
                         {score}
@@ -123,7 +129,9 @@ export const GamePage = () => {
 
            {/* Timer Display */}
            <div className="flex flex-col items-center">
-                <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest landscape:max-lg:hidden">Time</span>
+                <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest landscape:max-lg:hidden">
+                    {t('game.time')}
+                </span>
                 <span className="text-white font-mono font-bold text-lg tabular-nums tracking-wider">
                     {formatTime(elapsedTime)}
                 </span>
@@ -131,7 +139,9 @@ export const GamePage = () => {
 
            {/* Level Indicator */}
            <div className="flex flex-col items-center">
-               <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest landscape:max-lg:hidden">Level</span>
+               <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest landscape:max-lg:hidden">
+                    {t('game.level')}
+               </span>
                <span className="text-white font-bold text-lg">{level}</span>
            </div>
 
