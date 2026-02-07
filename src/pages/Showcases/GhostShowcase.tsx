@@ -103,7 +103,7 @@ export const GhostShowcase = () => {
        
        {variant >= 4 && (
            <div className="text-xs text-gray-400 mt-2 text-center">
-               Kacebi Squad models use their original textures.
+               Kacebi Squad models  use their original textures.
            </div>
        )}
     </div>
