@@ -40,7 +40,7 @@ export const ModeToggle = ({ is3D, onToggle, isDark }: ModeToggleProps) => (
 // --- არჩევის ღილაკი ---
 interface SelectionBtnProps {
   label: string;
-  icon?: string;
+  icon: React.ReactNode;
   isActive: boolean;
   onClick: () => void;
   color?: string; 

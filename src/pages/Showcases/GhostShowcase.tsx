@@ -2,11 +2,22 @@ import { useTheme } from '../../context/ThemeContext';
 import { ShowcaseLayout } from '../../components/layout/ShowcaseLayout';
 import { ShowcaseCanvas } from '../../components/UI/ShowcaseCanvas';
 import { ModeToggle, SelectionButton, ColorButton, ShowcaseSectionTitle } from '../../components/UI/ShowcaseUI';
-// მოდელები
+import { useTranslation } from 'react-i18next';
+
 import { ClassicGhost } from '../../components/Game/3D/Ghosts/ClassicGhost';
 import { ReaperGhost } from '../../components/Game/3D/Ghosts/ReaperGhost';
 import { Eyes3D } from '../../components/Game/3D/Ghosts/Eyes3D';
-import { useTranslation } from 'react-i18next';
+import { Model as KakabaModel } from '../../components/Game/3D/Models/Kakaba';
+import { Model as JanelaModel } from '../../components/Game/3D/Models/Janela';
+import { Model as IkoModel } from '../../components/Game/3D/Models/Iko';
+import { Model as JafaraModel } from '../../components/Game/3D/Models/Jafara';
+
+const ColorSquare = ({ color }: { color: string }) => (
+  <div 
+    className="w-5 h-5 rounded-md shadow-sm border border-white/20" 
+    style={{ backgroundColor: color }} 
+  />
+);
 
 export const GhostShowcase = () => {
   const { settings, updateSetting } = useTheme();
@@ -22,6 +33,7 @@ export const GhostShowcase = () => {
   let yPos = 0;
   if (variant === 2) yPos = 0.6;
   if (variant === 3) yPos = 0.3;
+  if (variant >= 4) yPos = -0.9
 
   const Sidebar = (
     <div>
@@ -41,9 +53,40 @@ export const GhostShowcase = () => {
             label={t('items.eyes_ghost')} icon="👀" color="indigo" isDark={isDark}
             isActive={variant === 3} onClick={() => updateSetting('ghostVariant', 3)} 
           />
+
+          <div className="h-px bg-white/10 my-2 mx-4" />
+          <p className="text-xs text-gray-500 mb-2 px-1 uppercase font-bold tracking-wider">Kacebi Squad</p>
+
+          <SelectionButton 
+            label="Kakaba" 
+            icon={<ColorSquare color="#ef4444" />} 
+            color="red" isDark={isDark}
+            isActive={variant === 4} onClick={() => updateSetting('ghostVariant', 4)} 
+          />
+          
+          <SelectionButton 
+            label="Janela" 
+            icon={<ColorSquare color="#ec4899" />} 
+            color="pink" isDark={isDark}
+            isActive={variant === 5} onClick={() => updateSetting('ghostVariant', 5)} 
+          />
+          
+          <SelectionButton 
+            label="Iko" 
+            icon={<ColorSquare color="#06b6d4" />} 
+            color="cyan" isDark={isDark}
+            isActive={variant === 6} onClick={() => updateSetting('ghostVariant', 6)} 
+          />
+          
+          <SelectionButton 
+            label="Jafara" 
+            icon={<ColorSquare color="#f97316" />} 
+            color="orange" isDark={isDark}
+            isActive={variant === 7} onClick={() => updateSetting('ghostVariant', 7)} 
+          />
        </div>
 
-       {variant !== 3 && (
+       {variant < 3 && (
          <>
             <ShowcaseSectionTitle title={t('showcase.choose_color')} />
             <div className="flex gap-3 flex-wrap">
@@ -57,14 +100,24 @@ export const GhostShowcase = () => {
             </div>
          </>
        )}
+       
+       {variant >= 4 && (
+           <div className="text-xs text-gray-400 mt-2 text-center">
+               Kacebi Squad models use their original textures.
+           </div>
+       )}
     </div>
   );
 
   const MainContent = (
-    <ShowcaseCanvas isDark={isDark} scale={1.8} position={[0, yPos, 0]}>
+    <ShowcaseCanvas isDark={isDark} scale={variant >= 4 ? 1.6 : 1.8} position={[0, yPos, 0]}>
         {variant === 1 && <ClassicGhost color={ghostColor} />}
         {variant === 2 && <ReaperGhost color={ghostColor} />}
         {variant === 3 && <Eyes3D />}
+        {variant === 4 && <KakabaModel />}
+        {variant === 5 && <JanelaModel />}
+        {variant === 6 && <IkoModel />}
+        {variant === 7 && <JafaraModel />}
     </ShowcaseCanvas>
   );
 
