@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { ShowcaseLayout } from '../../components/layout/ShowcaseLayout';
 import { ShowcaseCanvas } from '../../components/UI/ShowcaseCanvas';
@@ -22,7 +23,8 @@ const ColorSquare = ({ color }: { color: string }) => (
 export const GhostShowcase = () => {
   const { settings, updateSetting } = useTheme();
   const { t } = useTranslation();
-  
+  const [previewState, setPreviewState] = useState<string>('IDLE');
+
   const variant = settings.ghostVariant; 
   const ghostColor = settings.ghostColor; 
   const isDark = settings.isDarkMode;
@@ -33,11 +35,36 @@ export const GhostShowcase = () => {
   let yPos = 0;
   if (variant === 2) yPos = 0.6;
   if (variant === 3) yPos = 0.3;
-  if (variant >= 4) yPos = -0.9
+  if (variant >= 4) yPos = -0.9;
 
   const Sidebar = (
     <div>
        <ModeToggle is3D={is3D} onToggle={(v) => updateSetting('is3DMode', v)} isDark={isDark} />
+       {variant >= 4 && (
+         <div className="mb-6">
+           <ShowcaseSectionTitle title="Animation Test" />
+           <div className="flex gap-2">
+             <button 
+               onClick={() => setPreviewState('IDLE')}
+               className={`px-3 py-1 text-xs rounded border ${previewState === 'IDLE' ? 'bg-blue-500 text-white border-blue-500' : 'text-gray-400 border-gray-600'}`}
+             >
+               Idle
+             </button>
+             <button 
+               onClick={() => setPreviewState('CHASING')}
+               className={`px-3 py-1 text-xs rounded border ${previewState === 'CHASING' ? 'bg-green-500 text-white border-green-500' : 'text-gray-400 border-gray-600'}`}
+             >
+               Run
+             </button>
+             <button 
+               onClick={() => setPreviewState('SCARED')}
+               className={`px-3 py-1 text-xs rounded border ${previewState === 'SCARED' ? 'bg-purple-500 text-white border-purple-500' : 'text-gray-400 border-gray-600'}`}
+             >
+               Scared
+             </button>
+           </div>
+         </div>
+       )}
 
        <ShowcaseSectionTitle title={t('showcase.choose_style')} />
        <div className="flex flex-col gap-2 mb-6">
@@ -103,7 +130,7 @@ export const GhostShowcase = () => {
        
        {variant >= 4 && (
            <div className="text-xs text-gray-400 mt-2 text-center">
-               Kacebi Squad models  use their original textures.
+               Kacebi Squad models use their original textures.
            </div>
        )}
     </div>
@@ -114,10 +141,11 @@ export const GhostShowcase = () => {
         {variant === 1 && <ClassicGhost color={ghostColor} />}
         {variant === 2 && <ReaperGhost color={ghostColor} />}
         {variant === 3 && <Eyes3D />}
-        {variant === 4 && <KakabaModel />}
-        {variant === 5 && <JanelaModel />}
-        {variant === 6 && <IkoModel />}
-        {variant === 7 && <JafaraModel />}
+
+        {variant === 4 && <KakabaModel ghostState={previewState} />}
+        {variant === 5 && <JanelaModel ghostState={previewState} />}
+        {variant === 6 && <IkoModel ghostState={previewState} />}
+        {variant === 7 && <JafaraModel ghostState={previewState} />}
     </ShowcaseCanvas>
   );
 

@@ -1,65 +1,75 @@
 import * as THREE from 'three'
-import React, { useEffect } from 'react'
-import { useGraph } from '@react-three/fiber'
+import React, { useEffect, useRef } from 'react'
 import { useGLTF, useAnimations } from '@react-three/drei'
-import { type GLTF, SkeletonUtils } from 'three-stdlib'
 
-type ActionName = 'IdleV4.2(maya_head)'
-
-interface GLTFAction extends THREE.AnimationClip {
-  name: ActionName
+type ModelProps = React.ComponentProps<'group'> & {
+  ghostState: string; 
 }
 
-type GLTFResult = GLTF & {
-  nodes: {
-    avaturn_body: THREE.SkinnedMesh
-    avaturn_glasses_0: THREE.SkinnedMesh
-    avaturn_glasses_1: THREE.SkinnedMesh
-    avaturn_shoes_0: THREE.SkinnedMesh
-    avaturn_look_0: THREE.SkinnedMesh
-    Hips: THREE.Bone
-  }
-  materials: {
-    avaturn_body_material: THREE.MeshStandardMaterial
-    avaturn_glasses_0_material: THREE.MeshStandardMaterial
-    avaturn_glasses_1_material: THREE.MeshStandardMaterial
-    avaturn_shoes_0_material: THREE.MeshStandardMaterial
-    avaturn_look_0_material: THREE.MeshStandardMaterial
-  }
-  animations: GLTFAction[]
-}
+export function Model({ ghostState, ...props }: ModelProps) {
+  const group = useRef<THREE.Group>(null)
 
-export function Model(props: React.JSX.IntrinsicElements['group']) {
-  const group = React.useRef<THREE.Group>(null)
-  const { scene, animations } = useGLTF('/models/kakaba.glb')
-  const clone = React.useMemo(() => SkeletonUtils.clone(scene), [scene])
-  const { nodes, materials } = useGraph(clone) as unknown as GLTFResult
-  const { actions } = useAnimations(animations, group)
+  const idle = useGLTF('/models/kakaba-wait.glb')
+  const chase = useGLTF('/models/kakaba-chase.glb')
+  const scared = useGLTF('/models/kakaba-scared.glb')
+
+  const idleAnim = useAnimations(idle.animations, idle.scene)
+  const chaseAnim = useAnimations(chase.animations, chase.scene)
+  const scaredAnim = useAnimations(scared.animations, scared.scene)
+
+  const isScared = ghostState === 'SCARED'
+  const isRunning = ghostState === 'CHASING' || ghostState === 'SCATTER' || ghostState === 'EATEN'
+  const isIdle = !isScared && !isRunning
 
   useEffect(() => {
-    const action = actions['IdleV4.2(maya_head)'];
-    if (action) {
-      action.reset().fadeIn(0.5).play();
+    const playAnim = (
+      actions: { [key: string]: THREE.AnimationAction | null }, 
+      shouldPlay: boolean
+    ) => {
+      const action = Object.values(actions)[0]
+      
+      if (action) {
+        if (shouldPlay) action.reset().fadeIn(0.2).play()
+        else action.fadeOut(0.2)
+      }
     }
-    return () => {
-      action?.fadeOut(0.5);
-    };
-  }, [actions]);
+
+    playAnim(idleAnim.actions, isIdle)
+    playAnim(chaseAnim.actions, isRunning)
+    playAnim(scaredAnim.actions, isScared)
+
+  }, [ghostState, isIdle, isRunning, isScared, idleAnim, chaseAnim, scaredAnim])
+
+  const adjustPosition: [number, number, number] = [0, 0, 0]
 
   return (
     <group ref={group} {...props} dispose={null}>
-      <group name="Scene">
-        <group name="Armature">
-          <primitive object={nodes.Hips} />
-          <skinnedMesh name="avaturn_body" geometry={nodes.avaturn_body.geometry} material={materials.avaturn_body_material} skeleton={nodes.avaturn_body.skeleton} />
-          <skinnedMesh name="avaturn_glasses_0" geometry={nodes.avaturn_glasses_0.geometry} material={materials.avaturn_glasses_0_material} skeleton={nodes.avaturn_glasses_0.skeleton} />
-          <skinnedMesh name="avaturn_glasses_1" geometry={nodes.avaturn_glasses_1.geometry} material={materials.avaturn_glasses_1_material} skeleton={nodes.avaturn_glasses_1.skeleton} />
-          <skinnedMesh name="avaturn_shoes_0" geometry={nodes.avaturn_shoes_0.geometry} material={materials.avaturn_shoes_0_material} skeleton={nodes.avaturn_shoes_0.skeleton} />
-          <skinnedMesh name="avaturn_look_0" geometry={nodes.avaturn_look_0.geometry} material={materials.avaturn_look_0_material} skeleton={nodes.avaturn_look_0.skeleton} />
-        </group>
-      </group>
+
+      <primitive 
+        object={idle.scene} 
+        visible={isIdle} 
+        position={adjustPosition}
+        scale={isIdle ? 1 : 0} 
+      />
+
+      <primitive 
+        object={chase.scene} 
+        visible={isRunning} 
+        position={adjustPosition}
+        scale={isRunning ? 1 : 0} 
+      />
+
+      <primitive 
+        object={scared.scene} 
+        visible={isScared} 
+        position={adjustPosition}
+        scale={isScared ? 1 : 0} 
+      />
+
     </group>
   )
 }
 
-useGLTF.preload('/models/kakaba.glb')
+useGLTF.preload('/models/kakaba-wait.glb')
+useGLTF.preload('/models/kakaba-chase.glb')
+useGLTF.preload('/models/kakaba-scared.glb')

@@ -13,7 +13,9 @@ export const PacmanShowcase = () => {
   const { t } = useTranslation();
   const isDark = settings.isDarkMode;
   const is3D = settings.is3DMode;
-  
+
+  const [animationState, setAnimationState] = useState<string>('IDLE');
+
   const [selectedModel, setSelectedModel] = useState<'classic' | 'labadze'>(settings.playerModel === 'avatar' ? 'labadze' : 'classic');
 
   const handleModelChange = (model: 'classic' | 'labadze') => {
@@ -28,6 +30,32 @@ export const PacmanShowcase = () => {
       <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl text-sm text-blue-400 mb-6">
           <p>{t('showcase.model_disclaimer')}</p>
       </div>
+
+      {selectedModel === 'labadze' && is3D && (
+         <div className="mb-6">
+           <ShowcaseSectionTitle title="Animation Test" />
+           <div className="flex gap-2">
+             <button 
+               onClick={() => setAnimationState('IDLE')}
+               className={`px-3 py-1 text-xs rounded border ${animationState === 'IDLE' ? 'bg-blue-500 text-white border-blue-500' : 'text-gray-400 border-gray-600'}`}
+             >
+               Idle
+             </button>
+             <button 
+               onClick={() => setAnimationState('MOVING')}
+               className={`px-3 py-1 text-xs rounded border ${animationState === 'MOVING' ? 'bg-green-500 text-white border-green-500' : 'text-gray-400 border-gray-600'}`}
+             >
+               Run
+             </button>
+             <button 
+               onClick={() => setAnimationState('DYING')}
+               className={`px-3 py-1 text-xs rounded border ${animationState === 'DYING' ? 'bg-red-500 text-white border-red-500' : 'text-gray-400 border-gray-600'}`}
+             >
+               Death
+             </button>
+           </div>
+         </div>
+       )}
 
       <ShowcaseSectionTitle title={t('showcase.select_char')} />
       <div className="flex flex-col gap-2">
@@ -48,7 +76,7 @@ export const PacmanShowcase = () => {
   const MainContent = is3D ? (
     <ShowcaseCanvas isDark={isDark} scale={selectedModel === 'labadze' ? 1.8 : 2.5} position={[0, -0.9, 0]}>
         {selectedModel === 'labadze' ? (
-           <LabadzeModel />
+           <LabadzeModel playerState={animationState} />
         ) : (
            <Pacman3D isShowcase={true} />
         )}
