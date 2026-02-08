@@ -29,10 +29,6 @@ export const Board3D = ({ heading }: Board3DProps) => {
         <Board isMinimap={true} />
       </div>
 
-      {!isMobile && (
-        <div className="absolute top-1/2 left-1/2 w-1 h-1 bg-white/50 rounded-full -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none mix-blend-difference" />
-      )}
-
       {/* 3D SCENE */}
       <Canvas 
         shadows={!isMobile} 
@@ -48,6 +44,7 @@ export const Board3D = ({ heading }: Board3DProps) => {
         {!isMobile && <fog attach="fog" args={['#050505', 0, 40]} />}
         
         <Pacman3D 
+           isShowcase={false}
            isSpectator={settings.isSpectatorMode} 
            heading={heading} 
         />
@@ -63,7 +60,7 @@ export const Board3D = ({ heading }: Board3DProps) => {
           })
         )}
 
-        {/*  Dynamic Bonus Item */}
+        {/* Dynamic Bonus Item */}
         {activeBonus && (
            <group position={[activeBonus.x, 0.5, activeBonus.z]}>
                {activeBonus.type === 'CHERRY' && <Food3D consumableVariant="cherry" />}

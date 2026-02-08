@@ -17,9 +17,16 @@ export function Model({ ghostState, ...props }: ModelProps) {
   const chaseAnim = useAnimations(chase.animations, chase.scene)
   const scaredAnim = useAnimations(scared.animations, scared.scene)
 
-  const isScared = ghostState === 'SCARED'
-  const isRunning = ghostState === 'CHASING' || ghostState === 'SCATTER' || ghostState === 'EATEN'
-  const isIdle = !isScared && !isRunning
+  const isScared = ghostState === 'SCARED' || ghostState === 'FLASHING';
+  
+  const isRunning = 
+    ghostState === 'NORMAL' || 
+    ghostState === 'CHASING' || 
+    ghostState === 'SCATTER' || 
+    ghostState === 'EATEN' || 
+    ghostState === 'EYES';
+
+  const isIdle = !isScared && !isRunning;
 
   useEffect(() => {
     const playAnim = (
@@ -29,8 +36,16 @@ export function Model({ ghostState, ...props }: ModelProps) {
       const action = Object.values(actions)[0]
       
       if (action) {
-        if (shouldPlay) action.reset().fadeIn(0.2).play()
-        else action.fadeOut(0.2)
+        if (shouldPlay) {
+            action.reset().fadeIn(0.2).play();
+            if (ghostState === 'EATEN' || ghostState === 'EYES') {
+                action.timeScale = 1.5; 
+            } else {
+                action.timeScale = 1;
+            }
+        } else {
+            action.fadeOut(0.2);
+        }
       }
     }
 

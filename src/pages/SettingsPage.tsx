@@ -19,6 +19,20 @@ export const SettingsPage = () => {
       updateSetting('audio', { ...currentAudio, [key]: val });
   };
 
+  const handleThemeSwitch = (theme: 'classic' | 'labadze') => {
+    updateSetting('gameTheme', theme);
+
+    if (theme === 'labadze') {
+      updateSetting('playerModel', 'avatar'); 
+      updateSetting('ghostVariant', 4);      
+      updateSetting('is3DMode', true);       
+      updateSetting('wallColor', '#4c1d95'); 
+    } else {
+      updateSetting('playerModel', 'classic');
+      updateSetting('ghostVariant', 1);
+    }
+  };
+
   useEffect(() => {
     const root = document.documentElement;
     if (settings.isDarkMode) {
@@ -46,9 +60,50 @@ export const SettingsPage = () => {
                     {t('settings.reset')}
                 </button>
             </div>
-            {/* Language Switcher */}
             <LanguageSwitcher />
         </div>
+        <SettingsSection title="Game Edition">
+            <div className="grid grid-cols-2 gap-4">
+                <button
+                    onClick={() => handleThemeSwitch('classic')}
+                    className={`relative p-4 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-2 ${
+                        settings.gameTheme === 'classic' 
+                        ? 'border-yellow-400 bg-yellow-400/10 shadow-[0_0_20px_rgba(250,204,21,0.2)]' 
+                        : 'border-border-color/30 bg-bg-card/30 hover:bg-bg-card/50 grayscale'
+                    }`}
+                >
+                    <span className="text-3xl">🍒</span>
+                    <span className={`font-bold ${settings.gameTheme === 'classic' ? 'text-yellow-400' : 'text-gray-400'}`}>
+                        Classic
+                    </span>
+                    {settings.gameTheme === 'classic' && (
+                        <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+                    )}
+                </button>
+
+                <button
+                    onClick={() => handleThemeSwitch('labadze')}
+                    className={`relative p-4 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-2 ${
+                        settings.gameTheme === 'labadze' 
+                        ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.2)]' 
+                        : 'border-border-color/30 bg-bg-card/30 hover:bg-bg-card/50 grayscale'
+                    }`}
+                >
+                    <span className="text-3xl">😎</span>
+                    <span className={`font-bold ${settings.gameTheme === 'labadze' ? 'text-blue-400' : 'text-gray-400'}`}>
+                        Labadze
+                    </span>
+                    {settings.gameTheme === 'labadze' && (
+                        <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                    )}
+                </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+                {settings.gameTheme === 'labadze' 
+                    ? 'Includes custom characters, 3D world & voices.' 
+                    : 'Original arcade experience.'}
+            </p>
+        </SettingsSection>
 
         {/* AUDIO CONFIGURATION*/}
         <SettingsSection title={t('settings.audio')}>
@@ -59,7 +114,6 @@ export const SettingsPage = () => {
                     onToggle={() => updateAudio('masterMuted', !settings.audio.masterMuted)} 
                 />
                 
-                {/* Sliders Container */}
                 <div className={`transition-all duration-300 ${settings.audio.masterMuted ? 'opacity-40 grayscale pointer-events-none' : 'opacity-100'}`}>
                     <div className="h-px bg-border-color/30 my-3" />
                     <RangeSlider 
@@ -105,7 +159,6 @@ export const SettingsPage = () => {
                 />
             </div>
 
-            {/* Camera Perspective Sub-option */}
             {settings.is3DMode && (
                 <div className="mt-4 p-4 bg-primary/5 rounded-xl border border-primary/20 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
                     <span className="text-sm text-primary font-bold">{t('settings.camera')}</span>
@@ -143,7 +196,6 @@ export const SettingsPage = () => {
             </div>
         </SettingsSection>
 
-        {/* Bottom Spacer for Scrolling */}
         <div className="h-20" />
         
       </div>

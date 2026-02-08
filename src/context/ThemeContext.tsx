@@ -8,6 +8,7 @@ export interface ThemeContextType {
 }
 
 export const defaultSettings: ThemeSettings = {
+  gameTheme: 'classic',
   wallColor: '#1e3a8a',
   foodColor: '#fef08a',
   gameBg: '#000000',
