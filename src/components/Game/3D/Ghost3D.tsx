@@ -9,6 +9,11 @@ import { ReaperGhost } from './Ghosts/ReaperGhost';
 import { Eyes3D } from './Ghosts/Eyes3D'; 
 import { TileType, type GhostState } from '../../../types'; 
 
+import { Model as KakabaModel } from './Models/Kakaba';
+import { Model as JanelaModel } from './Models/Janela';
+import { Model as IkoModel } from './Models/Iko';
+import { Model as JafaraModel } from './Models/Jafara';
+
 interface Ghost3DProps {
   x: number;
   z: number;
@@ -39,12 +44,13 @@ export const Ghost3D = ({ x, z, color, state }: Ghost3DProps) => {
   const prevPos = useRef({ x, z });
   const targetRotation = useRef(0);
 
-  // Audio Calculations
   const masterMuted = settings.audio.masterMuted;
   const sfxVolume = settings.audio.sfxVolume;
   const isSfxEnabled = !masterMuted && sfxVolume > 0;
   
   const shouldPlaySound = isSfxEnabled && gameStatus === 'playing';
+  
+  const isLabadzeGhost = settings.gameTheme === 'labadze' || settings.ghostVariant >= 4;
 
   useEffect(() => {
     if (audioRef.current) {
@@ -74,11 +80,9 @@ export const Ghost3D = ({ x, z, color, state }: Ghost3DProps) => {
     }
 
     let volume = 1 - (distance / MAX_AUDIBLE_DISTANCE);
-    
     if (isWallBetween(playerPos.x, playerPos.z, x, z, layout)) {
         volume *= 0.2;
     }
-
     audioRef.current.setVolume(volume * sfxVolume * 1.5);
   });
 
@@ -97,6 +101,7 @@ export const Ghost3D = ({ x, z, color, state }: Ghost3DProps) => {
     const targetPos = new Vector3(x, 0.5, z);
     const speed = state === 'EATEN' ? 15.0 : 6.0; 
     currentPos.lerp(targetPos, speed * delta);
+    
     const tRotation = targetRotation.current;
     const cRotation = groupRef.current.rotation.y;
     let diff = tRotation - cRotation;
@@ -106,8 +111,12 @@ export const Ghost3D = ({ x, z, color, state }: Ghost3DProps) => {
     groupRef.current.rotation.y += diff * rotationSpeed * delta; 
     
     if (state !== 'EATEN') {
-        const t = stateThree.clock.getElapsedTime();
-        groupRef.current.position.y = 0.5 + Math.sin(t * 3) * 0.05;
+        if (isLabadzeGhost) {
+            groupRef.current.position.y = 0.5; 
+        } else {
+            const t = stateThree.clock.getElapsedTime();
+            groupRef.current.position.y = 0.5 + Math.sin(t * 3) * 0.05;
+        }
     } else {
         groupRef.current.position.y = 0.5; 
     }
@@ -115,15 +124,45 @@ export const Ghost3D = ({ x, z, color, state }: Ghost3DProps) => {
 
   const displayColor = state === 'SCARED' ? '#0000FF' : color;
 
+  const renderLabadzeGhost = () => {
+      if (color === '#FF0000') return <KakabaModel ghostState={state} />;
+      if (color === '#FFB8FF') return <JanelaModel ghostState={state} />;
+      if (color === '#00FFFF') return <IkoModel ghostState={state} />;
+      if (color === '#FFB852') return <JafaraModel ghostState={state} />;
+      return <KakabaModel ghostState={state} />;
+  }
+
+  const getScale = (): [number, number, number] => {
+    if (state === 'EATEN' && !isLabadzeGhost) return [0.8, 0.8, 0.8]; 
+    if (isLabadzeGhost) return [0.65, 0.65, 0.65]; 
+    return [0.6, 0.6, 0.6]; 
+  };
+
+  const getYPosition = () => {
+    if (state === 'EATEN' && !isLabadzeGhost) return 0; 
+    if (isLabadzeGhost) return -0.6; 
+    return -0.2; 
+  };
+
   return (
     <group ref={groupRef} position={[x, 0.5, z]}>
-      <group scale={[0.6, 0.6, 0.6]} position={[0, -0.2, 0]}> 
-        {state === 'EATEN' ? <Eyes3D /> : (
-           <>
-             {settings.ghostVariant === 1 && <ClassicGhost color={displayColor} />}
-             {settings.ghostVariant === 2 && <ReaperGhost color={displayColor} />}
-           </>
+      
+      <group scale={getScale()} position={[0, getYPosition(), 0]}> 
+        
+        {isLabadzeGhost ? (
+             renderLabadzeGhost()
+        ) : (
+             state === 'EATEN' ? (
+                 <Eyes3D /> 
+             ) : (
+                 <>
+                    {settings.ghostVariant === 1 && <ClassicGhost color={displayColor} />}
+                    {settings.ghostVariant === 2 && <ReaperGhost color={displayColor} />}
+                    {settings.ghostVariant === 3 && <Eyes3D />}
+                 </>
+             )
         )}
+
       </group>
       
       {state !== 'EATEN' && state !== 'EYES' && (

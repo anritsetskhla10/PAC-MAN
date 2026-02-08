@@ -1,11 +1,13 @@
-import { useRef, useEffect, useMemo } from 'react';
+import { useRef, useEffect, useMemo, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3, Group, MeshStandardMaterial, DoubleSide } from 'three';
 import { PointerLockControls } from '@react-three/drei';
 import type { PointerLockControls as PointerLockControlsImpl } from 'three-stdlib';
 import { useGame } from '../../../context/GameContext'; 
+import { useTheme } from '../../../context/ThemeContext';
 import type { PlayerHeading } from '../../../hooks/usePlayerHeading';
 import { useIsMobile } from '../../../hooks/useIsMobile'; 
+import { Model as LabadzeModel } from '../../Game/3D/Models/Labadze';
 
 interface Pacman3DProps {
   isShowcase?: boolean;
@@ -14,13 +16,14 @@ interface Pacman3DProps {
 }
 
 export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'RIGHT' }: Pacman3DProps) => {
-  const { playerPos, movePlayer, gameStatus } = useGame();
+  const { settings } = useTheme();
+  const { playerPos, movePlayer, gameStatus } = useGame(); 
   const { camera, viewport } = useThree(); 
   const controlsRef = useRef<PointerLockControlsImpl>(null);
   
   const isMobile = useIsMobile();
-
   const groupRef = useRef<Group>(null);       
+
   const mainBodyRef = useRef<Group>(null);    
   const upperJawRef = useRef<Group>(null);
   const lowerJawRef = useRef<Group>(null);
@@ -33,6 +36,14 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
   const targetRotation = useRef(Math.PI / 2); 
   const isMoving = useRef(false);
 
+  const [labadzeAnim, setLabadzeAnim] = useState('IDLE');
+  const lastAnimRef = useRef('IDLE'); 
+
+  const isLabadze = settings.playerModel === 'avatar' || settings.gameTheme === 'labadze';
+  const isFpsMode = !isSpectator && !isShowcase && !isMobile;
+
+  const shouldRenderModel = !isFpsMode; 
+
   const colors = useMemo(() => ({
     skin: "#FFD600", boots: "#D50000", gloves: "#FF8F00", eyes: "#000000",
   }), []);
@@ -44,10 +55,9 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
     eyes: new MeshStandardMaterial({ color: colors.eyes, roughness: 0.1, side: DoubleSide }),
   }), [colors]);
 
-
-  // Rotation Logic (Handles Mobile & Spectator)
+  // როტაციის ლოგიკა
   useEffect(() => {
-    if (isSpectator || isShowcase || isMobile) {
+    if (!isFpsMode) {
         let angle = 0;
         switch (heading) {
             case 'UP':    angle = Math.PI; break;      
@@ -57,10 +67,9 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
         }
         targetRotation.current = angle; 
     }
-  }, [heading, isSpectator, isShowcase, isMobile]);
+  }, [heading, isFpsMode]);
 
-
-  // Keyboard Controls (Desktop Only)
+  // კლავიატურის კონტროლი
   useEffect(() => {
     if (isShowcase || isMobile) return;
     
@@ -104,37 +113,46 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
 
   // Pointer Lock 
   useEffect(() => {
-    if (isShowcase || isSpectator || isMobile) {
+    if (!isFpsMode) {
          controlsRef.current?.unlock(); 
          return;
     }
-    
     if (gameStatus === 'playing') {
       const timer = setTimeout(() => { controlsRef.current?.lock(); }, 100);
       return () => clearTimeout(timer);
     } else {
       controlsRef.current?.unlock();
     }
-  }, [gameStatus, isShowcase, isSpectator, isMobile]);
+  }, [gameStatus, isFpsMode]);
 
-  // Animation Loop
+  // ანიმაციის ლუპი
   useFrame((state, delta) => {
     if (!groupRef.current) return;
 
+    const targetY = isLabadze ? 0.05 : 0.85;
+
     const targetVec = isShowcase 
         ? new Vector3(0, 0, 0)
-        : new Vector3(playerPos.x, 0.85, playerPos.z);
+        : new Vector3(playerPos.x, targetY, playerPos.z);
     
     const dx = playerPos.x - currentPosRef.current.x;
     const dz = playerPos.z - currentPosRef.current.z;
     isMoving.current = Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01;
 
+    let nextAnimState = 'IDLE';
+    if (gameStatus === 'gameover') nextAnimState = 'DYING';
+    else if (isMoving.current) nextAnimState = 'MOVING';
+
+    if (lastAnimRef.current !== nextAnimState) {
+        lastAnimRef.current = nextAnimState;
+        setLabadzeAnim(nextAnimState); 
+    }
+
     groupRef.current.position.lerp(targetVec, 9.0 * delta);
     currentPosRef.current.lerp(targetVec, 9.0 * delta);
 
-    // Camera Positioning
     if (!isShowcase) {
-        if (isSpectator || isMobile) {
+        if (!isFpsMode) {
             const isLandscape = viewport.width > viewport.height;
             const camHeight = isMobile ? (isLandscape ? 16 : 22) : 14; 
             const camDist = isMobile ? (isLandscape ? 10 : 12) : 8;
@@ -150,7 +168,6 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
                 camera.lookAt(groupRef.current.position); 
             }
         } else {
-            // FPS Camera 
             const fpsPos = new Vector3(groupRef.current.position.x, 0.6, groupRef.current.position.z);
             if (!isNaN(camera.position.x)) {
                 camera.position.lerp(fpsPos, 0.8);
@@ -158,7 +175,7 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
         }
     }
 
-    if (isSpectator || isShowcase || isMobile) {
+    if (!isFpsMode) {
         const tRot = targetRotation.current;
         const cRot = groupRef.current.rotation.y;
         let diff = tRot - cRot;
@@ -167,8 +184,8 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
         groupRef.current.rotation.y += diff * 15.0 * delta;
     }
 
-    if (!isSpectator && !isShowcase && !isMobile) return; 
-
+    if (!shouldRenderModel) return;
+    if (isLabadze) return; 
     const t = state.clock.getElapsedTime();
     const speed = 12; 
     const mouthAngle = (Math.sin(t * 12) + 1) * 0.25; 
@@ -196,78 +213,87 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
 
   return (
     <>
-      {!isShowcase && !isMobile && <PointerLockControls ref={controlsRef} />}
+      {!isShowcase && !isMobile && <PointerLockControls ref={controlsRef} selector="#root" />}
       
       <group position={[playerPos.x, 3, playerPos.z]}>
          <pointLight intensity={1.5} distance={15} decay={2} color="#ffaa00" />
       </group>
 
       <group ref={groupRef}>
-        <group scale={[0.4, 0.4, 0.4]} visible={isSpectator || isShowcase || isMobile}>
-            <group ref={mainBodyRef} position={[0, 1.1, 0]}>
-                <group ref={upperJawRef}>
-                    <mesh material={materials.skin}><sphereGeometry args={[1, 64, 64, 0, Math.PI * 2, 0, Math.PI / 2]} /></mesh>
-                    <mesh rotation={[Math.PI / 2, 0, 0]}><circleGeometry args={[1, 64]} /><meshStandardMaterial color={colors.skin} side={DoubleSide} /></mesh>
-                    <mesh position={[0, 0.2, 0.95]} rotation={[-0.1, 0, 0]}><sphereGeometry args={[0.2, 32, 32]} /><meshStandardMaterial color={colors.skin} roughness={0.3} /></mesh>
-                    <group position={[0, 0.5, 0.85]} rotation={[-0.1, 0, 0]}>
-                        <group position={[-0.32, 0, 0]} rotation={[0, -0.3, 0]}>
-                            <mesh rotation={[0, 0, 0.15]}><capsuleGeometry args={[0.12, 0.28, 4, 16]} /><meshStandardMaterial color="black" roughness={0.1} /></mesh>
-                            <mesh position={[0.05, 0.1, 0.11]}><sphereGeometry args={[0.045, 16, 16]} /><meshBasicMaterial color="white" /></mesh>
-                            <mesh position={[0, 0.3, -0.05]} rotation={[0, 0, -0.4]}><capsuleGeometry args={[0.04, 0.25, 4, 8]} /><meshStandardMaterial color="black" /></mesh>
-                        </group>
-                        <group position={[0.32, 0, 0]} rotation={[0, 0.3, 0]}>
-                            <mesh rotation={[0, 0, -0.15]}><capsuleGeometry args={[0.12, 0.28, 4, 16]} /><meshStandardMaterial color="black" roughness={0.1} /></mesh>
-                            <mesh position={[-0.05, 0.1, 0.11]}><sphereGeometry args={[0.045, 16, 16]} /><meshBasicMaterial color="white" /></mesh>
-                            <mesh position={[0, 0.3, -0.05]} rotation={[0, 0, 0.4]}><capsuleGeometry args={[0.04, 0.25, 4, 8]} /><meshStandardMaterial color="black" /></mesh>
-                        </group>
-                    </group>
-                </group>
-                <group ref={lowerJawRef}>
-                    <mesh material={materials.skin}><sphereGeometry args={[1, 64, 64, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} /></mesh>
-                    <mesh rotation={[Math.PI / 2, 0, 0]}><circleGeometry args={[1, 64]} /><meshStandardMaterial color={colors.skin} side={DoubleSide} /></mesh>
-                </group>
-            </group>
-            
-            {/* ARMS & LEGS (Same Geometry) */}
-            <group ref={leftArmPivot} position={[-0.92, 1.15, 0]}> 
-                <mesh position={[0, -0.35, 0]} material={materials.skin}><capsuleGeometry args={[0.24, 0.4, 16, 32]} /></mesh>
-                <group position={[0, -0.8, 0]}>
-                    <mesh position={[0, 0.15, 0]} rotation={[Math.PI/2, 0, 0]}><torusGeometry args={[0.2, 0.09, 16, 32]} /><meshStandardMaterial color={colors.gloves} side={DoubleSide} /></mesh>
-                    <mesh position={[0, -0.1, 0]}><sphereGeometry args={[0.35, 32, 32]} /><meshStandardMaterial color={colors.gloves} /></mesh>
-                    <mesh position={[0.2, 0, 0.15]} rotation={[0.5, 0, 0.5]}><capsuleGeometry args={[0.1, 0.25]} /><meshStandardMaterial color={colors.gloves} /></mesh>
-                </group>
-            </group>
-            <group ref={rightArmPivot} position={[0.92, 1.15, 0]}>
-                <mesh position={[0, -0.35, 0]} material={materials.skin}><capsuleGeometry args={[0.24, 0.4, 16, 32]} /></mesh>
-                <group position={[0, -0.8, 0]}>
-                    <mesh position={[0, 0.15, 0]} rotation={[Math.PI/2, 0, 0]}><torusGeometry args={[0.2, 0.09, 16, 32]} /><meshStandardMaterial color={colors.gloves} side={DoubleSide} /></mesh>
-                    <mesh position={[0, -0.1, 0]}><sphereGeometry args={[0.35, 32, 32]} /><meshStandardMaterial color={colors.gloves} /></mesh>
-                    <mesh position={[-0.2, 0, 0.15]} rotation={[0.5, 0, -0.5]}><capsuleGeometry args={[0.1, 0.25]} /><meshStandardMaterial color={colors.gloves} /></mesh>
-                </group>
-            </group>
-            <group ref={leftLegPivot} position={[-0.4, 0.5, 0]}>
-                <mesh material={materials.skin}><sphereGeometry args={[0.22, 32, 32]} /></mesh>
-                <group position={[0, -0.4, 0]}>
-                    <mesh position={[0, 0.2, 0]}><cylinderGeometry args={[0.18, 0.15, 0.5]} /><meshStandardMaterial color={colors.skin} side={DoubleSide} /></mesh>
-                    <group position={[0, -0.2, 0.1]}>
-                        <mesh position={[0, 0.2, -0.05]} rotation={[Math.PI/2, 0, 0]}><torusGeometry args={[0.24, 0.1, 16, 32]} /><meshStandardMaterial color={colors.boots} side={DoubleSide} /></mesh>
-                        <mesh position={[0, -0.1, 0]}><boxGeometry args={[0.52, 0.4, 0.65]} /><meshStandardMaterial color={colors.boots} /></mesh>
-                        <mesh position={[0, -0.15, 0.38]}><sphereGeometry args={[0.3, 32, 32]} /><meshStandardMaterial color={colors.boots} /></mesh>
-                    </group>
-                </group>
-            </group>
-            <group ref={rightLegPivot} position={[0.4, 0.5, 0]}>
-                <mesh material={materials.skin}><sphereGeometry args={[0.22, 32, 32]} /></mesh>
-                <group position={[0, -0.4, 0]}>
-                    <mesh position={[0, 0.2, 0]}><cylinderGeometry args={[0.18, 0.15, 0.5]} /><meshStandardMaterial color={colors.skin} side={DoubleSide} /></mesh>
-                    <group position={[0, -0.2, 0.1]}>
-                        <mesh position={[0, 0.2, -0.05]} rotation={[Math.PI/2, 0, 0]}><torusGeometry args={[0.24, 0.1, 16, 32]} /><meshStandardMaterial color={colors.boots} side={DoubleSide} /></mesh>
-                        <mesh position={[0, -0.1, 0]}><boxGeometry args={[0.52, 0.4, 0.65]} /><meshStandardMaterial color={colors.boots} /></mesh>
-                        <mesh position={[0, -0.15, 0.38]}><sphereGeometry args={[0.3, 32, 32]} /><meshStandardMaterial color={colors.boots} /></mesh>
-                    </group>
-                </group>
-            </group>
-        </group>
+        {shouldRenderModel && (
+            isLabadze ? (
+               <group scale={0.65} rotation={[0, 0, 0]}> 
+                  <LabadzeModel playerState={labadzeAnim} />
+               </group>
+            ) : (
+              <group scale={[0.4, 0.4, 0.4]}>
+                  {/* მხოლოდ კლასიკური მოდელი */}
+                  <group ref={mainBodyRef} position={[0, 1.1, 0]}>
+                      <group ref={upperJawRef}>
+                          <mesh material={materials.skin}><sphereGeometry args={[1, 64, 64, 0, Math.PI * 2, 0, Math.PI / 2]} /></mesh>
+                          <mesh rotation={[Math.PI / 2, 0, 0]}><circleGeometry args={[1, 64]} /><meshStandardMaterial color={colors.skin} side={DoubleSide} /></mesh>
+                          <mesh position={[0, 0.2, 0.95]} rotation={[-0.1, 0, 0]}><sphereGeometry args={[0.2, 32, 32]} /><meshStandardMaterial color={colors.skin} roughness={0.3} /></mesh>
+                          <group position={[0, 0.5, 0.85]} rotation={[-0.1, 0, 0]}>
+                              <group position={[-0.32, 0, 0]} rotation={[0, -0.3, 0]}>
+                                  <mesh rotation={[0, 0, 0.15]}><capsuleGeometry args={[0.12, 0.28, 4, 16]} /><meshStandardMaterial color="black" roughness={0.1} /></mesh>
+                                  <mesh position={[0.05, 0.1, 0.11]}><sphereGeometry args={[0.045, 16, 16]} /><meshBasicMaterial color="white" /></mesh>
+                                  <mesh position={[0, 0.3, -0.05]} rotation={[0, 0, -0.4]}><capsuleGeometry args={[0.04, 0.25, 4, 8]} /><meshStandardMaterial color="black" /></mesh>
+                              </group>
+                              <group position={[0.32, 0, 0]} rotation={[0, 0.3, 0]}>
+                                  <mesh rotation={[0, 0, -0.15]}><capsuleGeometry args={[0.12, 0.28, 4, 16]} /><meshStandardMaterial color="black" roughness={0.1} /></mesh>
+                                  <mesh position={[-0.05, 0.1, 0.11]}><sphereGeometry args={[0.045, 16, 16]} /><meshBasicMaterial color="white" /></mesh>
+                                  <mesh position={[0, 0.3, -0.05]} rotation={[0, 0, 0.4]}><capsuleGeometry args={[0.04, 0.25, 4, 8]} /><meshStandardMaterial color="black" /></mesh>
+                              </group>
+                          </group>
+                      </group>
+                      <group ref={lowerJawRef}>
+                          <mesh material={materials.skin}><sphereGeometry args={[1, 64, 64, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} /></mesh>
+                          <mesh rotation={[Math.PI / 2, 0, 0]}><circleGeometry args={[1, 64]} /><meshStandardMaterial color={colors.skin} side={DoubleSide} /></mesh>
+                      </group>
+                  </group>
+                  
+                  {/* ხელები და ფეხები */}
+                  <group ref={leftArmPivot} position={[-0.92, 1.15, 0]}> 
+                      <mesh position={[0, -0.35, 0]} material={materials.skin}><capsuleGeometry args={[0.24, 0.4, 16, 32]} /></mesh>
+                      <group position={[0, -0.8, 0]}>
+                          <mesh position={[0, 0.15, 0]} rotation={[Math.PI/2, 0, 0]}><torusGeometry args={[0.2, 0.09, 16, 32]} /><meshStandardMaterial color={colors.gloves} side={DoubleSide} /></mesh>
+                          <mesh position={[0, -0.1, 0]}><sphereGeometry args={[0.35, 32, 32]} /><meshStandardMaterial color={colors.gloves} /></mesh>
+                          <mesh position={[0.2, 0, 0.15]} rotation={[0.5, 0, 0.5]}><capsuleGeometry args={[0.1, 0.25]} /><meshStandardMaterial color={colors.gloves} /></mesh>
+                      </group>
+                  </group>
+                  <group ref={rightArmPivot} position={[0.92, 1.15, 0]}>
+                      <mesh position={[0, -0.35, 0]} material={materials.skin}><capsuleGeometry args={[0.24, 0.4, 16, 32]} /></mesh>
+                      <group position={[0, -0.8, 0]}>
+                           <mesh position={[0, 0.15, 0]} rotation={[Math.PI/2, 0, 0]}><torusGeometry args={[0.2, 0.09, 16, 32]} /><meshStandardMaterial color={colors.gloves} side={DoubleSide} /></mesh>
+                           <mesh position={[0, -0.1, 0]}><sphereGeometry args={[0.35, 32, 32]} /><meshStandardMaterial color={colors.gloves} /></mesh>
+                           <mesh position={[-0.2, 0, 0.15]} rotation={[0.5, 0, -0.5]}><capsuleGeometry args={[0.1, 0.25]} /><meshStandardMaterial color={colors.gloves} /></mesh>
+                      </group>
+                  </group>
+                  <group ref={leftLegPivot} position={[-0.4, 0.5, 0]}>
+                      <mesh material={materials.skin}><sphereGeometry args={[0.22, 32, 32]} /></mesh>
+                      <group position={[0, -0.4, 0]}>
+                          <mesh position={[0, 0.2, 0]}><cylinderGeometry args={[0.18, 0.15, 0.5]} /><meshStandardMaterial color={colors.skin} side={DoubleSide} /></mesh>
+                          <group position={[0, -0.2, 0.1]}>
+                               <mesh position={[0, 0.2, -0.05]} rotation={[Math.PI/2, 0, 0]}><torusGeometry args={[0.24, 0.1, 16, 32]} /><meshStandardMaterial color={colors.boots} side={DoubleSide} /></mesh>
+                               <mesh position={[0, -0.1, 0]}><boxGeometry args={[0.52, 0.4, 0.65]} /><meshStandardMaterial color={colors.boots} /></mesh>
+                               <mesh position={[0, -0.15, 0.38]}><sphereGeometry args={[0.3, 32, 32]} /><meshStandardMaterial color={colors.boots} /></mesh>
+                          </group>
+                      </group>
+                  </group>
+                  <group ref={rightLegPivot} position={[0.4, 0.5, 0]}>
+                      <mesh material={materials.skin}><sphereGeometry args={[0.22, 32, 32]} /></mesh>
+                      <group position={[0, -0.4, 0]}>
+                          <mesh position={[0, 0.2, 0]}><cylinderGeometry args={[0.18, 0.15, 0.5]} /><meshStandardMaterial color={colors.skin} side={DoubleSide} /></mesh>
+                           <group position={[0, -0.2, 0.1]}>
+                               <mesh position={[0, 0.2, -0.05]} rotation={[Math.PI/2, 0, 0]}><torusGeometry args={[0.24, 0.1, 16, 32]} /><meshStandardMaterial color={colors.boots} side={DoubleSide} /></mesh>
+                               <mesh position={[0, -0.1, 0]}><boxGeometry args={[0.52, 0.4, 0.65]} /><meshStandardMaterial color={colors.boots} /></mesh>
+                               <mesh position={[0, -0.15, 0.38]}><sphereGeometry args={[0.3, 32, 32]} /><meshStandardMaterial color={colors.boots} /></mesh>
+                          </group>
+                      </group>
+                  </group>
+              </group>
+            )
+        )}
       </group>
     </>
   );
