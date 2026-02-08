@@ -63,6 +63,7 @@ export interface Ghost {
 export type GameStatus = 'idle' | 'ready' | 'playing' | 'paused' | 'gameover' | 'won';
 
 export interface ThemeSettings {
+  gameTheme: 'classic' | 'labadze';
   wallColor: string;
   foodColor: string;
   gameBg: string;
