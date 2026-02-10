@@ -10,16 +10,26 @@ import { Cherry3D } from './Items/Cherry3D';
 import { Strawberry3D } from './Items/Strawberry3D';
 import { Life3D } from './Items/Life3D';
 
+import { Mchadi } from './Items/Mchadi';
+import { Kebab } from './Items/Kebab';
+import { Khinkali } from './Items/Khinkali';
+import { Khachapuri } from './Items/Khachapuri';
+
 type ConsumableVariant = 'dot' | 'power' | 'cherry' | 'strawberry' | 'life';
 
 interface Food3DProps {
   consumableVariant: ConsumableVariant;
+  themeOverride?: 'classic' | 'labadze';
 }
 
-export const Food3D = ({ consumableVariant }: Food3DProps) => {
+export const Food3D = ({ consumableVariant, themeOverride }: Food3DProps) => {
   const meshGroupRef = useRef<Group>(null);
   const audioRef = useRef<ThreePositionalAudio>(null!); 
   const { settings } = useTheme();
+
+  const isLabadze = themeOverride 
+    ? themeOverride === 'labadze' 
+    : (settings.gameTheme === 'labadze' || settings.playerModel === 'avatar');
 
   const masterMuted = settings.audio.masterMuted;
   const sfxVolume = settings.audio.sfxVolume;
@@ -36,9 +46,7 @@ export const Food3D = ({ consumableVariant }: Food3DProps) => {
   useFrame((state) => {
     if (!meshGroupRef.current) return;
     const elapsedTime = state.clock.getElapsedTime();
-
     meshGroupRef.current.rotation.y += 0.015;
-    
     meshGroupRef.current.position.y = Math.sin(elapsedTime * 2) * 0.05;
 
     if (consumableVariant === 'power' || consumableVariant === 'life') {
@@ -53,11 +61,23 @@ export const Food3D = ({ consumableVariant }: Food3DProps) => {
 
   return (
     <group ref={meshGroupRef}>
-        {consumableVariant === 'dot' && <Dot3D />}
-        {consumableVariant === 'power' && <PowerPellet3D />}
-        {consumableVariant === 'cherry' && <Cherry3D />}
-        {consumableVariant === 'strawberry' && <Strawberry3D />}
-        {consumableVariant === 'life' && <Life3D />}
+        {isLabadze ? (
+            <>
+                {consumableVariant === 'dot' && <Mchadi />}
+                {consumableVariant === 'power' && <Kebab />}
+                {consumableVariant === 'cherry' && <Khinkali />}
+                {consumableVariant === 'strawberry' && <Khachapuri />}
+                {consumableVariant === 'life' && <Khinkali />} 
+            </>
+        ) : (
+            <>
+                {consumableVariant === 'dot' && <Dot3D />}
+                {consumableVariant === 'power' && <PowerPellet3D />}
+                {consumableVariant === 'cherry' && <Cherry3D />}
+                {consumableVariant === 'strawberry' && <Strawberry3D />}
+                {consumableVariant === 'life' && <Life3D />}
+            </>
+        )}
 
         {isBonus && (
            <PositionalAudio
