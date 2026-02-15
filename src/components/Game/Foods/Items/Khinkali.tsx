@@ -4,18 +4,15 @@ import * as THREE from 'three';
 export const Khinkali = () => {
   const geometry = useMemo(() => {
     const pleatCount = 19; 
-    const radialSegments = pleatCount * 12; 
-    const heightSegments = 100; 
+    const radialSegments = pleatCount * 16; 
+    const heightSegments = 150; 
     
-    const totalHeight = 0.45;
-    const bellyRadius = 0.22;     
-    const neckRadius = 0.035;      
-    const headRadius = 0.03;     
-
-    // ზონები
-    const smoothBaseEnd = 0.15;   
-    const bellyEnd = 0.45;        
-    const neckStart = 0.88;       
+    const totalHeight = 0.55;
+    const baseRadius = 0.15;   
+    const bellyRadius = 0.28;  
+    const neckRadius = 0.05;   
+    const headRadius = 0.045;  
+    const neckStart = 0.88; 
 
     const positions = [];
     const indices = [];
@@ -23,66 +20,46 @@ export const Khinkali = () => {
     for (let y = 0; y <= heightSegments; y++) {
       const v = y / heightSegments;
       
-      // სიმაღლის კორექცია
-      let heightPos = v * totalHeight;
-      if (v < bellyEnd) {
-         const t = v / bellyEnd;
-         heightPos = (1 - Math.cos(t * Math.PI / 2)) * (totalHeight * 0.35);
-      }
-
       let currentRadius = 0;
-      let pleatStrength = 0;
+      let heightPos = v * totalHeight;
 
-      // ფორმის პროფილის გამოთვლა
-      if (v < bellyEnd) {
-        const t = v / bellyEnd;
-        currentRadius = Math.sin(t * Math.PI / 2) * bellyRadius;
-      } 
-      else if (v < neckStart) {
-        const t = (v - bellyEnd) / (neckStart - bellyEnd);
-        currentRadius = THREE.MathUtils.lerp(bellyRadius, neckRadius, Math.pow(t, 0.9));
-      } 
-      else if (v < 0.98) { 
-        const t = (v - neckStart) / (0.98 - neckStart);
+      if (v < 0.2) {
+        const t = v / 0.2;
+        currentRadius = THREE.MathUtils.lerp(baseRadius, bellyRadius, Math.sin(t * Math.PI / 2));
+        heightPos = (1 - Math.cos(t * Math.PI / 2)) * (totalHeight * 0.2);
+      } else if (v < neckStart) {
+        const t = (v - 0.2) / (neckStart - 0.2);
+        currentRadius = THREE.MathUtils.lerp(bellyRadius, neckRadius, Math.pow(t, 1.2));
+      } else {
+        const t = (v - neckStart) / (1 - neckStart);
         currentRadius = THREE.MathUtils.lerp(neckRadius, headRadius, t);
       }
-      else {
-        const t = (v - 0.98) / 0.02;
-        currentRadius = headRadius * (1 - t); 
+
+      let pleatDepth = 0;
+      
+      if (v > 0.05 && v < neckStart) {
+        const strengthT = (v - 0.05) / (neckStart - 0.05); 
+        pleatDepth = 0.04 * Math.sin(strengthT * Math.PI); 
+      } else {
+        pleatDepth = 0; 
       }
 
-      //  ნაკეცების სიღრმე
-      if (v < smoothBaseEnd) {
-          pleatStrength = 0;
-      }
-      else if (v < bellyEnd) {
-          const t = (v - smoothBaseEnd) / (bellyEnd - smoothBaseEnd);
-          pleatStrength = t * 0.04; 
-      }
-      else if (v < neckStart) {
-          const t = (v - bellyEnd) / (neckStart - bellyEnd);
-          pleatStrength = 0.04 * (1 - t * 0.9); 
-      }
-      else {
-          pleatStrength = 0;
-      }
-
-      //  წრეზე ტრიალი 
       for (let x = 0; x <= radialSegments; x++) {
         const u = x / radialSegments;
         const angle = u * Math.PI * 2;
 
         const foldShape = Math.abs(Math.sin(angle * pleatCount / 2));
         
-        let offset = foldShape * pleatStrength;
-
-        if (v > bellyEnd) {
-             offset *= 1.2;
-        }
+        let offset = foldShape * pleatDepth;
+        const deepCrease = 1 - foldShape;
+        offset -= deepCrease * (pleatDepth * 2.0); 
 
         let finalR = currentRadius + offset;
         
-        if (v < 0.05 || v > 0.99) finalR = currentRadius;
+        if (v > 0.98) {
+            finalR *= (1 - (v - 0.98) / 0.02);
+        }
+        if (y === 0) finalR = 0;
 
         const posX = Math.cos(angle) * finalR;
         const posZ = Math.sin(angle) * finalR;
@@ -92,16 +69,13 @@ export const Khinkali = () => {
       }
     }
 
-    // ინდექსები 
     for (let y = 0; y < heightSegments; y++) {
       for (let x = 0; x < radialSegments; x++) {
         const a = y * (radialSegments + 1) + x;
         const b = a + 1;
         const c = (y + 1) * (radialSegments + 1) + x;
         const d = c + 1;
-
-        indices.push(a, d, b);
-        indices.push(a, c, d);
+        indices.push(a, d, b, a, c, d);
       }
     }
 
@@ -109,17 +83,16 @@ export const Khinkali = () => {
     geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     geo.setIndex(indices);
     geo.computeVertexNormals(); 
-
     return geo;
   }, []);
 
   return (
-    <group scale={1.0}>
-      <mesh geometry={geometry}>
+    <group scale={1.0} position={[0, -0.27, 0]}>
+      <mesh geometry={geometry} castShadow receiveShadow>
         <meshStandardMaterial 
-            color="#FDF5E6"
-            roughness={0.6}
-            metalness={0.1}
+            color="#E8E2D5" 
+            roughness={0.7} 
+            metalness={0.0}
             flatShading={false}
             side={THREE.DoubleSide} 
         />
