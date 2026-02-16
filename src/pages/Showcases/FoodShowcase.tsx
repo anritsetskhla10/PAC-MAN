@@ -9,7 +9,6 @@ import { useTranslation } from 'react-i18next';
 
 type FoodType = 'dot' | 'power' | 'cherry' | 'strawberry' | 'life';
 type ThemeVariant = 'classic' | 'labadze';
-
 type ButtonColor = 'red' | 'yellow' | 'gray' | 'pink' | 'blue' | 'green';
 
 interface FoodItemConfig {
@@ -36,31 +35,32 @@ export const FoodShowcase = () => {
   const [localIs3D, setLocalIs3D] = useState(true);
 
   const allFoods: FoodItemConfig[] = [
-    // --- Dots ---
+    //  Dots 
     { label: 'Dot', type: 'dot', theme: 'classic', icon: '•', color: 'gray' },
     { label: 'Mchadi', type: 'dot', theme: 'labadze', icon: '🌽', color: 'yellow' },
     
-    // --- Power ---
+    //  Power 
     { label: 'Power', type: 'power', theme: 'classic', icon: '⚡', color: 'gray' },
     { label: 'Kebab', type: 'power', theme: 'labadze', icon: '🍢', color: 'yellow' },
 
-    // --- Cherry / Khinkali ---
+    //  Cherry / Khinkali 
     { label: 'Cherry', type: 'cherry', theme: 'classic', icon: '🍒', color: 'red' },
     { label: 'Khinkali', type: 'cherry', theme: 'labadze', icon: '🥟', color: 'yellow' },
 
-    // --- Strawberry / Khachapuri ---
+    //  Strawberry / khachapuri 
     { label: 'Strawberry', type: 'strawberry', theme: 'classic', icon: '🍓', color: 'red' },
-    { label: 'Khachapuri', type: 'strawberry', theme: 'labadze', icon: '🧀', color: 'yellow' },
+    { label: 'khachapuri', type: 'strawberry', theme: 'labadze', icon: '🧀', color: 'yellow' },
 
-    // --- Life ---
-    { label: 'Life', type: 'life', theme: 'classic', icon: '❤️', color: 'pink' },
+    //  Life 
+    { label: 'Life', type: 'life', theme: 'classic', icon: '❤️', color: 'pink' }
   ];
 
+  // Sidebar
   const Sidebar = (
     <div>
       <ModeToggle is3D={localIs3D} onToggle={setLocalIs3D} isDark={isDark} />
 
-      <ShowcaseSectionTitle title={t('showcase.inspect')} />
+      <ShowcaseSectionTitle title={t('showcase.inspect') || "Inspect Items"} />
       
       <div className="flex flex-col gap-2 h-[calc(100vh-250px)] overflow-y-auto pr-2 custom-scrollbar">
         {allFoods.map((item, index) => {
@@ -80,8 +80,8 @@ export const FoodShowcase = () => {
         })}
       </div>
       
-      <div className="mt-4 text-xs text-gray-400 text-center">
-        {t('showcase.visual_disclaimer')}
+      <div className="mt-4 text-xs text-gray-400 text-center opacity-60">
+        Select an item to view its 2D and 3D variants.
       </div>
     </div>
   );
@@ -90,23 +90,26 @@ export const FoodShowcase = () => {
     <ShowcaseCanvas isDark={isDark} scale={3}>
         <Food3D 
             consumableVariant={selectedItem.type} 
-            themeOverride={selectedItem.theme} 
+            themeOverride={selectedItem.theme}  
         />
     </ShowcaseCanvas>
   ) : (
-    <div className="flex items-center justify-center h-full">
-         <div className="z-10 transform scale-150 p-12 bg-white/5 rounded-3xl backdrop-blur-xl border border-white/10 shadow-2xl flex flex-col items-center gap-4">
-            <Food2D type={selectedItem.type} size={150} />
-            <p className="text-white/50 text-sm font-mono">
-                (2D View always uses Classic sprites)
-            </p>
+    //  2D VIEW 
+    <div className="flex items-center justify-center h-full w-full bg-black/5">
+         <div className="z-10 transform scale-150 p-12 bg-white/5 rounded-3xl backdrop-blur-xl border border-white/10 shadow-2xl flex flex-col items-center gap-6">
+            
+            <Food2D 
+                type={selectedItem.type} 
+                size={150} 
+                themeOverride={selectedItem.theme}
+            />
          </div>
     </div>
   );
 
   return (
     <ShowcaseLayout 
-      title={t('nav.food_lab')} 
+      title={t('nav.food_lab') || "Food Lab"} 
       icon="🍽️" 
       sidebarContent={Sidebar} 
       mainContent={MainContent} 
