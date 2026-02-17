@@ -1,9 +1,9 @@
 import { Canvas } from '@react-three/fiber';
 import { Pacman3D } from '../Player/Pacman3D'; 
-import { InstancedLevel } from '../../InstancedLevel';
-import { Board } from '../Board';
+import { InstancedLevel } from '../InstancedLevel';
+import { Board } from '../2D/Board';
 import { Ghost3D } from '../3D/Ghost3D'; 
-import { Food3D } from '../Foods/Food3D';
+import { Food3D } from '../3D/Food3D';
 import { useGame } from '../../../context/GameContext';
 import { useTheme } from '../../../context/ThemeContext';
 import { TileType, type Ghost } from '../../../types';

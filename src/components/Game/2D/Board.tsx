@@ -1,12 +1,12 @@
 import { useEffect, useState, useMemo } from 'react';
-import { TileType, GhostState } from '../../types';
-import { cn } from '../../utils/cn';
-import { useGame } from '../../context/GameContext';
-import { GhostIcon } from '../icons/GhostIcon'; 
-import { EyesIcon } from '../icons/EyesIcon'; 
-import { Food2D } from '../Game/Foods/Food2D';
-import { Pacman2D } from '../Game/Player/Pacman2D';
-import type { PlayerHeading } from '../../hooks/usePlayerHeading'; 
+import { TileType, GhostState } from '../../../types';
+import { cn } from '../../../utils/cn';
+import { useGame } from '../../../context/GameContext';
+import { GhostIcon } from '../../Game/2D/icons/GhostIcon'; 
+import { EyesIcon } from '../../Game/2D/icons/EyesIcon'; 
+import { Food2D } from '../2D/Food2D';
+import { Pacman2D } from '../../Game/Player/Pacman2D';
+import type { PlayerHeading } from '../../../hooks/usePlayerHeading'; 
 
 const MAP_COLS = 19;
 const MAP_ROWS = 22;

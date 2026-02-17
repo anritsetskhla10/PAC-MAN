@@ -4,16 +4,16 @@ import { Group, PositionalAudio as ThreePositionalAudio } from 'three';
 import { PositionalAudio } from '@react-three/drei';
 import { useTheme } from '../../../context/ThemeContext';
 
-import { Dot3D } from './Items/Dot3D';
-import { PowerPellet3D } from './Items/PowerPellet3D';
-import { Cherry3D } from './Items/Cherry3D';
-import { Strawberry3D } from './Items/Strawberry3D';
-import { Life3D } from './Items/Life3D';
+import { Dot3D } from '../3D/Food/Dot3D';
+import { PowerPellet3D } from '../3D/Food/PowerPellet3D';
+import { Cherry3D } from '../3D/Food/Cherry3D';
+import { Strawberry3D } from '../3D/Food/Strawberry3D';
+import { Life3D } from '../3D/Food/Life3D';
 
-import { Mchadi } from './Items/Mchadi';
-import { Kebab } from './Items/Kebab';
-import { Khinkali } from './Items/Khinkali';
-import { Khachapuri } from './Items/Khachapuri';
+import { Mchadi } from '../3D/Food/Mchadi';
+import { Kebab } from '../3D/Food/Kebab';
+import { Khinkali } from '../3D/Food/Khinkali';
+import { Khachapuri } from '../3D/Food/Khachapuri';
 
 type ConsumableVariant = 'dot' | 'power' | 'cherry' | 'strawberry' | 'life';
 

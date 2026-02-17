@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { useGame } from '../context/GameContext';
-import { useTheme } from '../context/ThemeContext';
-import { useIsMobile } from '../hooks/useIsMobile';
+import { useGame } from '../../context/GameContext';
+import { useTheme } from '../../context/ThemeContext';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface DPadButtonProps {
   dir: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT';

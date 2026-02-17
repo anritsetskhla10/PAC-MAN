@@ -3,8 +3,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { ShowcaseLayout } from '../../components/layout/ShowcaseLayout';
 import { ShowcaseCanvas } from '../../components/UI/ShowcaseCanvas';
 import { ModeToggle, SelectionButton, ShowcaseSectionTitle } from '../../components/UI/ShowcaseUI';
-import { Food3D } from '../../components/Game/Foods/Food3D';
-import { Food2D } from '../../components/Game/Foods/Food2D';
+import { Food3D } from '../../components/Game/3D/Food3D';
+import { Food2D } from '../../components/Game/2D/Food2D';
 import { useTranslation } from 'react-i18next';
 
 type FoodType = 'dot' | 'power' | 'cherry' | 'strawberry' | 'life';
