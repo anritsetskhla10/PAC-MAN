@@ -4,7 +4,6 @@ import { ShowcaseLayout } from '../../components/layout/ShowcaseLayout';
 import { ShowcaseCanvas } from '../../components/UI/ShowcaseCanvas';
 import { ModeToggle, SelectionButton, ColorButton, ShowcaseSectionTitle } from '../../components/UI/ShowcaseUI';
 import { useTranslation } from 'react-i18next';
-
 import { ClassicGhost } from '../../components/Game/3D/Ghosts/ClassicGhost';
 import { ReaperGhost } from '../../components/Game/3D/Ghosts/ReaperGhost';
 import { Eyes3D } from '../../components/Game/3D/Ghosts/Eyes3D';
@@ -12,6 +11,7 @@ import { Model as KakabaModel } from '../../components/Game/3D/Models/Kakaba';
 import { Model as JanelaModel } from '../../components/Game/3D/Models/Janela';
 import { Model as IkoModel } from '../../components/Game/3D/Models/Iko';
 import { Model as JafaraModel } from '../../components/Game/3D/Models/Jafara';
+import { Ghost2D } from '../../components/Game/2D/Ghost2D';
 
 const ColorSquare = ({ color }: { color: string }) => (
   <div 
@@ -28,7 +28,8 @@ export const GhostShowcase = () => {
   const variant = settings.ghostVariant; 
   const ghostColor = settings.ghostColor; 
   const isDark = settings.isDarkMode;
-  const is3D = settings.is3DMode; 
+  
+  const [is3D, setIs3D] = useState(settings.is3DMode);
 
   const colors = ['#FF0000', '#FFB8FF', '#00FFFF', '#FFB852', '#00FF00', '#FFFFFF'];
 
@@ -39,8 +40,9 @@ export const GhostShowcase = () => {
 
   const Sidebar = (
     <div>
-       <ModeToggle is3D={is3D} onToggle={(v) => updateSetting('is3DMode', v)} isDark={isDark} />
-       {variant >= 4 && (
+       <ModeToggle is3D={is3D} onToggle={setIs3D} isDark={isDark} />
+       
+       {variant >= 4 && is3D && ( 
          <div className="mb-6">
            <ShowcaseSectionTitle title="Animation Test" />
            <div className="flex gap-2">
@@ -128,7 +130,7 @@ export const GhostShowcase = () => {
          </>
        )}
        
-       {variant >= 4 && (
+       {variant >= 4 && is3D && (
            <div className="text-xs text-gray-400 mt-2 text-center">
                Kacebi Squad models use their original textures.
            </div>
@@ -136,7 +138,8 @@ export const GhostShowcase = () => {
     </div>
   );
 
-  const MainContent = (
+  const MainContent = is3D ? (
+    // 3D VIEW
     <ShowcaseCanvas isDark={isDark} scale={variant >= 4 ? 1.6 : 1.8} position={[0, yPos, 0]}>
         {variant === 1 && <ClassicGhost color={ghostColor} />}
         {variant === 2 && <ReaperGhost color={ghostColor} />}
@@ -147,6 +150,13 @@ export const GhostShowcase = () => {
         {variant === 6 && <IkoModel ghostState={previewState} />}
         {variant === 7 && <JafaraModel ghostState={previewState} />}
     </ShowcaseCanvas>
+  ) : (
+    //2D VIEW 
+    <div className="flex items-center justify-center h-full">
+         <div className="z-10 transform scale-150 p-12 bg-white/5 rounded-3xl backdrop-blur-xl border border-white/10 shadow-2xl">
+            <Ghost2D variant={variant} color={ghostColor} size={150} />
+         </div>
+    </div>
   );
 
   return (

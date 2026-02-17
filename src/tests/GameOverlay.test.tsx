@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GameOverlay } from '../components/GameOverlay';
+import { GameOverlay } from '../components/UI/GameOverlay';
 import * as GameContext from '../context/GameContext';
 
 type GameContextType = ReturnType<typeof GameContext.useGame>;

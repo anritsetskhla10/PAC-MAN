@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useGame } from '../context/GameContext';
-import { Board } from '../components/Game/Board';
+import { Board } from '../components/Game/2D/Board';
 import { Board3D } from '../components/Game/3D/Board3D';
-import { GameOverlay } from '../components/GameOverlay';
-import { MobileControls } from '../components/MobileControls';
+import { GameOverlay } from '../components/UI/GameOverlay';
+import { MobileControls } from '../components/layout/MobileControls';
 import { cn } from '../utils/cn';
 import { usePlayerHeading } from '../hooks/usePlayerHeading'; 
 import { useIsMobile } from '../hooks/useIsMobile'; 

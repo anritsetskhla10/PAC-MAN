@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { InstancedMesh, Object3D } from 'three';
 import * as THREE from 'three';
-import { useTheme } from '../context/ThemeContext';
-import { useGame } from '../context/GameContext'; 
-import { TileType } from '../types';
+import { useTheme } from '../../context/ThemeContext';
+import { useGame } from '../../context/GameContext'; 
+import { TileType } from '../../types';
 
 type Position3D = [number, number, number];
 

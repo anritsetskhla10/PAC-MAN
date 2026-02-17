@@ -1,13 +1,13 @@
 import { useTheme } from '../../../context/ThemeContext';
-import { Mchadi2D } from '../Foods/items2D/Mchadi2D';
-import { Kebab2D } from '../Foods/items2D//Kebab2D';
-import { Khinkali2D } from '../Foods/items2D//Khinkali2D';
-import { Khachapuri2D } from '../Foods/items2D/Khachapuri2D'; 
-import { Dot2D } from '../Foods/items2D/Dot2D';
-import { PowerPellet2D } from '../Foods/items2D/PowerPellet2D';
-import { Cherry2D } from '../Foods/items2D/Cherry2D';
-import { Strawberry2D } from '../Foods/items2D/Strawberry2D';
-import { Heart2D } from '../Foods/items2D/Heart2D';
+import { Mchadi2D } from '../2D/Food/Mchadi2D';
+import { Kebab2D } from '../2D/Food/Kebab2D';
+import { Khinkali2D } from '../2D/Food/Khinkali2D';
+import { Khachapuri2D } from '../2D/Food/Khachapuri2D'; 
+import { Dot2D } from '../2D/Food/Dot2D';
+import { PowerPellet2D } from '../2D/Food/PowerPellet2D';
+import { Cherry2D } from '../2D/Food/Cherry2D';
+import { Strawberry2D } from '../2D/Food/Strawberry2D';
+import { Heart2D } from '../2D/Food/Heart2D';
 
 type ConsumableVariant = 'dot' | 'power' | 'cherry' | 'strawberry' | 'life';
 

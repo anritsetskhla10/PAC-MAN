@@ -1,5 +1,5 @@
-import { useGame } from '../context/GameContext';
-import { formatTime } from '../utils/formatTime'; 
+import { useGame } from '../../context/GameContext';
+import { formatTime } from '../../utils/formatTime'; 
 import { useTranslation } from 'react-i18next';
 
 export const GameOverlay = () => {
