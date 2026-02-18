@@ -1,103 +1,97 @@
-
-interface JafaraProps {
+interface Jafara2DProps {
   size?: number;
-  isScared?: boolean;
 }
 
-export const Jafara2D = ({ size = 100, isScared }: JafaraProps) => {
-  // ნარინჯისფერი ფონი (Jafara Theme)
-  const bgColor = isScared ? '#1a1a2e' : '#F28C28';
+export const Jafara2D = ({ size = 100 }: Jafara2DProps) => (
+  <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <clipPath id="circleViewJafara">
+        <circle cx="50" cy="50" r="48" />
+      </clipPath>
+      
+      <radialGradient id="faceGradientJafara" cx="50%" cy="35%" r="65%" fx="50%" fy="30%">
+        <stop offset="0%" stopColor="#ffe0d0" />
+        <stop offset="100%" stopColor="#e8b99a" />
+      </radialGradient>
 
-  return (
-    <div style={{ width: size, height: size }}>
-      <svg viewBox="0 0 100 100" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <clipPath id="circleClipJafara">
-            <circle cx="50" cy="50" r="48" />
-          </clipPath>
-          
-          {/* სახის კანის ტონი */}
-          <radialGradient id="skinGradient" cx="50%" cy="40%" r="50%">
-            <stop offset="0%" stopColor="#e8b99a" />
-            <stop offset="100%" stopColor="#d19a78" />
-          </radialGradient>
+      {/* იშვიათი თმის ეფექტი ზედა ნაწილში */}
+      <pattern id="stubblePattern" x="0" y="0" width="2" height="2" patternUnits="userSpaceOnUse">
+        <circle cx="1" cy="1" r="0.7" fill="#1a1a1a" opacity="0.4" />
+      </pattern>
+    </defs>
 
-          {/* პიჯაკის გრადიენტი */}
-          <linearGradient id="suitGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#1e2445" />
-            <stop offset="100%" stopColor="#101428" />
-          </linearGradient>
-        </defs>
+    {/* ნარინჯისფერი ფონი */}
+    <circle cx="50" cy="50" r="48" fill="#F28C28" stroke="#c2410c" strokeWidth="2" />
 
-        {/* ნარინჯისფერი ჩარჩო/ფონი */}
-        <circle cx="50" cy="50" r="48" fill={bgColor} stroke="#2d2d2d" strokeWidth="1" />
+    <g clipPath="url(#circleViewJafara)">
+      
+      {/* კისერი */}
+      <path d="M42 75 L 42 95 L 58 95 L 58 75 Z" fill="#d19a78" />
 
-        {!isScared && (
-          <g clipPath="url(#circleClipJafara)">
-            
-            {/* პიჯაკი (Suit) */}
-            <path d="M10 90 Q 50 75 90 90 L 100 110 L 0 110 Z" fill="url(#suitGradient)" />
-            
-            {/* პერანგი (Shirt) */}
-            <path d="M38 82 L 50 98 L 62 82 L 50 110 Z" fill="#FFFFFF" />
-            
-            {/* ჰალსტუხი (Tie) */}
-            <path d="M47 90 L 50 94 L 53 90 L 53 110 L 47 110 Z" fill="#1a1a1a" />
-            <path d="M47 88 L 53 88 L 52 92 L 48 92 Z" fill="#1a1a1a" />
+      {/* პერანგის საყელო */}
+      <path d="M38 88 L 62 88 L 50 100 Z" fill="#FFFFFF" />
 
-            {/* კისერი */}
-            <path d="M42 75 L 42 85 Q 50 90 58 85 L 58 75 Z" fill="#c28e73" />
+      {/*  თავის ფორმა: მომრგვალებული ქალა და ვიწრო ნიკაპი  */}
+      <path 
+        d="M25 40 
+           C 25 10, 75 10, 75 40 
+           C 75 55, 65 85, 50 85 
+           C 35 85, 25 55, 25 40 Z" 
+        fill="url(#faceGradientJafara)" 
+      />
 
-            {/* თავის ფორმა (უფრო მასიური) */}
-            <path 
-              d="M32 40 C 32 15 38 12 50 12 C 62 12 68 15 68 40 C 68 65 62 82 50 82 C 38 82 32 65 32 40 Z" 
-              fill="url(#skinGradient)" 
-            />
+      {/*  ტანსაცმელი  */}
+      <path d="M5 92 Q 50 105 95 92 V 110 H 5 V 92 Z" fill="#1a1a1a" /> 
+      <path d="M40 88 L 50 98 L 60 88 V 110 H 40 V 88 Z" fill="#FFFFFF" />
+      <path d="M44 90 L 50 93 L 56 90 L 56 95 L 50 93 L 44 95 V 90 Z" fill="#000000" />
+      <circle cx="50" cy="93" r="1.2" fill="#333333" />
 
-            {/* თმა (მოკლე, კლასიკური) */}
-            <path 
-              d="M32 35 Q 32 12 50 12 Q 68 12 68 35 L 68 40 Q 50 32 32 40 Z" 
-              fill="#261a12" 
-            />
-            
-            {/* წვერი (Jafara's Signature Beard) */}
-            <path 
-              d="M32 50 Q 32 85 50 85 Q 68 85 68 50 Q 50 55 32 50 Z" 
-              fill="#261a12" 
-            />
+      {/* იშვიათი თმა ქალაზე */}
+      <path 
+      d="M26 38 C 26 12, 74 12, 74 38 C 74 22, 26 22, 26 38 Z" 
+      fill="url(#stubblePattern)" 
+    />
 
-            {/* ულვაში */}
-            <path 
-              d="M38 58 Q 50 65 62 58 Q 50 60 38 58" 
-              fill="#1a110a" 
-            />
+      {/* წარბები */}
+      <path d="M32 38 Q 40 34 46 37" stroke="#1a1a1a" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <path d="M54 37 Q 60 34 68 38" stroke="#1a1a1a" strokeWidth="3" fill="none" strokeLinecap="round" />
 
-            {/* თვალები */}
-            <circle cx="42" cy="45" r="2.2" fill="#1a1a1a" />
-            <circle cx="58" cy="45" r="2.2" fill="#1a1a1a" />
+      {/* თვალები */}
+      <circle cx="39" cy="46" r="2.8" fill="#2d1b0e" />
+      <circle cx="61" cy="46" r="2.8" fill="#2d1b0e" />
 
-            {/* წარბები (უფრო მკვეთრი) */}
-            <path d="M36 40 Q 42 37 46 39" stroke="#1a110a" strokeWidth="2" fill="none" />
-            <path d="M54 39 Q 58 37 64 40" stroke="#1a110a" strokeWidth="2" fill="none" />
+      {/* ცხვირი */}
+      <path d="M50 45 Q 48 58 46 60 L 50 63 L 54 60" fill="none" stroke="#d19a78" strokeWidth="1.8" opacity="0.8" />
 
-            {/* ცხვირი */}
-            <path d="M48 58 Q 50 62 52 58" stroke="#8d6e63" strokeWidth="1" fill="none" />
+      {/*  წვერი და ულვაში: ზუსტად მიყვება ვიწრო ნიკაპს  */}
+      <g fill="#1a1a1a">
+        {/* ულვაში */}
+        <path d="M35 60 Q 50 56 65 60 L 67 64 Q 50 61 33 64 Z" 
+        transform="translate(0, 5)"
+        />
+        
+        {/* სრული წვერი, რომელიც ვიწროვდება ნიკაპთან */}
+        <path d="M28 55 
+                 C 28 75, 40 85, 50 85 
+                 C 60 85, 72 75, 72 55 
+                 L 66 58 
+                 C 62 70, 55 75, 50 75 
+                 C 45 75, 38 70, 34 58 
+                 Z" />
+                 
+        {/* დამაკავშირებელი ხაზი (Goatee ჩარჩო) */}
+        <path d="M35 60 L 37 68 M 65 60 L 63 68" stroke="#1a1a1a" strokeWidth="2.5" />
+      </g>
 
-          </g>
-        )}
+      {/*  პირი და ტუჩები  */}
+      <g transform="translate(0, 2)">
+        <path d="M43 66 Q 50 67 57 66" stroke="#d19a78" strokeWidth="1.2" fill="none" />
+        <path d="M43 67 Q 50 68 57 67" stroke="#3e2723" strokeWidth="1" fill="none" />
+        <path d="M44 68 Q 50 71 56 68" stroke="#e57373" strokeWidth="1.5" fill="none" opacity="0.5" />
+        {/* ნიკაპის ჩრდილი წვერის ქვეშ */}
+        <path d="M49 71 L 50 72 L 51 71" fill="#000" opacity="0.6" />
+      </g>
 
-        {isScared && (
-          <g clipPath="url(#circleClipJafara)">
-             {/* "შეშინებული" ვერსია პიჯაკში */}
-             <path d="M10 90 Q 50 75 90 90 L 100 110 L 0 110 Z" fill="#111" />
-             <circle cx="35" cy="45" r="6" fill="white" />
-             <circle cx="65" cy="45" r="6" fill="white" />
-             <circle cx="35" cy="45" r="2" fill="#2121DE" />
-             <circle cx="65" cy="45" r="2" fill="#2121DE" />
-             <path d="M40 70 Q 50 60 60 70" stroke="white" strokeWidth="2" fill="none" />
-          </g>
-        )}
-      </svg>
-    </div>
-  );
-};
+    </g>
+  </svg>
+);
