@@ -52,6 +52,8 @@ export const Ghost3D = ({ x, z, color, state }: Ghost3DProps) => {
   
   const isLabadzeGhost = settings.gameTheme === 'labadze' || settings.ghostVariant >= 4;
 
+  const sirenUrl = isLabadzeGhost ? '/sounds/kacebi/labadze_siren.mp3' : '/sounds/siren.mp3';
+
   useEffect(() => {
     if (audioRef.current) {
         if (!isSfxEnabled) {
@@ -83,7 +85,7 @@ export const Ghost3D = ({ x, z, color, state }: Ghost3DProps) => {
     if (isWallBetween(playerPos.x, playerPos.z, x, z, layout)) {
         volume *= 0.2;
     }
-    audioRef.current.setVolume(volume * sfxVolume * 1.5);
+    audioRef.current.setVolume(volume * sfxVolume * 0.5);
   });
 
   useEffect(() => {
@@ -168,7 +170,7 @@ export const Ghost3D = ({ x, z, color, state }: Ghost3DProps) => {
       {state !== 'EATEN' && state !== 'EYES' && (
         <PositionalAudio
           ref={audioRef}
-          url="/sounds/siren.mp3" 
+          url={sirenUrl} 
           distance={1} 
           loop
           autoplay

@@ -46,7 +46,7 @@ const getInitialPositions = (levelIndex: number = 1) => {
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const { pacmanStart, ghostsStart, initialLayout, foodCount } = getInitialPositions(1);
   const { settings } = useTheme();
-  const { playChomp, playDeath, playIntro, playEatGhost, playExtraLife, playFruit, playLevelUp } = useGameAudio();
+  const { playChomp, playDeath, playIntro, playEatGhost, playExtraLife, playFruit, playLevelUp, playPowerPellet } = useGameAudio();
 
   const [lives, setLives] = useState<number>(MAX_LIVES);
   const [level, setLevel] = useState<number>(1);
@@ -273,11 +273,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           playChomp(); 
       } 
       if (tile === TileType.POWER_PELLET) { 
-          pts = SCORES.POWER_PELLET; 
-          newDots = dotsEaten + 1;
-          setDotsEaten(newDots); 
-          activatePowerMode(); 
-          playChomp(); 
+        pts = SCORES.POWER_PELLET; 
+        newDots = dotsEaten + 1;
+        setDotsEaten(newDots); 
+        activatePowerMode(); 
+        playPowerPellet(); 
       }
       
       if (newDots !== dotsEaten) {
@@ -326,7 +326,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         return currentBonus;
     });
 
-  }, [layout, gameStatus, playerPos, dotsEaten, lives, extraLifeSpawned, spawnBonus, playChomp, playExtraLife, playFruit]);
+  }, [layout, gameStatus, playerPos, dotsEaten, lives, extraLifeSpawned, spawnBonus, playChomp, playExtraLife, playFruit, playPowerPellet]);
 
 
   useEffect(() => {

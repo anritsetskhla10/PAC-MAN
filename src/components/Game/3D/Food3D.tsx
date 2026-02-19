@@ -55,9 +55,9 @@ export const Food3D = ({ consumableVariant, themeOverride }: Food3DProps) => {
     }
   });
 
-  const soundFile = consumableVariant === 'life' 
-      ? '/sounds/extra_life.wav' 
-      : '/sounds/eat_fruit.wav';
+  const soundFile = isLabadze
+      ? (consumableVariant === 'life' ? '/sounds/extra_life.wav' : '/sounds/kacebi/labadze_eat_fruit.mp3')
+      : (consumableVariant === 'life' ? '/sounds/extra_life.wav' : '/sounds/eat_fruit.wav');
 
   return (
     <group ref={meshGroupRef}>
