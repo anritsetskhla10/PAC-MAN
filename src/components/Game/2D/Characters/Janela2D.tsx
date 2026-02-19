@@ -4,8 +4,8 @@ interface GhostProps {
 }
 
 export const Janela2D = ({ size = 100, isScared }: GhostProps) => {
-  const color = isScared ? '#2121DE' : '#ec4899'; 
-
+  const bgColor = isScared ? "#2121DE" : "#ec4899";
+  const strokeColor = isScared ? "#2121DE" : "#be185d";
   return (
     <div style={{ width: size, height: size }}>
       <svg viewBox="0 0 100 100" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
@@ -20,9 +20,8 @@ export const Janela2D = ({ size = 100, isScared }: GhostProps) => {
         </defs>
 
         {/* ფონი */}
-        <circle cx="50" cy="50" r="48" fill={color} stroke="#be185d" strokeWidth="2" />
+        <circle cx="50" cy="50" r="48" fill={bgColor} stroke={strokeColor} strokeWidth="2" />
 
-        {!isScared && (
           <g clipPath="url(#circleViewJanela)">
             
             {/* კისერი */}
@@ -77,19 +76,6 @@ export const Janela2D = ({ size = 100, isScared }: GhostProps) => {
             />
 
           </g>
-        )}
-
-        {/* შეშინებული სახე */}
-        {isScared && (
-            <g>
-               <circle cx="35" cy="45" r="5" fill="white" />
-               <circle cx="65" cy="45" r="5" fill="white" />
-               <circle cx="35" cy="45" r="2" fill="blue" />
-               <circle cx="65" cy="45" r="2" fill="blue" />
-               <path d="M35 65 Q 50 55 65 65" stroke="white" strokeWidth="2" fill="none" />
-               <path d="M30 65 L 35 60 L 40 65 L 45 60 L 50 65 L 55 60 L 60 65 L 65 60 L 70 65" stroke="white" strokeWidth="1" fill="none" />
-            </g>
-        )}
       </svg>
     </div>
   );

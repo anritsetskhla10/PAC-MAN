@@ -1,8 +1,12 @@
 interface Kakaba2DProps {
   size?: number;
+  isScared?: boolean; 
 }
 
-export const Kakaba2D = ({ size = 100 }: Kakaba2DProps) => (
+export const Kakaba2D = ({ size = 100, isScared }: Kakaba2DProps) => {
+  const bgColor = isScared ? "#2121DE" : "#ef4444";
+  const strokeColor = isScared ? "#2121DE" : "#b91c1c";
+  return (
   <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <clipPath id="circleViewKakaba">
@@ -15,7 +19,7 @@ export const Kakaba2D = ({ size = 100 }: Kakaba2DProps) => (
     </defs>
 
     {/* ფონი  */}
-    <circle cx="50" cy="50" r="48" fill="#ef4444" stroke="#b91c1c" strokeWidth="2" />
+    <circle cx="50" cy="50" r="48" fill={bgColor} stroke={strokeColor} strokeWidth="2" />
 
     <g clipPath="url(#circleViewKakaba)">
       
@@ -66,3 +70,4 @@ export const Kakaba2D = ({ size = 100 }: Kakaba2DProps) => (
     </g>
   </svg>
 );
+}

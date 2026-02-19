@@ -4,7 +4,8 @@ interface GhostProps {
 }
 
 export const Iko2D = ({ size = 100, isScared }: GhostProps) => {
-  const color = isScared ? '#2121DE' : '#1f90d1';
+  const bgColor = isScared ? "#2121DE" : "#1f90d1";
+  const strokeColor = isScared ? "#2121DE" : "#166a9c";
 
   return (
     <div style={{ width: size, height: size }}>
@@ -25,9 +26,7 @@ export const Iko2D = ({ size = 100, isScared }: GhostProps) => {
           </linearGradient>
         </defs>
 
-        <circle cx="50" cy="50" r="48" fill={color} stroke="#166a9c" strokeWidth="2" />
-
-        {!isScared && (
+          <circle cx="50" cy="50" r="48" fill={bgColor} stroke={strokeColor} strokeWidth="2" />
           <g clipPath="url(#circleViewIko)">
             
             {/* კისერი */}
@@ -86,20 +85,7 @@ export const Iko2D = ({ size = 100, isScared }: GhostProps) => {
             
             {/* ტუჩის ქვედა წვერი */}
             <path d="M49 70 L 50 71 L 51 70" fill="#1a0f0a" opacity="0.8" />
-
           </g>
-        )}
-
-        {isScared && (
-            <g>
-               <circle cx="35" cy="45" r="5" fill="white" />
-               <circle cx="65" cy="45" r="5" fill="white" />
-               <circle cx="35" cy="45" r="2" fill="blue" />
-               <circle cx="65" cy="45" r="2" fill="blue" />
-               <path d="M35 65 Q 50 55 65 65" stroke="white" strokeWidth="2" fill="none" />
-               <path d="M30 65 L 35 60 L 40 65 L 45 60 L 50 65 L 55 60 L 60 65 L 65 60 L 70 65" stroke="white" strokeWidth="1" fill="none" />
-            </g>
-        )}
       </svg>
     </div>
   );

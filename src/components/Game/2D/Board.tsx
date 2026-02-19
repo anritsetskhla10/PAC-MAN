@@ -154,6 +154,7 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
                                 variant={currentVariant} 
                                 color={ghostColor} 
                                 size={isMinimap ? cellSize : cellSize * 0.9} 
+                                isScared={ghost.state === GhostState.SCARED} 
                             />
                         </div>
                     );
