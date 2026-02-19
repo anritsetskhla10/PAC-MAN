@@ -84,7 +84,7 @@ export const PacmanShowcase = () => {
   ) : (
     <div className="flex items-center justify-center h-full">
          <div className="z-10 transform scale-150 p-12 bg-white/5 rounded-3xl backdrop-blur-xl border border-white/10 shadow-2xl">
-            <Pacman2D size={150} />
+            <Pacman2D size={150} heading="RIGHT" forceModel={selectedModel}/>
          </div>
     </div>
   );
