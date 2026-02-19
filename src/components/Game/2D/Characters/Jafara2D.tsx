@@ -1,8 +1,12 @@
 interface Jafara2DProps {
   size?: number;
+  isScared?: boolean;
 }
 
-export const Jafara2D = ({ size = 100 }: Jafara2DProps) => (
+export const Jafara2D = ({ size = 100, isScared }: Jafara2DProps) => {
+  const bgColor = isScared ? "#2121DE" : "#F28C28";
+  const strokeColor = isScared ? "#2121DE" : "#c2410c";
+  return (
   <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <clipPath id="circleViewJafara">
@@ -20,8 +24,8 @@ export const Jafara2D = ({ size = 100 }: Jafara2DProps) => (
       </pattern>
     </defs>
 
-    {/* ნარინჯისფერი ფონი */}
-    <circle cx="50" cy="50" r="48" fill="#F28C28" stroke="#c2410c" strokeWidth="2" />
+    {/*ფონი */}
+    <circle cx="50" cy="50" r="48" fill={bgColor} stroke={strokeColor} strokeWidth="2" />
 
     <g clipPath="url(#circleViewJafara)">
       
@@ -95,3 +99,4 @@ export const Jafara2D = ({ size = 100 }: Jafara2DProps) => (
     </g>
   </svg>
 );
+}

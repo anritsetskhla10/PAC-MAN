@@ -10,31 +10,26 @@ interface Ghost2DProps {
   variant: number;
   color: string;
   size?: number;
+  isScared?: boolean; 
 }
 
-export const Ghost2D = ({ variant, color, size = 100 }: Ghost2DProps) => {
+export const Ghost2D = ({ variant, color, size = 100, isScared = false }: Ghost2DProps) => {
   switch (variant) {
     case 1:
       return <GhostIcon className="w-full h-full" color={color} />;
-
     case 2:
       return <Reaper2D size={size} color={color} />;
-
     case 3:
       return <EyesIcon className="w-full h-full" />;
-
+    
     case 4:
-      return <Kakaba2D size={size} />;
-
+      return <Kakaba2D size={size} isScared={isScared} />;
     case 5:
-      return <Janela2D size={size} />;
-
+      return <Janela2D size={size} isScared={isScared} />;
     case 6:
-      return <Iko2D size={size} />;
-
+      return <Iko2D size={size} isScared={isScared} />;
     case 7:
-      return <Jafara2D size={size} />;
-
+      return <Jafara2D size={size} isScared={isScared} />;
     default:
       return null;
   }
