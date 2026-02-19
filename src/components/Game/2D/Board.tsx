@@ -2,8 +2,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { TileType, GhostState } from '../../../types';
 import { cn } from '../../../utils/cn';
 import { useGame } from '../../../context/GameContext';
-import { GhostIcon } from '../../Game/2D/icons/GhostIcon'; 
-import { EyesIcon } from '../../Game/2D/icons/EyesIcon'; 
+import { useTheme } from '../../../context/ThemeContext';
+import { Ghost2D } from './Ghost2D';
 import { Food2D } from '../2D/Food2D';
 import { Pacman2D } from '../../Game/Player/Pacman2D';
 import type { PlayerHeading } from '../../../hooks/usePlayerHeading'; 
@@ -22,6 +22,7 @@ const GHOST_COLORS = ['#FF0000', '#FFB8FF', '#00FFFF', '#FFB852'];
 
 export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeight = 0 }: BoardProps) => {
   const { playerPos, ghostsPos, layout, movePlayer, activeBonus } = useGame(); 
+  const { settings } = useTheme();
   
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1000);
 
@@ -126,16 +127,37 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
                     </div>
                 )}
 
-                {isGhostHere && (
-                  ghost.state === GhostState.EATEN ? (
-                    <EyesIcon className={cn("z-30", isMinimap ? "w-full h-full p-0.5" : "w-[80%] h-[80%]")} />
-                  ) : (
-                    <GhostIcon 
-                      color={ghost.state === GhostState.SCARED ? '#0000FF' : GHOST_COLORS[ghostIndex % GHOST_COLORS.length]}
-                      className={cn("z-30 animate-bounce drop-shadow-md", isMinimap ? "w-full h-full p-0.5" : "w-[90%] h-[90%]")}
-                    />
-                  )
-                )}
+                {isGhostHere && ghost && (() => {
+                    const ghostColor = ghost.state === GhostState.SCARED 
+                        ? '#0000FF' 
+                        : GHOST_COLORS[ghostIndex % GHOST_COLORS.length];
+                    
+                    let currentVariant = 1; 
+                    
+                    if (ghost.state === GhostState.EATEN) {
+                        currentVariant = 3; 
+                    } else if (settings.gameTheme === 'labadze') {
+                        const labadzeMap = [4, 5, 6, 7];
+                        currentVariant = labadzeMap[ghostIndex % 4];
+                    } else {
+                        currentVariant = (settings.ghostVariant === 1 || settings.ghostVariant === 2) 
+                            ? settings.ghostVariant 
+                            : 1;
+                    }
+
+                    return (
+                        <div className={cn(
+                            "z-30 absolute inset-0 flex items-center justify-center pointer-events-none",
+                            ghost.state !== GhostState.EATEN && "animate-bounce drop-shadow-md"
+                        )}>
+                            <Ghost2D 
+                                variant={currentVariant} 
+                                color={ghostColor} 
+                                size={isMinimap ? cellSize : cellSize * 0.9} 
+                            />
+                        </div>
+                    );
+                })()}
               </div>
             );
           })
