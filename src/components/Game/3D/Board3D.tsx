@@ -9,6 +9,7 @@ import { useTheme } from '../../../context/ThemeContext';
 import { TileType, type Ghost } from '../../../types';
 import type { PlayerHeading } from '../../../hooks/usePlayerHeading';
 import { useIsMobile } from '../../../hooks/useIsMobile'; 
+import { Suspense } from 'react';
 
 const GAME_GHOST_COLORS = ['#FF0000', '#FFB8FF', '#00FFFF', '#FFB852'];
 
@@ -37,6 +38,7 @@ export const Board3D = ({ heading }: Board3DProps) => {
         dpr={isMobile ? [1, 1.5] : [1, 2]} 
         frameloop="always"
       >
+        <Suspense fallback={null}>
         <color attach="background" args={['#050505']} />
         <hemisphereLight color="#ffffff" groundColor="#000000" intensity={0.7} />
         <ambientLight intensity={0.4} />
@@ -80,6 +82,7 @@ export const Board3D = ({ heading }: Board3DProps) => {
             />
           </group>
         ))}
+        </Suspense>
       </Canvas>
     </div>
   );
