@@ -41,21 +41,14 @@ export default defineConfig({
     })
   ],
   build: {
-    chunkSizeWarningLimit: 1600, 
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-three': ['three', '@react-three/fiber', '@react-three/drei'],
+          'vendor-i18n': ['i18next', 'react-i18next', 'i18next-browser-languagedetector', 'i18next-http-backend']
         }
       }
     }
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/tests/setup.ts',
-    css: false, 
   }
 })

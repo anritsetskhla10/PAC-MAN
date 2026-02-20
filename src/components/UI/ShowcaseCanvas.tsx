@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 
@@ -20,13 +20,15 @@ export const ShowcaseCanvas = ({
   return (
     <Canvas camera={{ position: cameraPosition, fov: 50 }}>
       <OrbitControls 
-        enablePan={false} 
+        enablePan={true} 
+        enableZoom={true}
+        enableRotate={true}
         autoRotate 
         autoRotateSpeed={1.5}
-        minPolarAngle={Math.PI / 4} 
-        maxPolarAngle={Math.PI / 2} 
-        minDistance={2}
-        maxDistance={10}
+        minDistance={0.5} 
+        maxDistance={30}
+        minPolarAngle={0} 
+        maxPolarAngle={Math.PI / 2 + 0.1} 
       />
 
       {/* განათება */}
@@ -34,16 +36,19 @@ export const ShowcaseCanvas = ({
       <pointLight position={[10, 10, 10]} intensity={1} />
       <pointLight position={[-10, -5, -5]} intensity={0.5} color={isDark ? "blue" : "orange"} />
 
-      {/* მოდელის კონტეინერი */}
-      <group scale={[scale, scale, scale]} position={position}>
-        {children}
-      </group>
+      <Suspense fallback={null}>
+        <group scale={scale} position={position}>
+          {children}
+        </group>
+      </Suspense>
 
-      {/* იატაკის ბადე */}
       <gridHelper 
-        args={[20, 20, isDark ? '#333' : '#ddd', isDark ? '#111' : '#f0f0f0']} 
-        position={[0, -1, 0]} 
+        args={[20, 20, isDark ? '#ffffff' : '#000000', isDark ? '#ffffff' : '#000000']} 
+        position={[0, -1.2, 0]} 
+        material-opacity={isDark ? 0.2 : 0.1} 
+        material-transparent={true}
       />
+
     </Canvas>
   );
 };
