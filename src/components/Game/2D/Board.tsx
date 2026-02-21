@@ -74,7 +74,7 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
             : "border-0 bg-(--game-bg) gap-px shadow-2xl" 
         )}
         style={{
-          gridTemplateColumns: `repeat(${layout[0].length}, ${cellSize}px)`,
+          gridTemplateColumns: `repeat(${layout[0]?.length || 19}, ${cellSize}px)`,
         }}
       >
         {layout.map((row, rowIndex) =>
