@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { GameContext, type Position } from './GameContext';
 import { type GameStatus, TileType, GhostState, type Ghost, type GlobalMode, type ActiveBonus, type BonusType } from '../types';
-import { LEVEL_MAPS, SCORES, GHOST_CONFIG, GHOST_SPEEDS, WAVE_TIMINGS, TUNNEL_ROW, SPAWN_POINTS } from '../utils/constants';
+import { LEVEL_MAPS, GHOST_CONFIG, GHOST_SPEEDS, WAVE_TIMINGS, TUNNEL_ROW, SPAWN_POINTS } from '../utils/constants';
 import { calculateGhostNextMove } from '../utils/ghostLogic'; 
 import { useTheme } from './ThemeContext';
 import { useGameAudio } from '../hooks/useGameAudio'; 
+import { checkCollision, checkFoodEaten, checkBonusEaten } from '../utils/physics';
 
 const MAX_LIVES = 3;
 
@@ -257,76 +258,53 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const dz = targetZ - playerPos.z;
     if (dx !== 0 || dz !== 0) playerDirRef.current = { x: dx, z: dz };
 
-    setPlayerPos({ x: targetX, z: targetZ });
+    const newPos = { x: targetX, z: targetZ };
+    setPlayerPos(newPos);
 
-    const tile = layout[targetZ][targetX];
-    const isInteractable = ([TileType.FOOD, TileType.POWER_PELLET] as number[]).includes(tile);
+    const foodResult = checkFoodEaten(newPos, layout);
+    if (foodResult.hasEaten) {
+      const newDots = dotsEaten + 1;
+      setDotsEaten(newDots); 
+      setScore(s => s + foodResult.points);
+      setLayout(foodResult.newLayout);
 
-    if (isInteractable) {
-      let pts = 0;
-      let newDots = dotsEaten; 
-
-      if (tile === TileType.FOOD) { 
-          pts = SCORES.DOT; 
-          newDots = dotsEaten + 1;
-          setDotsEaten(newDots); 
+      if (foodResult.eatenType === TileType.FOOD) {
           playChomp(); 
-      } 
-      if (tile === TileType.POWER_PELLET) { 
-        pts = SCORES.POWER_PELLET; 
-        newDots = dotsEaten + 1;
-        setDotsEaten(newDots); 
-        activatePowerMode(); 
-        playPowerPellet(); 
+      } else if (foodResult.eatenType === TileType.POWER_PELLET) {
+          activatePowerMode(); 
+          playPowerPellet(); 
       }
-      
-      if (newDots !== dotsEaten) {
-          if (newDots === 50) spawnBonus('CHERRY');
-          if (newDots === 70) spawnBonus('STRAWBERRY');
-          
-          if (newDots === 100 && !extraLifeSpawned && lives < MAX_LIVES) {
-              spawnBonus('EXTRA_LIFE');
-              setExtraLifeSpawned(true);
-              playExtraLife(); 
-          }
-      }
-      
-      setScore(s => s + pts);
-      
-      setLayout(l => {
-        const nl = l.map(r => [...r]);
-        nl[targetZ][targetX] = TileType.EMPTY;
-        return nl;
-      });
 
+      if (newDots === 50) spawnBonus('CHERRY');
+      if (newDots === 70) spawnBonus('STRAWBERRY');
+      if (newDots === 100 && !extraLifeSpawned && lives < MAX_LIVES) {
+          spawnBonus('EXTRA_LIFE');
+          setExtraLifeSpawned(true);
+          playExtraLife(); 
+      }
+      
       setRemainingFood(prev => {
           const newState = prev - 1;
-          if (newState <= 0) {
-                setGameStatus('won'); 
-          }
+          if (newState <= 0) setGameStatus('won'); 
           return newState;
       });
     }
 
-    setActiveBonus(currentBonus => {
-        if (currentBonus && currentBonus.x === targetX && currentBonus.z === targetZ) {
-            setScore(s => s + currentBonus.points);
-            if (currentBonus.type === 'EXTRA_LIFE') {
-                setLives(l => Math.min(l + 1, MAX_LIVES)); 
-                playExtraLife(); 
-            } else {
-                playFruit(); 
-            }
+    if (checkBonusEaten(newPos, activeBonus)) {
+      setScore(s => s + activeBonus!.points); 
+      if (activeBonus!.type === 'EXTRA_LIFE') {
+          setLives(l => Math.min(l + 1, MAX_LIVES)); 
+          playExtraLife(); 
+      } else {
+          playFruit(); 
+      }
 
-            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-            
-            if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
-            return null; 
-        }
-        return currentBonus;
-    });
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
+      setActiveBonus(null); 
+    }
 
-  }, [layout, gameStatus, playerPos, dotsEaten, lives, extraLifeSpawned, spawnBonus, playChomp, playExtraLife, playFruit, playPowerPellet]);
+  }, [layout, gameStatus, playerPos, dotsEaten, lives, extraLifeSpawned, spawnBonus, playChomp, playExtraLife, playFruit, playPowerPellet, activeBonus]);
 
 
   useEffect(() => {
@@ -398,18 +376,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     return () => clearInterval(interval);
   }, [gameStatus, settings.difficulty, remainingFood, globalMode, waveIndex, dotsEaten]);
 
- useEffect(() => {
+  useEffect(() => {
     if (gameStatus !== 'playing') return;
     
-    const hitIndex = ghostsPos.findIndex(g => 
-       Math.abs(g.x - playerPos.x) < 0.6 && Math.abs(g.z - playerPos.z) < 0.6
-    );
+    const { hit, hitGhostIndex, hitGhost } = checkCollision(playerPos, ghostsPos);
 
-    if (hitIndex !== -1) {
-        const ghost = ghostsPos[hitIndex];
-        
+    if (hit && hitGhost) {
         const timerId = setTimeout(() => {
-            if (ghost.state === GhostState.NORMAL) {
+            if (hitGhost.state === GhostState.NORMAL) {
                 if (lives > 1) {
                     playDeath(); 
                     setLives(prev => prev - 1);
@@ -423,7 +397,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
                     if (navigator.vibrate) navigator.vibrate(1000);
                 }
             } 
-            else if (ghost.state === GhostState.SCARED || ghost.state === GhostState.FLASHING) {
+            else if (hitGhost.state === GhostState.SCARED || hitGhost.state === GhostState.FLASHING) {
                  playEatGhost(); 
                  const comboMultiplier = Math.pow(2, ghostsEatenBatch);
                  const points = 200 * comboMultiplier;
@@ -431,8 +405,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
                  setGhostsEatenBatch(prev => prev + 1);
                  setGhostsPos(prev => {
                     const ng = [...prev];
-                    if (ng[hitIndex]) {
-                        ng[hitIndex] = { ...ghost, state: GhostState.EATEN, movementProgress: 0 };
+                    if (ng[hitGhostIndex]) {
+                        ng[hitGhostIndex] = { ...hitGhost, state: GhostState.EATEN, movementProgress: 0 };
                     }
                     return ng;
                 });

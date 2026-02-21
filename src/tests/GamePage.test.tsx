@@ -12,7 +12,7 @@ vi.mock('../components/Game/3D/Board3D', () => ({
   Board3D: () => <div data-testid="mock-board-3d">3D Board Placeholder</div>
 }));
 
-vi.mock('../components/Game/Board', () => ({
+vi.mock('../components/Game/2D/Board', () => ({
   Board: () => <div data-testid="mock-board-2d">2D Board Placeholder</div>
 }));
 
@@ -31,21 +31,51 @@ const useThemeSpy = vi.spyOn(ThemeContext, 'useTheme');
 
 describe('GamePage UI (Sidebar & HUD)', () => {
   
-  const setupMocks = (gameOverrides = {}, themeOverrides = {}) => {
-    useThemeSpy.mockReturnValue({
-      settings: { is3DMode: true, isSpectatorMode: false, ...themeOverrides },
-      updateSetting: vi.fn(),
-    } as unknown as ThemeContextType);
-
+  const setupMocks = (gameOverrides: Partial<GameContextType> = {}, themeOverrides: Partial<ThemeContextType['settings']> = {}) => {
     useGameSpy.mockReturnValue({
-      gameStatus: 'playing',
-      score: 0,
-      elapsedTime: 0,
+      score: 5000,
+      level: 3,
       lives: 3,
-      level: 1,
+      elapsedTime: 75,
+      gameStatus: 'playing',
       pauseGame: vi.fn(),
-      ...gameOverrides
+      resumeGame: vi.fn(),
+      startGame: vi.fn(),
+      restartGame: vi.fn(),
+      nextLevel: vi.fn(),
+      movePlayer: vi.fn(),
+      startRound: vi.fn(),
+      playerPos: { x: 1, z: 1 },
+      ghostsPos: [],
+      layout: [[1]],
+      remainingFood: 10,
+      activeBonus: null,
+      ...gameOverrides,
     } as unknown as GameContextType);
+
+    useThemeSpy.mockReturnValue({
+      settings: {
+        is3DMode: false,
+        gameTheme: 'classic',
+        wallColor: '#1e3a8a',
+        foodColor: '#fef08a',
+        gameBg: '#000000',
+        isDarkMode: true,
+        isSpectatorMode: false,
+        ghostVariant: 1,
+        ghostColor: '#FF0000',
+        difficulty: 'MEDIUM',
+        playerModel: 'classic',
+        audio: {
+          masterMuted: false,
+          musicVolume: 0.5,
+          sfxVolume: 1.0,
+        },
+        ...themeOverrides,
+      },
+      updateSetting: vi.fn(),
+      resetTheme: vi.fn(),
+    } as unknown as ThemeContextType);
   };
 
   beforeEach(() => {
@@ -53,10 +83,10 @@ describe('GamePage UI (Sidebar & HUD)', () => {
   });
 
   it('should render correct Score, Level, and formatted Time', () => {
-    setupMocks({ 
-      score: 5000, 
-      level: 3, 
-      elapsedTime: 75 
+    setupMocks({
+      score: 5000,
+      level: 3,
+      elapsedTime: 75, 
     });
 
     render(
@@ -103,19 +133,16 @@ describe('GamePage UI (Sidebar & HUD)', () => {
 
   it('should call pauseGame when pause button is clicked', () => {
     const pauseGameMock = vi.fn();
-    setupMocks({ 
-      gameStatus: 'playing',
-      pauseGame: pauseGameMock 
-    });
+    setupMocks({ gameStatus: 'playing', pauseGame: pauseGameMock });
 
     render(
       <MemoryRouter>
         <GamePage />
       </MemoryRouter>
     );
-
-    const pauseBtn = screen.getByText('⏸');
-    fireEvent.click(pauseBtn);
+    
+    const pauseButton = screen.getByText('⏸');
+    fireEvent.click(pauseButton);
     expect(pauseGameMock).toHaveBeenCalled();
   });
 });
