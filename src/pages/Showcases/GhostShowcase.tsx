@@ -7,10 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { ClassicGhost } from '../../components/Game/3D/Ghosts/ClassicGhost';
 import { ReaperGhost } from '../../components/Game/3D/Ghosts/ReaperGhost';
 import { Eyes3D } from '../../components/Game/3D/Ghosts/Eyes3D';
-import { Model as KakabaModel } from '../../components/Game/3D/Models/Kakaba';
-import { Model as JanelaModel } from '../../components/Game/3D/Models/Janela';
-import { Model as IkoModel } from '../../components/Game/3D/Models/Iko';
-import { Model as JafaraModel } from '../../components/Game/3D/Models/Jafara';
+import { LabadzeGhostModel } from '../../components/Game/3D/Models/LabadzeGhostModel';
 import { Ghost2D } from '../../components/Game/2D/Ghost2D';
 
 const ColorSquare = ({ color }: { color: string }) => (
@@ -145,10 +142,10 @@ export const GhostShowcase = () => {
         {variant === 2 && <ReaperGhost color={ghostColor} />}
         {variant === 3 && <Eyes3D />}
 
-        {variant === 4 && <KakabaModel ghostState={previewState} />}
-        {variant === 5 && <JanelaModel ghostState={previewState} />}
-        {variant === 6 && <IkoModel ghostState={previewState} />}
-        {variant === 7 && <JafaraModel ghostState={previewState} />}
+        {variant === 4 && <LabadzeGhostModel name="kakaba" ghostState={previewState} />}
+        {variant === 5 && <LabadzeGhostModel name="janela" ghostState={previewState} />}
+        {variant === 6 && <LabadzeGhostModel name="iko" ghostState={previewState} />}
+        {variant === 7 && <LabadzeGhostModel name="jafara" ghostState={previewState} />}
     </ShowcaseCanvas>
   ) : (
     //2D VIEW 
