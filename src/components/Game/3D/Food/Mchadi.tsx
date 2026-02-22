@@ -9,7 +9,7 @@ export const Mchadi = () => {
   const meshRef = useRef<THREE.Mesh>(null);
 
   const geometry = useMemo(() => {
-    const geo = new THREE.SphereGeometry(0.13, 128, 128);
+    const geo = new THREE.SphereGeometry(0.13, 16, 16);
     
     const positions = geo.attributes.position;
     const count = positions.count;

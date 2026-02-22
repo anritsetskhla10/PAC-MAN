@@ -15,7 +15,7 @@ export const Kebab = () => {
   }, []);
 
   const lavashGeometry = useMemo(() => {
-    const geo = new THREE.CylinderGeometry(0.13, 0.13, 0.75, 48, 32, true);
+    const geo = new THREE.CylinderGeometry(0.13, 0.13, 0.75, 16, 8, true);
     
     const positions = geo.attributes.position;
     const v = new THREE.Vector3();
@@ -53,10 +53,12 @@ export const Kebab = () => {
       
       {/* ხორცი */}
       <mesh position={[0, 0, 0]}>
-        <capsuleGeometry args={[0.11, 0.92, 8, 16]} />
-        <meshStandardMaterial 
-          color="#3E2723" 
-          roughness={0.9} 
+        <capsuleGeometry args={[0.11, 0.92, 4, 8]} />
+        <meshPhysicalMaterial
+          color="#771313"   
+          roughness={0.65}     
+          metalness={0.0}       
+          reflectivity={0.5}    
         />
       </mesh>
 

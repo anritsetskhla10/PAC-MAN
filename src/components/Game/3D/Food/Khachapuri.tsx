@@ -4,6 +4,7 @@ import * as THREE from 'three';
 export const Khachapuri = () => {
   const { materials, shapes } = useMemo(() => {
     const doughMat = new THREE.MeshStandardMaterial({
+      color: "#dca560",
       roughness: 0.85,   
       metalness: 0.0,
       flatShading: false, 
@@ -31,6 +32,7 @@ export const Khachapuri = () => {
       roughness: 0.3,
       opacity: 0.9,
       transparent: true,
+      depthWrite: false,
     });
 
     const crustRadius = 0.18; 
@@ -117,7 +119,7 @@ export const Khachapuri = () => {
   return (
     <group rotation={[0, 0, 0]} scale={0.4}>
       <mesh material={materials.dough}>
-        <tubeGeometry ref={crustGeoRef} args={[shapes.curve, 128, shapes.crustRadius, 64, true]} />
+        <tubeGeometry ref={crustGeoRef} args={[shapes.curve, 32, shapes.crustRadius, 16, true]} />
       </mesh>
 
       <group position={[0, -shapes.crustRadius * 0.4, 0]}>

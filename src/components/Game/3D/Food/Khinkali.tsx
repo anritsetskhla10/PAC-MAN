@@ -5,7 +5,7 @@ export const Khinkali = () => {
   const geometry = useMemo(() => {
     const pleatCount = 19; 
     const radialSegments = pleatCount * 16; 
-    const heightSegments = 150; 
+    const heightSegments = 30; 
     
     const totalHeight = 0.55;
     const baseRadius = 0.15;   
