@@ -4,9 +4,10 @@ import { InstancedLevel } from '../InstancedLevel';
 import { Board } from '../2D/Board';
 import { Ghost3D } from '../3D/Ghost3D'; 
 import { Food3D } from '../3D/Food3D';
+import { InstancedFood } from '../3D/Food/InstancedFood';
 import { useGame } from '../../../context/GameContext';
 import { useTheme } from '../../../context/ThemeContext';
-import { TileType, type Ghost } from '../../../types';
+import { type Ghost } from '../../../types';
 import type { PlayerHeading } from '../../../hooks/usePlayerHeading';
 import { useIsMobile } from '../../../hooks/useIsMobile'; 
 import { Suspense } from 'react';
@@ -39,51 +40,43 @@ export const Board3D = ({ heading }: Board3DProps) => {
         frameloop="always"
       >
         <Suspense fallback={null}>
-        <color attach="background" args={['#050505']} />
-        <hemisphereLight color="#ffffff" groundColor="#000000" intensity={0.7} />
-        <ambientLight intensity={0.4} />
-        
-        {!isMobile && <fog attach="fog" args={['#050505', 0, 40]} />}
-        
-        <Pacman3D 
-           isShowcase={false}
-           isSpectator={settings.isSpectatorMode} 
-           heading={heading} 
-        />
-        
-        <InstancedLevel />
+          <color attach="background" args={['#050505']} />
+          <hemisphereLight color="#ffffff" groundColor="#000000" intensity={0.7} />
+          <ambientLight intensity={0.4} />
+          
+          {!isMobile && <fog attach="fog" args={['#050505', 0, 40]} />}
+          
+          <Pacman3D 
+             isShowcase={false}
+             isSpectator={settings.isSpectatorMode} 
+             heading={heading} 
+          />
+          
+          <InstancedLevel />
 
-        {/* Consumables  */}
-        {layout.map((row: number[], z: number) => 
-          row.map((tile: number, x: number) => {
-            if (tile === TileType.POWER_PELLET) return <group key={`${x}-${z}`} position={[x, 0.5, z]}><Food3D consumableVariant="power" /></group>;
-            if (tile === TileType.FOOD) return <group key={`${x}-${z}`} position={[x, 0.5, z]}><Food3D consumableVariant="dot" /></group>;
-            return null;
-          })
-        )}
+          <InstancedFood layout={layout} />
 
-        {/* Dynamic Bonus Item */}
-        {activeBonus && (
-           <group position={[activeBonus.x, 0.5, activeBonus.z]}>
-               {activeBonus.type === 'CHERRY' && <Food3D consumableVariant="cherry" />}
-               {activeBonus.type === 'STRAWBERRY' && <Food3D consumableVariant="strawberry" />}
-               {activeBonus.type === 'EXTRA_LIFE' && <Food3D consumableVariant="life" />}
-           </group>
-        )}
+          {activeBonus && (
+             <group position={[activeBonus.x, 0.5, activeBonus.z]}>
+                 {activeBonus.type === 'CHERRY' && <Food3D consumableVariant="cherry" />}
+                 {activeBonus.type === 'STRAWBERRY' && <Food3D consumableVariant="strawberry" />}
+                 {activeBonus.type === 'EXTRA_LIFE' && <Food3D consumableVariant="life" />}
+             </group>
+          )}
 
-        {/* Ghosts */}
-        {ghostsPos.map((ghost: Ghost, index: number) => (
-          <group key={index} position={[0, 0.1, 0]}>
-            <Ghost3D 
-              x={ghost.x} 
-              z={ghost.z}
-              state={ghost.state} 
-              color={GAME_GHOST_COLORS[index % GAME_GHOST_COLORS.length]} 
-            />
-          </group>
-        ))}
+          {/* Ghosts */}
+          {ghostsPos.map((ghost: Ghost, index: number) => (
+            <group key={index} position={[0, 0.1, 0]}>
+              <Ghost3D 
+                x={ghost.x} 
+                z={ghost.z}
+                state={ghost.state} 
+                color={GAME_GHOST_COLORS[index % GAME_GHOST_COLORS.length]} 
+              />
+            </group>
+          ))}
         </Suspense>
       </Canvas>
     </div>
   );
-}
+};
