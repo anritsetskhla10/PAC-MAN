@@ -9,10 +9,7 @@ import { ReaperGhost } from './Ghosts/ReaperGhost';
 import { Eyes3D } from './Ghosts/Eyes3D'; 
 import { TileType, type GhostState } from '../../../types'; 
 
-import { Model as KakabaModel } from './Models/Kakaba';
-import { Model as JanelaModel } from './Models/Janela';
-import { Model as IkoModel } from './Models/Iko';
-import { Model as JafaraModel } from './Models/Jafara';
+import { LabadzeGhostModel, type LabadzeGhostName } from './Models/LabadzeGhostModel';
 
 interface Ghost3DProps {
   x: number;
@@ -127,12 +124,16 @@ export const Ghost3D = ({ x, z, color, state }: Ghost3DProps) => {
   const displayColor = state === 'SCARED' ? '#0000FF' : color;
 
   const renderLabadzeGhost = () => {
-      if (color === '#FF0000') return <KakabaModel ghostState={state} />;
-      if (color === '#FFB8FF') return <JanelaModel ghostState={state} />;
-      if (color === '#00FFFF') return <IkoModel ghostState={state} />;
-      if (color === '#FFB852') return <JafaraModel ghostState={state} />;
-      return <KakabaModel ghostState={state} />;
-  }
+  const ghostMap: Record<string, LabadzeGhostName> = {
+    '#FF0000': 'kakaba',
+    '#FFB8FF': 'janela',
+    '#00FFFF': 'iko',
+    '#FFB852': 'jafara',
+  };
+  const ghostName = ghostMap[color] || 'kakaba';
+  
+  return <LabadzeGhostModel name={ghostName} ghostState={state} />;
+}
 
   const getScale = (): [number, number, number] => {
     if (state === 'EATEN' && !isLabadzeGhost) return [0.8, 0.8, 0.8]; 
