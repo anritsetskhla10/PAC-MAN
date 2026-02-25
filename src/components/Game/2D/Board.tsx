@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { TileType, GhostState } from '../../../types';
+import { TileType, GhostState, type Ghost } from '../../../types';
 import { cn } from '../../../utils/cn';
 import { useGame } from '../../../context/GameContext';
 import { useTheme } from '../../../context/ThemeContext';
@@ -21,10 +21,23 @@ interface BoardProps {
 const GHOST_COLORS = ['#FF0000', '#FFB8FF', '#00FFFF', '#FFB852'];
 
 export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeight = 0 }: BoardProps) => {
-  const { playerPos, ghostsPos, layout, movePlayer, activeBonus } = useGame(); 
+  const { playerPosRef, ghostsPosRef, layout, movePlayer, activeBonus, subscribeToPositions } = useGame(); 
   const { settings } = useTheme();
   
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1000);
+
+  const [localPlayerPos, setLocalPlayerPos] = useState({ x: 1, z: 1 });
+  const [localGhostsPos, setLocalGhostsPos] = useState<Ghost[]>([]);
+
+  useEffect(() => {
+    setLocalPlayerPos({ ...playerPosRef.current });
+    setLocalGhostsPos([...ghostsPosRef.current]);
+
+    return subscribeToPositions(() => {
+      setLocalPlayerPos({ ...playerPosRef.current });
+      setLocalGhostsPos([...ghostsPosRef.current]);
+    });
+  }, [subscribeToPositions, playerPosRef, ghostsPosRef]);
 
   useEffect(() => {
     if (!isMinimap) return;
@@ -36,8 +49,8 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
   useEffect(() => {
     if (isMinimap) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      let newX = playerPos.x;
-      let newZ = playerPos.z;
+      let newX = playerPosRef.current.x;
+      let newZ = playerPosRef.current.z;
       
       if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') newZ -= 1;
       if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') newZ += 1;
@@ -48,7 +61,7 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [playerPos, movePlayer, isMinimap]); 
+  }, [movePlayer, isMinimap, playerPosRef]); 
 
   const cellSize = useMemo(() => {
     if (isMinimap) {
@@ -79,9 +92,9 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
       >
         {layout.map((row, rowIndex) =>
           row.map((tile, colIndex) => {
-            const isPlayerHere = playerPos.x === colIndex && playerPos.z === rowIndex;
-            const ghostIndex = ghostsPos.findIndex(g => Math.round(g.x) === colIndex && Math.round(g.z) === rowIndex);
-            const ghost = ghostsPos[ghostIndex];
+            const isPlayerHere = localPlayerPos.x === colIndex && localPlayerPos.z === rowIndex;
+            const ghostIndex = localGhostsPos.findIndex(g => Math.round(g.x) === colIndex && Math.round(g.z) === rowIndex);
+            const ghost = localGhostsPos[ghostIndex];
             const isGhostHere = ghostIndex !== -1;
 
             const isPower = tile === TileType.POWER_PELLET;
@@ -110,7 +123,6 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
               >
                 {!isPlayerHere && !isGhostHere && (
                     <>
-                        {/* Static Items*/}
                         {isPower ? <Food2D type="power" size={foodSize} /> :
                          isFood ? <Food2D type="dot" size={foodSize} /> : null
                         }

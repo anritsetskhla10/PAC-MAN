@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import { useGame } from '../../context/GameContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -24,15 +23,10 @@ const DPadButton = ({ dir, icon, className, onMove }: DPadButtonProps) => (
 );
 
 export const MobileControls = () => {
-  const { playerPos, movePlayer, gameStatus } = useGame();
+  const { playerPosRef, movePlayer, gameStatus } = useGame();
   const { settings } = useTheme();
   const isMobile = useIsMobile();
   
-  const playerPosRef = useRef(playerPos);
-
-  useEffect(() => {
-    playerPosRef.current = playerPos;
-  }, [playerPos]);
 
   const handleMove = (direction: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT') => {
     if (navigator.vibrate) navigator.vibrate(15);
@@ -65,13 +59,13 @@ export const MobileControls = () => {
   const finalBtnClass = `${baseBtnClass} ${themeClass}`;
 
   return (
-    <div className={`fixed z-200 bottom-6 right-6 flex flex-col items-center gap-2 touch-none select-none
+    <div className={`fixed z-200 bottom-6 right-6 flex flex-col items-center gap-4 touch-none select-none
        ${is3DEnvironment ? 'opacity-60 hover:opacity-100' : 'opacity-90'}
     `}>
       
       <DPadButton dir="UP" icon="▲" className={finalBtnClass} onMove={handleMove} />
 
-      <div className="flex gap-2">
+      <div className="flex gap-4">
         <DPadButton dir="LEFT" icon="◀" className={finalBtnClass} onMove={handleMove} />
         <DPadButton dir="DOWN" icon="▼" className={finalBtnClass} onMove={handleMove} />
         <DPadButton dir="RIGHT" icon="▶" className={finalBtnClass} onMove={handleMove} />

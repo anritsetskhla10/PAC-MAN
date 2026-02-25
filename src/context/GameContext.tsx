@@ -1,11 +1,13 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, type RefObject } from 'react';
 import type { GameStatus, Ghost, Coordinate, ActiveBonus } from '../types'; 
 
 export type Position = Coordinate;
 
 export interface GameContextType {
-  playerPos: Position;
-  ghostsPos: Ghost[]; 
+
+  playerPosRef: RefObject<Position>;
+  ghostsPosRef: RefObject<Ghost[]>; 
+  
   score: number;
   layout: number[][];
   gameStatus: GameStatus; 
@@ -13,8 +15,9 @@ export interface GameContextType {
   lives: number; 
   level: number;
   activeBonus: ActiveBonus | null;
-  
   elapsedTime: number;
+
+  subscribeToPositions: (callback: () => void) => () => void;
 
   movePlayer: (x: number, z: number) => void;
   startGame: () => void; 
