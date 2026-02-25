@@ -55,7 +55,7 @@
     "choose_color": "Choose Color",
     "select_char": "Select Character",
     "visual_disclaimer": "* Visual inspection only. Does not affect gameplay settings.",
-    "model_disclaimer": "The selected model will be used in the game.",
+    "model_disclaimer": "The selected model will not be used in the game.",
     "close_hint": "Press 'X' to close this panel"
   },
   "items": {

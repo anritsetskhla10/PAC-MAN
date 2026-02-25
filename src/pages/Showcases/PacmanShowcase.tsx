@@ -20,7 +20,6 @@ export const PacmanShowcase = () => {
 
   const handleModelChange = (model: 'classic' | 'labadze') => {
     setSelectedModel(model);
-    updateSetting('playerModel', model === 'labadze' ? 'avatar' : 'classic'); 
   };
 
   const Sidebar = (
@@ -60,12 +59,12 @@ export const PacmanShowcase = () => {
       <ShowcaseSectionTitle title={t('showcase.select_char')} />
       <div className="flex flex-col gap-2">
         <SelectionButton 
-            label={t('items.classic_pacman')} icon="🟡" color="yellow" isDark={isDark}
+            label={t('items.classic_pacman')} icon="ᗧ" color="yellow" isDark={isDark}
             isActive={selectedModel === 'classic'} 
             onClick={() => handleModelChange('classic')} 
         />
         <SelectionButton 
-            label="Labadze" icon="👨‍💼" color="blue" isDark={isDark}
+            label="Labadze" icon="🏃‍♂️" color="blue" isDark={isDark}
             isActive={selectedModel === 'labadze'} 
             onClick={() => handleModelChange('labadze')} 
         />
@@ -78,7 +77,7 @@ export const PacmanShowcase = () => {
         {selectedModel === 'labadze' ? (
            <LabadzeModel playerState={animationState} />
         ) : (
-           <Pacman3D isShowcase={true} />
+           <Pacman3D isShowcase={true} forceModel={selectedModel} />
         )}
     </ShowcaseCanvas>
   ) : (
@@ -92,7 +91,7 @@ export const PacmanShowcase = () => {
   return (
     <ShowcaseLayout 
       title={t('nav.pacman_lab')} 
-      icon="🟡" 
+      icon="ᗧ" 
       sidebarContent={Sidebar} 
       mainContent={MainContent} 
     />

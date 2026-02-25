@@ -7,10 +7,9 @@ import { Food3D } from '../3D/Food3D';
 import { InstancedFood } from '../3D/Food/InstancedFood';
 import { useGame } from '../../../context/GameContext';
 import { useTheme } from '../../../context/ThemeContext';
-import { type Ghost } from '../../../types';
 import type { PlayerHeading } from '../../../hooks/usePlayerHeading';
 import { useIsMobile } from '../../../hooks/useIsMobile'; 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 const GAME_GHOST_COLORS = ['#FF0000', '#FFB8FF', '#00FFFF', '#FFB852'];
 
@@ -19,9 +18,15 @@ interface Board3DProps {
 }
 
 export const Board3D = ({ heading }: Board3DProps) => {
-  const { ghostsPos, layout, activeBonus } = useGame(); 
+  const { ghostsPosRef, layout, activeBonus } = useGame(); 
   const { settings } = useTheme();
   const isMobile = useIsMobile();
+
+  const [ghostCount, setGhostCount] = useState(0);
+
+  useEffect(() => {
+    setGhostCount(ghostsPosRef.current.length);
+  }, [ghostsPosRef]);
 
   return (
     <div className="relative w-full h-full bg-black overflow-hidden select-none">
@@ -65,12 +70,10 @@ export const Board3D = ({ heading }: Board3DProps) => {
           )}
 
           {/* Ghosts */}
-          {ghostsPos.map((ghost: Ghost, index: number) => (
+          {Array.from({ length: ghostCount }).map((_, index: number) => (
             <group key={index} position={[0, 0.1, 0]}>
               <Ghost3D 
-                x={ghost.x} 
-                z={ghost.z}
-                state={ghost.state} 
+                index={index} 
                 color={GAME_GHOST_COLORS[index % GAME_GHOST_COLORS.length]} 
               />
             </group>

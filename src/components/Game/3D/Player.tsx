@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import { PointerLockControls } from '@react-three/drei'; 
@@ -7,17 +7,18 @@ import type { PointerLockControls as PointerLockControlsImpl } from 'three-stdli
 
 export const Player = () => {
   const { camera } = useThree();
-  const { playerPos, movePlayer, gameStatus } = useGame();
+  // 🚀 [PERF FIX]: playerPosRef
+  const { playerPosRef, movePlayer, gameStatus } = useGame();
   const controlsRef = useRef<PointerLockControlsImpl>(null);
-  
-  const posRef = useRef(playerPos);
 
-  useEffect(() => { 
-    if (playerPos && !isNaN(playerPos.x) && !isNaN(playerPos.z)) {
-      posRef.current = playerPos; 
+  const [initialPos, setInitialPos] = useState({ x: 0, z: 0 });
+
+  useEffect(() => {
+    if (playerPosRef.current) {
+        setInitialPos({ x: playerPosRef.current.x, z: playerPosRef.current.z });
     }
-  }, [playerPos]);
-
+  }, [playerPosRef]);
+  
   // --- Controls Lock ---
   useEffect(() => {
     if (gameStatus === 'playing') {
@@ -33,7 +34,7 @@ export const Player = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (gameStatus !== 'playing') return;
 
-      const currentPos = posRef.current;
+      const currentPos = playerPosRef.current;
       let newX = currentPos.x;
       let newZ = currentPos.z;
 
@@ -53,13 +54,14 @@ export const Player = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [camera, movePlayer, gameStatus]);
+  }, [camera, movePlayer, gameStatus, playerPosRef]);
 
   // --- Camera Movement (Smooth Lerp) ---
   useFrame(() => {
-    if (!posRef.current || isNaN(posRef.current.x)) return;
+    const pos = playerPosRef.current;
+    if (!pos || isNaN(pos.x)) return;
 
-    const targetPosition = new Vector3(posRef.current.x, 0.5, posRef.current.z);
+    const targetPosition = new Vector3(pos.x, 0.5, pos.z);
     if (!isNaN(camera.position.x)) {
        camera.position.lerp(targetPosition, 0.8); 
     } else {
@@ -71,8 +73,8 @@ export const Player = () => {
     <>
       <PointerLockControls ref={controlsRef} />
       
-
-      <group position={[playerPos.x, 0.5, playerPos.z]}>
+      {/* 🚀 [PERF FIX]: initial position */}
+      <group position={[initialPos.x, 0.5, initialPos.z]}>
         <pointLight 
           position={[0, 0.6, 0]} 
           intensity={1.5} 
