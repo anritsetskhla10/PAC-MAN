@@ -7,6 +7,7 @@ import { Ghost2D } from './Ghost2D';
 import { Food2D } from '../2D/Food2D';
 import { Pacman2D } from '../../Game/Player/Pacman2D';
 import type { PlayerHeading } from '../../../hooks/usePlayerHeading'; 
+import { debounce } from '../../../utils/debounce';
 
 const MAP_COLS = 19;
 const MAP_ROWS = 22;
@@ -39,9 +40,13 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
     });
   }, [subscribeToPositions, playerPosRef, ghostsPosRef]);
 
-  useEffect(() => {
+ useEffect(() => {
     if (!isMinimap) return;
-    const handleResize = () => setWindowWidth(window.innerWidth);
+
+    const handleResize = debounce(() => {
+        setWindowWidth(window.innerWidth);
+    }, 150);
+    
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [isMinimap]);
