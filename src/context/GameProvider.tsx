@@ -6,6 +6,7 @@ import { calculateGhostNextMove } from '../utils/ghostLogic';
 import { useTheme } from './ThemeContext';
 import { useGameAudio } from '../hooks/useGameAudio'; 
 import { checkCollision, checkFoodEaten, checkBonusEaten } from '../utils/physics';
+import * as THREE from 'three';
 
 const MAX_LIVES = 3;
 
@@ -84,6 +85,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const playerDirRef = useRef<Position>({ x: 1, z: 0 }); 
   const layoutRef = useRef(layout);
 
+  const resumeAudioContext = () => {
+    const audioCtx = THREE.AudioContext.getContext();
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  };
+
   useEffect(() => { layoutRef.current = layout; }, [layout]);
 
   useEffect(() => {
@@ -140,6 +148,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, [level, notifyListeners]); 
 
   const startGame = () => {
+    resumeAudioContext();
     if (gameStatus === 'idle' || gameStatus === 'gameover' || gameStatus === 'won') {
         restartGame();
     } else {
@@ -149,6 +158,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const startRound = () => {
+    resumeAudioContext();
     setGameStatus('playing');
   };
 
@@ -156,6 +166,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const resumeGame = () => { if (gameStatus === 'paused') setGameStatus('playing'); };
   
   const restartGame = () => {
+    resumeAudioContext();
     if (powerModeTimerRef.current) clearTimeout(powerModeTimerRef.current);
     if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
     if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);

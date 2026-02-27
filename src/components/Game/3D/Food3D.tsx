@@ -85,7 +85,6 @@ export const Food3D = ({ consumableVariant, themeOverride }: Food3DProps) => {
              url={soundFile} 
              distance={3}
              loop={false}
-             autoplay
            />
         )}
     </group>

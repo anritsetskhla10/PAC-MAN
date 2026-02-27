@@ -68,6 +68,16 @@ export const Ghost3D = ({ index, color }: Ghost3DProps) => {
     }
   }, [sfxVolume, isSfxEnabled]);
 
+  useEffect(() => {
+    if (audioRef.current) {
+      if (gameStatus === 'playing' && !audioRef.current.isPlaying) {
+         audioRef.current.play();
+      } else if (gameStatus !== 'playing' && audioRef.current.isPlaying) {
+         audioRef.current.pause();
+      }
+    }
+  }, [gameStatus]);
+
   useFrame((stateThree, delta) => {
     if (!groupRef.current) return;
     
@@ -133,6 +143,7 @@ export const Ghost3D = ({ index, color }: Ghost3DProps) => {
         groupRef.current.position.y = 0.5; 
     }
   });
+  
 
   const displayColor = visualState === 'SCARED' ? '#0000FF' : color;
 
@@ -187,7 +198,6 @@ export const Ghost3D = ({ index, color }: Ghost3DProps) => {
           url={sirenUrl} 
           distance={1} 
           loop
-          autoplay
         />
       )}
     </group>
