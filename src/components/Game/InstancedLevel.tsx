@@ -4,12 +4,14 @@ import * as THREE from 'three';
 import { useTheme } from '../../context/ThemeContext';
 import { useGame } from '../../context/GameContext'; 
 import { TileType } from '../../types';
+import { LEVEL_MAPS } from '../../utils/constants'; 
 
 type Position3D = [number, number, number];
 
 export const InstancedLevel = () => {
   const { settings } = useTheme();
-  const { layout } = useGame(); 
+  
+  const { level } = useGame(); 
 
   const wallsRef = useRef<InstancedMesh>(null);
   const floorsRef = useRef<InstancedMesh>(null);
@@ -20,7 +22,10 @@ export const InstancedLevel = () => {
     const walls: Position3D[] = [];
     const floors: Position3D[] = [];
 
-    layout.forEach((row, z) => {
+    const mapIndex = (level - 1) % LEVEL_MAPS.length;
+    const staticMap = LEVEL_MAPS[mapIndex];
+
+    staticMap.forEach((row, z) => {
       row.forEach((tile, x) => {
         floors.push([x, 0, z]);
         if (tile === TileType.WALL) {
@@ -29,7 +34,7 @@ export const InstancedLevel = () => {
       });
     });
     return { wallPositions: walls, floorPositions: floors };
-  }, [layout]); 
+  }, [level]); 
 
   useEffect(() => {
     if (!wallsRef.current || !floorsRef.current) return;
@@ -54,7 +59,7 @@ export const InstancedLevel = () => {
 
   return (
     <group>
-      {/* --- WALLS --- */}
+      {/* WALLS */}
       <instancedMesh 
         ref={wallsRef} 
         args={[undefined, undefined, wallPositions.length]}
@@ -73,7 +78,7 @@ export const InstancedLevel = () => {
         />
       </instancedMesh>
 
-      {/* --- FLOORS --- */}
+      {/*  FLOORS */}
       <instancedMesh 
         ref={floorsRef} 
         args={[undefined, undefined, floorPositions.length]}
