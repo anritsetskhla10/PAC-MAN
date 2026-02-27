@@ -178,6 +178,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     notifyListeners();
 
     setLayout(freshData.initialLayout);
+    layoutRef.current = freshData.initialLayout;
     setRemainingFood(freshData.foodCount); 
     setDotsEaten(0); 
     setScore(0);
@@ -208,6 +209,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       notifyListeners();
 
       setLayout(freshData.initialLayout);
+      layoutRef.current = freshData.initialLayout;
       setRemainingFood(freshData.foodCount);
       setDotsEaten(0);
       
@@ -295,8 +297,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     playerPosRef.current = newPos;
     notifyListeners();
 
-    const foodResult = checkFoodEaten(newPos, layout);
+    const foodResult = checkFoodEaten(newPos, layoutRef.current);
+
     if (foodResult.hasEaten) {
+      layoutRef.current = foodResult.newLayout;
       const newDots = dotsEaten + 1;
       setDotsEaten(newDots); 
       setScore(s => s + foodResult.points);
