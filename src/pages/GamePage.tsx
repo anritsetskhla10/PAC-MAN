@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, Suspense, lazy } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useGame } from '../context/GameContext';
 import { Board } from '../components/Game/2D/Board';
-import { Board3D } from '../components/Game/3D/Board3D';
 import { GameOverlay } from '../components/UI/GameOverlay';
 import { MobileControls } from '../components/layout/MobileControls';
 import { cn } from '../utils/cn';
@@ -11,6 +10,8 @@ import { useIsMobile } from '../hooks/useIsMobile';
 import { Link } from 'react-router-dom'; 
 import { formatTime } from '../utils/formatTime'; 
 import { useTranslation } from 'react-i18next';
+
+const Board3D = lazy(() => import('../components/Game/3D/Board3D').then(m => ({ default: m.Board3D })));
 
 export const GamePage = () => {
   const { settings, updateSetting } = useTheme();
@@ -178,7 +179,14 @@ export const GamePage = () => {
         <div ref={boardContainerRef} className="w-full h-full flex items-center justify-center p-2 landscape:max-lg:p-0 md:p-6 lg:p-8">
             {settings.is3DMode ? (
                <div className="w-full h-full rounded-xl overflow-hidden border border-white/5 shadow-2xl relative bg-black/50">
-                 <Board3D heading={playerHeading} />
+                 <Suspense fallback={
+                    <div className="w-full h-full flex flex-col items-center justify-center text-white/50 animate-pulse bg-black/80">
+                        <span className="text-4xl mb-4">🧊</span>
+                        <p className="text-sm font-bold tracking-widest uppercase">Loading 3D Engine...</p>
+                    </div>
+                 }>
+                   <Board3D heading={playerHeading} />
+                 </Suspense>
                </div>
             ) : (
                <Board 
