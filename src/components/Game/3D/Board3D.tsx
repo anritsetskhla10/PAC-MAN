@@ -32,9 +32,11 @@ export const Board3D = ({ heading }: Board3DProps) => {
     <div className="relative w-full h-full bg-black overflow-hidden select-none">
       
       {/* MINIMAP */}
-      <div className="absolute top-16 left-2 sm:top-20 sm:left-4 z-40 pointer-events-none opacity-80 scale-50 sm:scale-75 origin-top-left transition-transform landscape:scale-[0.4] landscape:top-4">
-        <Board isMinimap={true} />
-      </div>
+      {!isMobile && (
+        <div className="absolute top-16 left-2 sm:top-20 sm:left-4 z-40 pointer-events-none opacity-80 scale-50 sm:scale-75 origin-top-left transition-transform landscape:scale-[0.4] landscape:top-4">
+          <Board isMinimap={true} />
+        </div>
+      )}
 
       {/* 3D SCENE */}
       <Canvas 
