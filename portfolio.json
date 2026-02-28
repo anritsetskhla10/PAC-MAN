@@ -1,0 +1,18 @@
+{
+  "id": "pac-man-lab",
+  "title": "Pac-Man Lab",
+  "description": {
+    "en": "An advanced Pac-Man clone engineered to push the limits of React and WebGL. It features seamless state synchronization between 2D and 3D environments, a heavily optimized game loop decoupled from React state to eliminate layout thrashing, and GPU-accelerated InstancedMesh rendering for zero-overhead static geometry. Backed by 100% UI test coverage.",
+    "ka": "პაკმანის თანამედროვე კლონი, შექმნილი React-ისა და WebGL-ის შესაძლებლობების სადემონსტრაციოდ. მოიცავს 2D და 3D გარემოების მყისიერ სინქრონიზაციას, ზედმეტი რენდერებისგან სრულად დაცულ იზოლირებულ თამაშის ციკლს და GPU-ზე ოპტიმიზებულ InstancedMesh-ს. პროექტი დაზღვეულია 100%-იანი UI სატესტო დაფარვით."
+  },
+  "technologies": [
+    "React",
+    "TypeScript",
+    "React Three Fiber",
+    "Three.js",
+    "Tailwind CSS",
+    "Vitest"
+  ],
+  "imageCount": 3,
+  "repoLink": "https://pac-man-lab.vercel.app/"
+}
