@@ -43,8 +43,13 @@ export const Board3D = ({ heading }: Board3DProps) => {
         shadows={!isMobile} 
         camera={{ fov: 60, near: 0.001 }} 
         className="touch-none block"
-        dpr={isMobile ? [1, 1.5] : [1, 2]} 
+        dpr={isMobile ? 1 : [1, 2]} 
         frameloop="always"
+        gl={{
+          antialias: !isMobile,
+          powerPreference: "high-performance",
+          precision: isMobile ? "mediump" : "highp"
+        }}
       >
         <Suspense fallback={null}>
           <color attach="background" args={['#050505']} />
