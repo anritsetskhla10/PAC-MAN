@@ -77,11 +77,3 @@ export function LabadzeGhostModel({ ghostState, name, ...props }: ModelProps) {
     </group>
   );
 }
-
-const GHOST_NAMES: LabadzeGhostName[] = ['iko', 'jafara', 'kakaba', 'janela'];
-
-GHOST_NAMES.forEach((name) => {
-  useGLTF.preload(`/models/${name}-wait.glb`);
-  useGLTF.preload(`/models/${name}-chase.glb`);
-  useGLTF.preload(`/models/${name}-scared.glb`);
-});
