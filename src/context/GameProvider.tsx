@@ -277,6 +277,37 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }, DURATION);
   }, [notifyListeners]);
 
+  const handleCollisionHit = useCallback((hitGhost: Ghost, hitGhostIndex: number) => {
+      if (hitGhost.state === GhostState.NORMAL) {
+          if (lives > 1) {
+              playDeath(); 
+              setLives(prev => prev - 1);
+              setGameStatus('ready'); 
+              softReset(); 
+              if (navigator.vibrate) navigator.vibrate(500); 
+          } else {
+              playDeath(); 
+              setLives(0);
+              setGameStatus('gameover');
+              if (navigator.vibrate) navigator.vibrate(1000);
+          }
+      } 
+      else if (hitGhost.state === GhostState.SCARED || hitGhost.state === GhostState.FLASHING) {
+           playEatGhost(); 
+           const comboMultiplier = Math.pow(2, ghostsEatenBatch);
+           const points = 200 * comboMultiplier;
+           setScore(s => s + points);
+           setGhostsEatenBatch(prev => prev + 1);
+           
+           const newGhosts = [...ghostsPosRef.current];
+           if (newGhosts[hitGhostIndex]) {
+               newGhosts[hitGhostIndex] = { ...hitGhost, state: GhostState.EATEN, movementProgress: 0 };
+           }
+           ghostsPosRef.current = newGhosts;
+           notifyListeners();
+      }
+  }, [lives, ghostsEatenBatch, softReset, playDeath, playEatGhost, notifyListeners]);
+
   const movePlayer = useCallback((targetX: number, targetZ: number) => {
     if (gameStatus !== 'playing') return;
     
@@ -296,6 +327,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     
     playerPosRef.current = newPos;
     notifyListeners();
+
+    const { hit, hitGhostIndex, hitGhost } = checkCollision(newPos, ghostsPosRef.current);
+    if (hit && hitGhost) {
+        handleCollisionHit(hitGhost, hitGhostIndex);
+        if (hitGhost.state === GhostState.NORMAL) return; 
+    }
 
     const foodResult = checkFoodEaten(newPos, layoutRef.current);
 
@@ -342,7 +379,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       setActiveBonus(null); 
     }
 
-  }, [layout, gameStatus, dotsEaten, lives, extraLifeSpawned, spawnBonus, playChomp, playExtraLife, playFruit, playPowerPellet, activeBonus, notifyListeners, activatePowerMode]);
+  }, [layout, gameStatus, dotsEaten, lives, extraLifeSpawned, spawnBonus, playChomp, playExtraLife, playFruit, playPowerPellet, activeBonus, notifyListeners, activatePowerMode, handleCollisionHit]);
 
 
   useEffect(() => {
@@ -430,34 +467,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
         const { hit, hitGhostIndex, hitGhost } = checkCollision(playerPosRef.current, ghostsPosRef.current);
         if (hit && hitGhost) {
-            if (hitGhost.state === GhostState.NORMAL) {
-                if (lives > 1) {
-                    playDeath(); 
-                    setLives(prev => prev - 1);
-                    setGameStatus('ready'); 
-                    softReset(); 
-                    if (navigator.vibrate) navigator.vibrate(500); 
-                } else {
-                    playDeath(); 
-                    setLives(0);
-                    setGameStatus('gameover');
-                    if (navigator.vibrate) navigator.vibrate(1000);
-                }
-            } 
-            else if (hitGhost.state === GhostState.SCARED || hitGhost.state === GhostState.FLASHING) {
-                 playEatGhost(); 
-                 const comboMultiplier = Math.pow(2, ghostsEatenBatch);
-                 const points = 200 * comboMultiplier;
-                 setScore(s => s + points);
-                 setGhostsEatenBatch(prev => prev + 1);
-                 
-                 const newGhosts = [...ghostsPosRef.current];
-                 if (newGhosts[hitGhostIndex]) {
-                     newGhosts[hitGhostIndex] = { ...hitGhost, state: GhostState.EATEN, movementProgress: 0 };
-                 }
-                 ghostsPosRef.current = newGhosts;
-                 hasPositionChanged = true; 
-            }
+            handleCollisionHit(hitGhost, hitGhostIndex);
+            hasPositionChanged = true;
         }
       }
 
@@ -470,7 +481,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     animationFrameId = requestAnimationFrame(gameLoop);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [gameStatus, settings.difficulty, remainingFood, globalMode, waveIndex, dotsEaten, lives, ghostsEatenBatch, softReset, playDeath, playEatGhost, notifyListeners]);
+  }, [gameStatus, settings.difficulty, remainingFood, globalMode, waveIndex, dotsEaten, lives, ghostsEatenBatch, softReset, playDeath, playEatGhost, notifyListeners, handleCollisionHit]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
