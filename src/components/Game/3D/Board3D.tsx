@@ -69,11 +69,13 @@ export const Board3D = ({ heading }: Board3DProps) => {
           <InstancedFood layout={layout} />
 
           {activeBonus && (
-             <group position={[activeBonus.x, 0.5, activeBonus.z]}>
-                 {activeBonus.type === 'CHERRY' && <Food3D consumableVariant="cherry" />}
-                 {activeBonus.type === 'STRAWBERRY' && <Food3D consumableVariant="strawberry" />}
-                 {activeBonus.type === 'EXTRA_LIFE' && <Food3D consumableVariant="life" />}
-             </group>
+             <Suspense fallback={null}>
+                 <group position={[activeBonus.x, 0.5, activeBonus.z]}>
+                     {activeBonus.type === 'CHERRY' && <Food3D consumableVariant="cherry" />}
+                     {activeBonus.type === 'STRAWBERRY' && <Food3D consumableVariant="strawberry" />}
+                     {activeBonus.type === 'EXTRA_LIFE' && <Food3D consumableVariant="life" />}
+                 </group>
+             </Suspense>
           )}
 
           {/* Ghosts */}

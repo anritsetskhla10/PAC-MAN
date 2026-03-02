@@ -3,6 +3,8 @@ import { useFrame } from '@react-three/fiber';
 import { Group, PositionalAudio as ThreePositionalAudio } from 'three'; 
 import { PositionalAudio } from '@react-three/drei';
 import { useTheme } from '../../../context/ThemeContext';
+import { useLoader } from '@react-three/fiber';
+import * as THREE from 'three';
 
 import { Dot3D } from '../3D/Food/Dot3D';
 import { PowerPellet3D } from '../3D/Food/PowerPellet3D';
@@ -14,6 +16,10 @@ import { Mchadi } from '../3D/Food/Mchadi';
 import { Kebab } from '../3D/Food/Kebab';
 import { Khinkali } from '../3D/Food/Khinkali';
 import { Khachapuri } from '../3D/Food/Khachapuri';
+
+useLoader.preload(THREE.AudioLoader, '/sounds/eat_fruit.wav');
+useLoader.preload(THREE.AudioLoader, '/sounds/kacebi/labadze_eat_fruit.mp3');
+useLoader.preload(THREE.AudioLoader, '/sounds/extra_life.wav');
 
 type ConsumableVariant = 'dot' | 'power' | 'cherry' | 'strawberry' | 'life';
 
