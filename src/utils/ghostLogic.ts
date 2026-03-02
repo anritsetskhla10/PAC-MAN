@@ -38,46 +38,50 @@ const isRedZone = (x: number, z: number, dir: Coordinate) => {
 };
 
 // --- BFS PATHFINDING (Used for Eyes returning home) ---
-const getNextStepBFS = (start: Coordinate, target: Coordinate, layout: number[][]): Coordinate => {
+const getNextStepBFS = (start: Coordinate, target: Coordinate, layout: number[][]): { nextPos: Coordinate, nextDir: Coordinate } => {
   const startX = Math.round(start.x);
   const startZ = Math.round(start.z);
   const targetX = Math.round(target.x);
   const targetZ = Math.round(target.z);
 
-  if (startX === targetX && startZ === targetZ) return start;
+  if (startX === targetX && startZ === targetZ) {
+      return { nextPos: start, nextDir: { x: 0, z: 0 } };
+  }
 
-  const queue: { x: number, z: number, firstStep: Coordinate | null }[] = [
-    { x: startX, z: startZ, firstStep: null }
+  const queue: { x: number, z: number, firstPos: Coordinate | null, firstDir: Coordinate | null }[] = [
+    { x: startX, z: startZ, firstPos: null, firstDir: null }
   ];
   const visited = new Set<string>();
   visited.add(`${startX},${startZ}`);
 
   while (queue.length > 0) {
-    const { x, z, firstStep } = queue.shift()!;
-    if (x === targetX && z === targetZ) return firstStep || { x: targetX, z: targetZ };
+    const { x, z, firstPos, firstDir } = queue.shift()!;
+    if (x === targetX && z === targetZ) {
+        return { nextPos: firstPos!, nextDir: firstDir! };
+    }
 
     for (const dir of DIRECTIONS) {
-      const nextX = x + dir.x;
+      let nextX = x + dir.x;
       const nextZ = z + dir.z;
-      const key = `${nextX},${nextZ}`;
-      
-      let isPassable = false;
-      if (nextZ === TUNNEL_ROW) isPassable = true;
-      else if (nextZ >= 0 && nextZ < layout.length && nextX >= 0 && nextX < layout[0].length) {
-          const t = layout[nextZ][nextX];
-          // Eyes ignore walls conceptually, but sticking to paths usually looks better in 3D
-          // For simplicity, eyes use standard pathing but ignore player collision
-          isPassable = t !== TileType.WALL; 
+
+      const stepPos = firstPos || { x: nextX, z: nextZ };
+      const stepDir = firstDir || dir;
+
+      if (nextZ === TUNNEL_ROW) {
+        if (nextX < 0) nextX = layout[0].length - 1;
+        else if (nextX >= layout[0].length) nextX = 0;
       }
+
+      const key = `${nextX},${nextZ}`;
+      const isPassable = !isWall(nextX, nextZ, layout, true);
 
       if (!visited.has(key) && isPassable) {
         visited.add(key);
-        const nextFirstStep = firstStep || { x: nextX, z: nextZ };
-        queue.push({ x: nextX, z: nextZ, firstStep: nextFirstStep });
+        queue.push({ x: nextX, z: nextZ, firstPos: stepPos, firstDir: stepDir });
       }
     }
   }
-  return { x: startX, z: startZ };
+  return { nextPos: start, nextDir: { x: 0, z: 0 } };
 };
 
 // --- TARGETING ---
@@ -113,7 +117,13 @@ const getBestMove = (current: Coordinate, currentDir: Coordinate, target: Coordi
     const nextZ = current.z + dir.z;
 
     if (!isWall(nextX, nextZ, layout, allowHouse)) {
-      const dist = getDistSq({ x: nextX, z: nextZ }, target);
+      let checkX = nextX;
+      if (nextZ === TUNNEL_ROW) {
+          if (checkX < 0) checkX = layout[0].length - 1;
+          else if (checkX >= layout[0].length) checkX = 0;
+      }
+      
+      const dist = getDistSq({ x: checkX, z: nextZ }, target);
       validMoves.push({ pos: { x: nextX, z: nextZ }, dir, dist });
     }
   }
@@ -173,18 +183,12 @@ export const calculateGhostNextMove = (
   const currentPos = { x: Math.round(ghost.x), z: Math.round(ghost.z) };
   
   // EATEN STATE (Eyes returning home)
-  // Note: We use GhostState.EATEN or EYES interchangeably depending on how you set it, 
-  // but standardizing on EATEN for the "return trip" is fine.
   if (ghost.state === GhostState.EATEN || ghost.state === GhostState.EYES) {
     const home = { x: ghost.startX, z: ghost.startZ }; 
     if (Math.abs(currentPos.x - home.x) <= 0.5 && Math.abs(currentPos.z - home.z) <= 0.5) {
-       // Arrived home
        return { nextPos: currentPos, nextDir: { x: 0, z: 0 } };
     }
-    const nextStep = getNextStepBFS(currentPos, home, layout);
-    const dirX = nextStep.x - currentPos.x;
-    const dirZ = nextStep.z - currentPos.z;
-    return { nextPos: nextStep, nextDir: { x: dirX, z: dirZ } };
+    return getNextStepBFS(currentPos, home, layout);
   }
 
   // HOUSE LOGIC

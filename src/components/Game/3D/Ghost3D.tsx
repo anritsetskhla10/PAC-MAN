@@ -114,7 +114,11 @@ export const Ghost3D = ({ index, color }: Ghost3DProps) => {
     const currentPos = groupRef.current.position;
     const targetPos = new Vector3(ghost.x, 0.5, ghost.z);
     const speed = visualState === 'EATEN' ? 15.0 : 6.0; 
-    currentPos.lerp(targetPos, speed * delta);
+    if (currentPos.distanceTo(targetPos) > 2) {
+       currentPos.copy(targetPos);
+    } else {
+       currentPos.lerp(targetPos, speed * delta);
+    }
     
     // როტაციის გამოთვლა
     const dx = targetPos.x - currentPos.x;
