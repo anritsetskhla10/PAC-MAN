@@ -23,6 +23,26 @@ export const GamePage = () => {
   const boardContainerRef = useRef<HTMLDivElement>(null);
   const [boardDimensions, setBoardDimensions] = useState({ width: 0, height: 0 });
 
+  const [prevScore, setPrevScore] = useState(score);
+  const [addedScore, setAddedScore] = useState<{ amount: number; id: number } | null>(null);
+
+  if (score !== prevScore) {
+    if (score > prevScore) {
+      const difference = score - prevScore;
+      setAddedScore({ amount: difference, id: score });
+    }
+    setPrevScore(score);
+  }
+
+  useEffect(() => {
+    if (addedScore) {
+      const timer = setTimeout(() => {
+        setAddedScore(null);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [addedScore]);
+
   useEffect(() => {
     const measureBoardArea = () => {
         if (boardContainerRef.current) {
@@ -50,7 +70,6 @@ export const GamePage = () => {
     };
   }, []);
 
-  // Mobile 3D Auto-Spectator
   useEffect(() => {
     if (isMobile && settings.is3DMode && !settings.isSpectatorMode) {
       updateSetting('isSpectatorMode', true);
@@ -117,14 +136,22 @@ export const GamePage = () => {
            </div>
 
            {/* Score Display */}
-           <div className="flex flex-col items-center">
+           <div className="flex flex-col items-center relative">
                 <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest landscape:max-lg:writing-vertical-rl">
                     {t('game.score')}
                 </span>
-                <div className="bg-primary/10 border border-primary/40 px-4 py-1 rounded-full shadow-[0_0_10px_rgba(0,212,255,0.2)]">
+                <div className="bg-primary/10 border border-primary/40 px-4 py-1 rounded-full shadow-[0_0_10px_rgba(0,212,255,0.2)] relative">
                     <span className="text-primary font-bold text-lg md:text-xl landscape:max-lg:writing-vertical-rl landscape:max-lg:rotate-180">
                         {score}
                     </span>
+                    {addedScore && (
+                        <span
+                            key={addedScore.id}
+                            className="score-popup-anim absolute -top-4 right-0 text-[#4ade80] font-black text-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-50 landscape:max-lg:-right-6 landscape:max-lg:top-2 landscape:max-lg:rotate-90"
+                        >
+                            +{addedScore.amount}
+                        </span>
+                    )}
                 </div>
            </div>
 
