@@ -45,3 +45,19 @@ html, body, #root {
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
+
+@keyframes floatUpAndFade {
+  0% { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
+  100% { 
+    opacity: 0; 
+    transform: translateY(-25px) scale(1.2); 
+  }
+}
+
+.score-popup-anim {
+  animation: floatUpAndFade 0.8s ease-out forwards;
+  pointer-events: none;
+}
