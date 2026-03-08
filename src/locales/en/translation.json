@@ -63,5 +63,25 @@
     "reaper_ghost": "Dark Reaper",
     "eyes_ghost": "Eaten Eyes",
     "classic_pacman": "Classic Pacman"
+  },
+  "instructions": {
+    "title": "HOW TO PLAY",
+    "controls": "Controls",
+    "desktop_controls": "WASD or Arrow Keys to move.",
+    "mobile_controls": "Use the on-screen D-Pad to move.",
+    "objective": "Objective",
+    "objective_desc": "Eat all the dots in the maze to advance to the next level. Avoid the ghosts!",
+    "power_pellets": "Power Pellets",
+    "power_desc": "Eat large pellets to turn ghosts blue. Eat them for extra points!",
+    "bonuses": "Bonuses",
+    "bonuses_desc": "Fruit appears after eating 50 & 70 dots. Eat 100 dots for an Extra Life!",
+    "modes_title": "Game Modes & Themes",
+    "modes_desc": "Toggle between 2D and 3D graphics on the left panel. Visit Settings (⚙️) to try the 'Labadze' theme for a unique Georgian twist!",
+    "camera_title": "Camera Perspectives",
+    "camera_desc": "In 3D mode, click the 👀/🎥 icon to switch between First-Person and Spectator views.",
+    "camera_note": "⚠️ First-Person (FPS) mode is Desktop only. Use your mouse to look around!",
+    "settings_title": "Settings & Customization",
+    "settings_desc": "Click the ⚙️ icon to adjust difficulty, volume, ghost models, and maze colors.",
+    "got_it": "GOT IT!"
   }
 }

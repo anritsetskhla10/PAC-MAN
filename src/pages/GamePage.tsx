@@ -3,6 +3,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useGame } from '../context/GameContext';
 import { Board } from '../components/Game/2D/Board';
 import { GameOverlay } from '../components/UI/GameOverlay';
+import { InstructionsModal } from '../components/UI/InstructionsModal'; 
 import { MobileControls } from '../components/layout/MobileControls';
 import { cn } from '../utils/cn';
 import { usePlayerHeading } from '../hooks/usePlayerHeading'; 
@@ -25,6 +26,8 @@ export const GamePage = () => {
 
   const [prevScore, setPrevScore] = useState(score);
   const [addedScore, setAddedScore] = useState<{ amount: number; id: number } | null>(null);
+
+  const [showInstructions, setShowInstructions] = useState(false);
 
   if (score !== prevScore) {
     if (score > prevScore) {
@@ -85,6 +88,15 @@ export const GamePage = () => {
     if (settings.is3DMode && document.pointerLockElement) document.exitPointerLock();
   };
 
+  const handleOpenInstructions = () => {
+    if (gameStatus === 'playing') pauseGame();
+    setShowInstructions(true);
+  };
+
+  const handleCloseInstructions = () => {
+    setShowInstructions(false);
+  };
+
   return (
     <div className="fixed inset-0 w-full h-full bg-black overflow-hidden z-100 flex flex-col landscape:max-lg:flex-row pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
       
@@ -95,11 +107,20 @@ export const GamePage = () => {
           "landscape:max-lg:w-20 landscape:max-lg:h-full landscape:max-lg:flex-col landscape:max-lg:border-r landscape:max-lg:border-b-0 landscape:max-lg:py-6"
       )}>
         
-        {/* Left Controls (Settings/Mode) */}
-        <div className="flex landscape:max-lg:flex-col gap-3 items-center">
-             <Link to="/settings" className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors">
+        {/* Left Controls */}
+        <div className="flex landscape:max-lg:flex-col gap-2 md:gap-3 items-center">
+             <Link to="/settings" className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors" title="Settings">
                 ⚙️
              </Link>
+             
+             <button 
+                onClick={handleOpenInstructions}
+                className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                title="How to Play"
+             >
+                ❓
+             </button>
+
              <div 
                className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-primary/20 cursor-pointer hover:bg-white/10 transition-colors" 
                onClick={() => updateSetting('is3DMode', !settings.is3DMode)}
@@ -199,7 +220,8 @@ export const GamePage = () => {
         
         <div className="absolute inset-0 z-40 pointer-events-none">
             <div className="pointer-events-auto w-full h-full">
-                <GameOverlay />
+                {showInstructions && <InstructionsModal onClose={handleCloseInstructions} />}
+                {!showInstructions && <GameOverlay />}
             </div>
         </div>
 
