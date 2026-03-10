@@ -29,6 +29,13 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
 
   const [localPlayerPos, setLocalPlayerPos] = useState({ x: 1, z: 1 });
   const [localGhostsPos, setLocalGhostsPos] = useState<Ghost[]>([]);
+  
+  const [flashTick, setFlashTick] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => setFlashTick(prev => !prev), 200);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     setLocalPlayerPos({ ...playerPosRef.current });
@@ -40,7 +47,7 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
     });
   }, [subscribeToPositions, playerPosRef, ghostsPosRef]);
 
- useEffect(() => {
+  useEffect(() => {
     if (!isMinimap) return;
 
     const handleResize = debounce(() => {
@@ -104,7 +111,6 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
 
             const isPower = tile === TileType.POWER_PELLET;
             const isFood = tile === TileType.FOOD;
-
             const isBonusHere = activeBonus && activeBonus.x === colIndex && activeBonus.z === rowIndex;
             
             const scale = isMinimap ? 0.5 : (isMobile ? 0.9 : 1); 
@@ -128,10 +134,8 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
               >
                 {!isPlayerHere && !isGhostHere && (
                     <>
-                        {isPower ? <Food2D type="power" size={foodSize} /> :
-                         isFood ? <Food2D type="dot" size={foodSize} /> : null
-                        }
-                        
+                        {isPower && <Food2D type="power" size={foodSize} />}
+                        {isFood && <Food2D type="dot" size={foodSize} />}
                         {isBonusHere && activeBonus.type === 'CHERRY' && <Food2D type="cherry" size={foodSize} />}
                         {isBonusHere && activeBonus.type === 'STRAWBERRY' && <Food2D type="strawberry" size={foodSize} />}
                         {isBonusHere && activeBonus.type === 'EXTRA_LIFE' && <Food2D type="life" size={foodSize} />}
@@ -145,12 +149,10 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
                 )}
 
                 {isGhostHere && ghost && (() => {
-                    const ghostColor = ghost.state === GhostState.SCARED 
-                        ? '#0000FF' 
-                        : GHOST_COLORS[ghostIndex % GHOST_COLORS.length];
+                    const isFlashing = ghost.state === GhostState.FLASHING;
+                    const isScaredState = ghost.state === GhostState.SCARED || isFlashing;
                     
                     let currentVariant = 1; 
-                    
                     if (ghost.state === GhostState.EATEN) {
                         currentVariant = 3; 
                     } else if (settings.gameTheme === 'labadze') {
@@ -162,16 +164,23 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
                             : 1;
                     }
 
+                    const isLabadzeGhost = currentVariant >= 4 && currentVariant <= 7;
+
+                    const ghostColor = isFlashing 
+                        ? (flashTick ? '#FFFFFF' : '#0000FF')
+                        : (isScaredState ? '#0000FF' : GHOST_COLORS[ghostIndex % GHOST_COLORS.length]);
+
                     return (
                         <div className={cn(
                             "z-30 absolute inset-0 flex items-center justify-center pointer-events-none",
-                            ghost.state !== GhostState.EATEN && "animate-bounce drop-shadow-md"
+                            ghost.state !== GhostState.EATEN && "animate-bounce drop-shadow-md",
+                            isFlashing && isLabadzeGhost && "ghost-css-flash" 
                         )}>
                             <Ghost2D 
                                 variant={currentVariant} 
                                 color={ghostColor} 
                                 size={isMinimap ? cellSize : cellSize * 0.9} 
-                                isScared={ghost.state === GhostState.SCARED} 
+                                isScared={isScaredState} 
                             />
                         </div>
                     );
