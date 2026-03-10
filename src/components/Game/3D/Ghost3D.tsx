@@ -44,7 +44,6 @@ export const Ghost3D = ({ index, color }: Ghost3DProps) => {
   const masterMuted = settings.audio.masterMuted;
   const sfxVolume = settings.audio.sfxVolume;
   const isSfxEnabled = !masterMuted && sfxVolume > 0;
-  
   const shouldPlaySound = isSfxEnabled && gameStatus === 'playing';
   const isLabadzeGhost = settings.gameTheme === 'labadze' || settings.ghostVariant >= 4;
   const sirenUrl = isLabadzeGhost ? '/sounds/kacebi/labadze_siren.mp3' : '/sounds/siren.mp3';
@@ -59,73 +58,51 @@ export const Ghost3D = ({ index, color }: Ghost3DProps) => {
 
   useEffect(() => {
     if (audioRef.current) {
-        if (!isSfxEnabled) {
-            audioRef.current.setVolume(0);
-        }
-        if (audioRef.current.setRolloffFactor) {
-            audioRef.current.setRolloffFactor(0); 
-        }
+        if (!isSfxEnabled) audioRef.current.setVolume(0);
+        if (audioRef.current.setRolloffFactor) audioRef.current.setRolloffFactor(0); 
     }
   }, [sfxVolume, isSfxEnabled]);
 
   useEffect(() => {
     if (audioRef.current) {
-      if (gameStatus === 'playing' && !audioRef.current.isPlaying) {
-         audioRef.current.play();
-      } else if (gameStatus !== 'playing' && audioRef.current.isPlaying) {
-         audioRef.current.pause();
-      }
+      if (gameStatus === 'playing' && !audioRef.current.isPlaying) audioRef.current.play();
+      else if (gameStatus !== 'playing' && audioRef.current.isPlaying) audioRef.current.pause();
     }
   }, [gameStatus]);
 
   useFrame((stateThree, delta) => {
     if (!groupRef.current) return;
-    
     const ghost = ghostsPosRef.current[index];
     const playerPos = playerPosRef.current;
-
     if (!ghost || !playerPos) return;
 
-    if (ghost.state !== visualState) {
-        setVisualState(ghost.state);
-    }
+    if (ghost.state !== visualState) setVisualState(ghost.state);
 
-    // აუდიოს ლოგიკა (დისტანციაზე დამოკიდებული ხმა)
     if (audioRef.current) {
         if (!shouldPlaySound) {
             if (audioRef.current.getVolume() > 0) audioRef.current.setVolume(0);
         } else {
             const distance = Math.hypot(ghost.x - playerPos.x, ghost.z - playerPos.z);
             const MAX_AUDIBLE_DISTANCE = 12; 
-            
             if (distance > MAX_AUDIBLE_DISTANCE) {
                 audioRef.current.setVolume(0);
             } else {
                 let volume = 1 - (distance / MAX_AUDIBLE_DISTANCE);
-                if (isWallBetween(playerPos.x, playerPos.z, ghost.x, ghost.z, layout)) {
-                    volume *= 0.2;
-                }
+                if (isWallBetween(playerPos.x, playerPos.z, ghost.x, ghost.z, layout)) volume *= 0.2;
                 audioRef.current.setVolume(volume * sfxVolume * 0.5);
             }
         }
     }
 
-    // პოზიციის lerp 
     const currentPos = groupRef.current.position;
     const targetPos = new Vector3(ghost.x, 0.5, ghost.z);
     const speed = visualState === 'EATEN' ? 15.0 : 6.0; 
-    if (currentPos.distanceTo(targetPos) > 2) {
-       currentPos.copy(targetPos);
-    } else {
-       currentPos.lerp(targetPos, speed * delta);
-    }
+    if (currentPos.distanceTo(targetPos) > 2) currentPos.copy(targetPos);
+    else currentPos.lerp(targetPos, speed * delta);
     
-    // როტაციის გამოთვლა
     const dx = targetPos.x - currentPos.x;
     const dz = targetPos.z - currentPos.z;
-    if (Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01) {
-      targetRotation.current = Math.atan2(dx, dz);
-    }
+    if (Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01) targetRotation.current = Math.atan2(dx, dz);
 
     const tRotation = targetRotation.current;
     const cRotation = groupRef.current.rotation.y;
@@ -135,11 +112,9 @@ export const Ghost3D = ({ index, color }: Ghost3DProps) => {
     const rotationSpeed = visualState === 'EATEN' ? 20.0 : 10.0;
     groupRef.current.rotation.y += diff * rotationSpeed * delta; 
     
-    //  Y ღერძის ბაუნსი ანიმაციისთვის
     if (visualState !== 'EATEN') {
-        if (isLabadzeGhost) {
-            groupRef.current.position.y = 0.5; 
-        } else {
+        if (isLabadzeGhost) groupRef.current.position.y = 0.5; 
+        else {
             const t = stateThree.clock.getElapsedTime();
             groupRef.current.position.y = 0.5 + Math.sin(t * 3) * 0.05;
         }
@@ -148,8 +123,8 @@ export const Ghost3D = ({ index, color }: Ghost3DProps) => {
     }
   });
   
-
-  const displayColor = visualState === 'SCARED' ? '#0000FF' : color;
+  const isFlashing = visualState === 'FLASHING';
+  const displayColor = (visualState === 'SCARED' || visualState === 'FLASHING') ? '#0000FF' : color;
 
   const renderLabadzeGhost = () => {
     const ghostMap: Record<string, LabadzeGhostName> = {
@@ -159,7 +134,6 @@ export const Ghost3D = ({ index, color }: Ghost3DProps) => {
       '#FFB852': 'jafara',
     };
     const ghostName = ghostMap[color] || 'kakaba';
-    
     return <LabadzeGhostModel name={ghostName} ghostState={visualState} />;
   };
 
@@ -177,9 +151,7 @@ export const Ghost3D = ({ index, color }: Ghost3DProps) => {
 
   return (
     <group ref={groupRef} position={[initialPos.x, 0.5, initialPos.z]}>
-      
       <group scale={getScale()} position={[0, getYPosition(), 0]}> 
-        
         {isLabadzeGhost ? (
              renderLabadzeGhost()
         ) : (
@@ -187,22 +159,16 @@ export const Ghost3D = ({ index, color }: Ghost3DProps) => {
                  <Eyes3D /> 
              ) : (
                  <>
-                    {settings.ghostVariant === 1 && <ClassicGhost color={displayColor} />}
-                    {settings.ghostVariant === 2 && <ReaperGhost color={displayColor} />}
+                    {settings.ghostVariant === 1 && <ClassicGhost color={displayColor} isFlashing={isFlashing} />}
+                    {settings.ghostVariant === 2 && <ReaperGhost color={displayColor} isFlashing={isFlashing} />}
                     {settings.ghostVariant === 3 && <Eyes3D />}
                  </>
              )
         )}
-
       </group>
       
       {visualState !== 'EATEN' && visualState !== 'EYES' && (
-        <PositionalAudio
-          ref={audioRef}
-          url={sirenUrl} 
-          distance={1} 
-          loop
-        />
+        <PositionalAudio ref={audioRef} url={sirenUrl} distance={1} loop />
       )}
     </group>
   );

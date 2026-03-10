@@ -61,3 +61,16 @@ html, body, #root {
   animation: floatUpAndFade 0.8s ease-out forwards;
   pointer-events: none;
 }
+
+@keyframes invertFlash {
+  0%, 100% { 
+    filter: none; 
+  }
+  50% { 
+    filter: brightness(0) invert(1); 
+  }
+}
+
+.ghost-css-flash {
+  animation: invertFlash 0.4s infinite;
+}
