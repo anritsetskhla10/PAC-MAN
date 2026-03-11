@@ -7,6 +7,7 @@ export interface GameContextType {
 
   playerPosRef: RefObject<Position>;
   ghostsPosRef: RefObject<Ghost[]>; 
+  layoutRef: RefObject<number[][]>;
   
   score: number;
   layout: number[][];

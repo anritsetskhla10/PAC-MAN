@@ -1,10 +1,7 @@
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Group, PositionalAudio as ThreePositionalAudio } from 'three'; 
-import { PositionalAudio } from '@react-three/drei';
+import { Group } from 'three'; 
 import { useTheme } from '../../../context/ThemeContext';
-import { useLoader } from '@react-three/fiber';
-import * as THREE from 'three';
 
 import { Dot3D } from '../3D/Food/Dot3D';
 import { PowerPellet3D } from '../3D/Food/PowerPellet3D';
@@ -17,10 +14,6 @@ import { Kebab } from '../3D/Food/Kebab';
 import { Khinkali } from '../3D/Food/Khinkali';
 import { Khachapuri } from '../3D/Food/Khachapuri';
 
-useLoader.preload(THREE.AudioLoader, '/sounds/eat_fruit.wav');
-useLoader.preload(THREE.AudioLoader, '/sounds/kacebi/labadze_eat_fruit.mp3');
-useLoader.preload(THREE.AudioLoader, '/sounds/extra_life.wav');
-
 type ConsumableVariant = 'dot' | 'power' | 'cherry' | 'strawberry' | 'life';
 
 interface Food3DProps {
@@ -30,24 +23,11 @@ interface Food3DProps {
 
 export const Food3D = ({ consumableVariant, themeOverride }: Food3DProps) => {
   const meshGroupRef = useRef<Group>(null);
-  const audioRef = useRef<ThreePositionalAudio>(null!); 
   const { settings } = useTheme();
 
   const isLabadze = themeOverride 
     ? themeOverride === 'labadze' 
     : (settings.gameTheme === 'labadze' || settings.playerModel === 'avatar');
-
-  const masterMuted = settings.audio.masterMuted;
-  const sfxVolume = settings.audio.sfxVolume;
-  const isSfxEnabled = !masterMuted && sfxVolume > 0;
-  const isBonus = ['cherry', 'strawberry', 'life'].includes(consumableVariant);
-
-  useEffect(() => {
-    if (audioRef.current) {
-        const targetVol = isSfxEnabled ? sfxVolume * 0.8 : 0;
-        audioRef.current.setVolume(targetVol);
-    }
-  }, [sfxVolume, isSfxEnabled]);
 
   useFrame((state) => {
     if (!meshGroupRef.current) return;
@@ -61,10 +41,6 @@ export const Food3D = ({ consumableVariant, themeOverride }: Food3DProps) => {
     }
   });
 
-  const soundFile = isLabadze
-      ? (consumableVariant === 'life' ? '/sounds/extra_life.wav' : '/sounds/kacebi/labadze_eat_fruit.mp3')
-      : (consumableVariant === 'life' ? '/sounds/extra_life.wav' : '/sounds/eat_fruit.wav');
-
   return (
     <group ref={meshGroupRef}>
         {isLabadze ? (
@@ -73,7 +49,7 @@ export const Food3D = ({ consumableVariant, themeOverride }: Food3DProps) => {
                 {consumableVariant === 'power' && <Kebab />}
                 {consumableVariant === 'cherry' && <Khinkali />}
                 {consumableVariant === 'strawberry' && <Khachapuri />}
-                {consumableVariant === 'life' && <Khinkali />} 
+                {consumableVariant === 'life' && <Life3D />}
             </>
         ) : (
             <>
@@ -83,15 +59,6 @@ export const Food3D = ({ consumableVariant, themeOverride }: Food3DProps) => {
                 {consumableVariant === 'strawberry' && <Strawberry3D />}
                 {consumableVariant === 'life' && <Life3D />}
             </>
-        )}
-
-        {isBonus && (
-           <PositionalAudio
-             ref={audioRef}
-             url={soundFile} 
-             distance={3}
-             loop={false}
-           />
         )}
     </group>
   );

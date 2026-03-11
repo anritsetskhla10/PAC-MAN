@@ -31,7 +31,7 @@ const isWallBetween = (x1: number, z1: number, x2: number, z2: number, layout: n
 
 export const Ghost3D = ({ index, color }: Ghost3DProps) => {
   const { settings } = useTheme();
-  const { gameStatus, playerPosRef, ghostsPosRef, layout } = useGame(); 
+  const { gameStatus, playerPosRef, ghostsPosRef, layoutRef, subscribeToPositions } = useGame(); 
   
   const groupRef = useRef<Group>(null);
   const audioRef = useRef<ThreePositionalAudio>(null!); 
@@ -54,7 +54,16 @@ export const Ghost3D = ({ index, color }: Ghost3DProps) => {
       setVisualState(ghost.state);
       setInitialPos({ x: ghost.x, z: ghost.z });
     }
-  }, [ghostsPosRef, index]);
+
+    const unsubscribe = subscribeToPositions(() => {
+      const currentGhost = ghostsPosRef.current[index];
+      if (currentGhost) {
+        setVisualState((prev) => prev !== currentGhost.state ? currentGhost.state : prev);
+      }
+    });
+
+    return unsubscribe;
+  }, [ghostsPosRef, index, subscribeToPositions]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -76,7 +85,6 @@ export const Ghost3D = ({ index, color }: Ghost3DProps) => {
     const playerPos = playerPosRef.current;
     if (!ghost || !playerPos) return;
 
-    if (ghost.state !== visualState) setVisualState(ghost.state);
 
     if (audioRef.current) {
         if (!shouldPlaySound) {
@@ -88,7 +96,9 @@ export const Ghost3D = ({ index, color }: Ghost3DProps) => {
                 audioRef.current.setVolume(0);
             } else {
                 let volume = 1 - (distance / MAX_AUDIBLE_DISTANCE);
-                if (isWallBetween(playerPos.x, playerPos.z, ghost.x, ghost.z, layout)) volume *= 0.2;
+                if (layoutRef.current && isWallBetween(playerPos.x, playerPos.z, ghost.x, ghost.z, layoutRef.current)) {
+                    volume *= 0.2;
+                }
                 audioRef.current.setVolume(volume * sfxVolume * 0.5);
             }
         }

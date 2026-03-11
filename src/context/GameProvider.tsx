@@ -350,9 +350,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           playPowerPellet(); 
       }
 
-      if (newDots === 50) spawnBonus('CHERRY');
-      if (newDots === 70) spawnBonus('STRAWBERRY');
-      if (newDots === 100 && !extraLifeSpawned && lives < MAX_LIVES) {
+      if (newDots === 30) spawnBonus('CHERRY');
+      if (newDots === 60) spawnBonus('STRAWBERRY');
+      if (newDots === 90 && !extraLifeSpawned && lives < MAX_LIVES) {
           spawnBonus('EXTRA_LIFE');
           setExtraLifeSpawned(true);
           playExtraLife(); 
@@ -496,7 +496,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <GameContext.Provider value={{ 
-      playerPosRef, ghostsPosRef, subscribeToPositions, 
+      playerPosRef, ghostsPosRef, subscribeToPositions, layoutRef,
       score, layout, gameStatus, remainingFood, lives, level, activeBonus, elapsedTime,
       movePlayer, startGame, startRound, pauseGame, resumeGame, restartGame, nextLevel 
     }}>
