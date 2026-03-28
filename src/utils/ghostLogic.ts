@@ -129,7 +129,6 @@ const getBestMove = (current: Coordinate, currentDir: Coordinate, target: Coordi
   }
 
   if (validMoves.length === 0) {
-      // Dead end handling (rare in standard maps but possible)
       for (const dir of DIRECTIONS) {
           const nextX = current.x + dir.x;
           const nextZ = current.z + dir.z;
@@ -199,17 +198,15 @@ export const calculateGhostNextMove = (
           // Bounce up and down waiting
           let nextDir = ghost.currentDir;
           if (nextDir.z === 0) nextDir = { x: 0, z: -1 };
-          
-          const targetZ = currentPos.z + (nextDir.z * 0.2); 
-          
+          const targetZ = ghost.z + (nextDir.z * 0.2); 
           if (targetZ < 8.6 || targetZ > 9.4) {
              nextDir = { x: 0, z: -nextDir.z };
-             return { nextPos: currentPos, nextDir };
+             return { nextPos: { x: ghost.x, z: ghost.z }, nextDir };  
           }
 
-          return { 
-              nextPos: { x: currentPos.x, z: targetZ }, 
-              nextDir 
+          return {
+              nextPos: { x: ghost.x, z: targetZ },
+              nextDir
           };
       }
   }
@@ -230,7 +227,6 @@ export const calculateGhostNextMove = (
         case GHOST_CONFIG.CLYDE.color:  target = GHOST_CONFIG.CLYDE.scatterTarget; break;
      }
   } else {
-     // AI Smartness based on difficulty
      const isSmart = difficulty === 'HARD' || (difficulty === 'MEDIUM' && Math.random() > 0.2) || (difficulty === 'EASY' && Math.random() > 0.6);
      if (!isSmart) return getRandomMove(currentPos, ghost.currentDir, layout);
 
