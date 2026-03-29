@@ -81,6 +81,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const powerModeTimerRef = useRef<number | null>(null);
   const flashTimerRef = useRef<number | null>(null);
   const bonusTimerRef = useRef<number | null>(null);
+  const collisionProcessedRef = useRef(false);
+
   
   const playerDirRef = useRef<Position>({ x: 1, z: 0 }); 
   const layoutRef = useRef(layout);
@@ -131,21 +133,23 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const softReset = useCallback(() => {
-     const mapIndex = (level - 1) % LEVEL_MAPS.length;
-     const currentMap = LEVEL_MAPS[mapIndex];
-     const { pacmanStart, ghostsStart } = getStartingCoordinates(currentMap);
-     
-     playerPosRef.current = pacmanStart;
-     ghostsPosRef.current = ghostsStart;
-     notifyListeners();
+    collisionProcessedRef.current = false;
+    const mapIndex = (level - 1) % LEVEL_MAPS.length;
+    const currentMap = LEVEL_MAPS[mapIndex];
+    const { pacmanStart, ghostsStart } = getStartingCoordinates(currentMap);
+    
+    playerPosRef.current = pacmanStart;
+    ghostsPosRef.current = ghostsStart;
+    notifyListeners();
 
-     playerDirRef.current = { x: 1, z: 0 };
-     setGlobalMode('SCATTER');
-     setWaveIndex(0);
-     waveTimerRef.current = 0;
-     setActiveBonus(null); 
-     if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
-  }, [level, notifyListeners]); 
+    playerDirRef.current = { x: 1, z: 0 };
+    setGlobalMode('SCATTER');
+    setWaveIndex(0);
+    waveTimerRef.current = 0;
+    setActiveBonus(null); 
+    if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
+}, [level, notifyListeners]);
+
 
   const startGame = () => {
     resumeAudioContext();
@@ -278,35 +282,39 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, [notifyListeners]);
 
   const handleCollisionHit = useCallback((hitGhost: Ghost, hitGhostIndex: number) => {
-      if (hitGhost.state === GhostState.NORMAL) {
-          if (lives > 1) {
-              playDeath(); 
-              setLives(prev => prev - 1);
-              setGameStatus('ready'); 
-              softReset(); 
-              if (navigator.vibrate) navigator.vibrate(500); 
-          } else {
-              playDeath(); 
-              setLives(0);
-              setGameStatus('gameover');
-              if (navigator.vibrate) navigator.vibrate(1000);
-          }
-      } 
-      else if (hitGhost.state === GhostState.SCARED || hitGhost.state === GhostState.FLASHING) {
-           playEatGhost(); 
-           const comboMultiplier = Math.pow(2, ghostsEatenBatch);
-           const points = 200 * comboMultiplier;
-           setScore(s => s + points);
-           setGhostsEatenBatch(prev => prev + 1);
-           
-           const newGhosts = [...ghostsPosRef.current];
-           if (newGhosts[hitGhostIndex]) {
-               newGhosts[hitGhostIndex] = { ...hitGhost, state: GhostState.EATEN, movementProgress: 0 };
-           }
-           ghostsPosRef.current = newGhosts;
-           notifyListeners();
-      }
-  }, [lives, ghostsEatenBatch, softReset, playDeath, playEatGhost, notifyListeners]);
+    if (collisionProcessedRef.current) return;
+
+    if (hitGhost.state === GhostState.NORMAL) {
+        collisionProcessedRef.current = true;
+        if (lives > 1) {
+            playDeath(); 
+            setLives(prev => prev - 1);
+            setGameStatus('ready'); 
+            softReset(); 
+            if (navigator.vibrate) navigator.vibrate(500); 
+        } else {
+            playDeath(); 
+            setLives(0);
+            setGameStatus('gameover');
+            if (navigator.vibrate) navigator.vibrate(1000);
+        }
+    } 
+    else if (hitGhost.state === GhostState.SCARED || hitGhost.state === GhostState.FLASHING) {
+        playEatGhost(); 
+        const comboMultiplier = Math.pow(2, ghostsEatenBatch);
+        const points = 200 * comboMultiplier;
+        setScore(s => s + points);
+        setGhostsEatenBatch(prev => prev + 1);
+        
+        const newGhosts = [...ghostsPosRef.current];
+        if (newGhosts[hitGhostIndex]) {
+            newGhosts[hitGhostIndex] = { ...hitGhost, state: GhostState.EATEN, movementProgress: 0 };
+        }
+        ghostsPosRef.current = newGhosts;
+        notifyListeners();
+    }
+}, [lives, ghostsEatenBatch, softReset, playDeath, playEatGhost, notifyListeners]);
+
 
   const movePlayer = useCallback((targetX: number, targetZ: number) => {
     if (gameStatus !== 'playing') return;
