@@ -32,7 +32,7 @@ const isWall = (x: number, z: number, layout: number[][], allowHouse: boolean = 
 
 const isRedZone = (x: number, z: number, dir: Coordinate) => {
   if (dir.z === -1) { 
-    if ((x >= 8 && x <= 10) && (z === 8 || z === 20)) return true;
+    if ((x >= 8 && x <= 10) && z === 8) return true;
   }
   return false;
 };
