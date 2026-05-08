@@ -6,7 +6,7 @@ import { calculateGhostNextMove } from '../utils/ghostLogic';
 import { useTheme } from './ThemeContext';
 import { useGameAudio } from '../hooks/useGameAudio'; 
 import { checkCollision, checkFoodEaten, checkBonusEaten } from '../utils/physics';
-import * as THREE from 'three';
+import { Howler } from 'howler';
 
 const MAX_LIVES = 3;
 
@@ -88,9 +88,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const layoutRef = useRef(layout);
 
   const resumeAudioContext = () => {
-    const audioCtx = THREE.AudioContext.getContext();
-    if (audioCtx && audioCtx.state === 'suspended') {
-      audioCtx.resume();
+    if (Howler.ctx && Howler.ctx.state === 'suspended') {
+      Howler.ctx.resume();
     }
   };
 
