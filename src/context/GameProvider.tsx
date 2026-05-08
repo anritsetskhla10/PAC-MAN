@@ -19,9 +19,22 @@ const getStartingCoordinates = (currentMap: number[][]) => {
             if (tile === TileType.GHOST_START) {
                 const ghostTypes = Object.values(GHOST_CONFIG);
                 const type = ghostTypes[ghostsStart.length % ghostTypes.length];
+                
+                let initialX = colIndex;
+                let initialZ = rowIndex;
+                let currentDir = { x: 0, z: 0 };
+
+                if (type.color === GHOST_CONFIG.BLINKY.color) {
+                    initialX = 9;
+                    initialZ = 7;
+                    currentDir = { x: -1, z: 0 }; 
+                } else if (type.color === GHOST_CONFIG.PINKY.color) {
+                    currentDir = { x: 0, z: -1 }; 
+                }
+
                 ghostsStart.push({ 
-                    x: colIndex, z: rowIndex, startX: colIndex, startZ: rowIndex,
-                    color: type.color, state: GhostState.NORMAL, currentDir: { x: 0, z: 0 }, movementProgress: 0 
+                    x: initialX, z: initialZ, startX: colIndex, startZ: rowIndex,
+                    color: type.color, state: GhostState.NORMAL, currentDir, movementProgress: 0 
                 });
             }
         });
@@ -442,7 +455,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
              const isElroy = g.color === GHOST_CONFIG.BLINKY.color && remainingFood <= 20;
              const checkCanLeave = (ghost: Ghost, eatenCount: number) => {
                 if (ghost.color === GHOST_CONFIG.BLINKY.color) return true;
-                if (ghost.color === GHOST_CONFIG.PINKY.color && eatenCount >= 5) return true;
+                if (ghost.color === GHOST_CONFIG.PINKY.color) return true; 
                 if (ghost.color === GHOST_CONFIG.INKY.color && eatenCount >= 30) return true;
                 if (ghost.color === GHOST_CONFIG.CLYDE.color && eatenCount >= 60) return true;
                 return false;
