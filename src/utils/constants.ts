@@ -4,7 +4,7 @@ export const GHOST_SPEEDS = {
   NORMAL: 0.20,       
   SCARED: 0.10,       
   EATEN: 0.60,        
-  TUNNEL: 0.10,       
+  TUNNEL: 0.08,       
   ELROY_1: 0.21,      
   ELROY_2: 0.22       
 };
