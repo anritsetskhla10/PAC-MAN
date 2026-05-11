@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { GameContext, type Position } from './GameContext';
 import { type GameStatus, TileType, GhostState, type Ghost, type GlobalMode, type ActiveBonus, type BonusType } from '../types';
-import { LEVEL_MAPS, GHOST_CONFIG, SPAWN_POINTS, TUNNEL_ROW } from '../utils/constants';
+import { LEVEL_MAPS, GHOST_CONFIG, SPAWN_POINTS, TUNNEL_ROW, SCORES, POWER_MODE_DURATION_MS, POWER_MODE_FLASH_START_MS, BONUS_EXPIRATION_MS } from '../utils/constants';
 import { useTheme } from './ThemeContext';
 import { useGameAudio } from '../hooks/useGameAudio'; 
 import { checkCollision, checkFoodEaten, checkBonusEaten } from '../utils/physics';
@@ -71,7 +71,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [gameStatus, setGameStatus] = useState<GameStatus>('idle'); 
   const [remainingFood, setRemainingFood] = useState<number>(foodCount); 
   const [dotsEaten, setDotsEaten] = useState<number>(0); 
-  const [, setGhostsEatenBatch] = useState<number>(0); 
   const [globalMode, setGlobalMode] = useState<GlobalMode>('SCATTER');
   const [waveIndex, setWaveIndex] = useState(0);
 
@@ -132,15 +131,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const spawnPos = SPAWN_POINTS[randomIndex];
 
     let points = 0;
-    if (type === 'CHERRY') points = 100;
-    if (type === 'STRAWBERRY') points = 300;
-    if (type === 'EXTRA_LIFE') points = 200;
+    if (type === 'CHERRY') points = SCORES.CHERRY;
+    if (type === 'STRAWBERRY') points = SCORES.STRAWBERRY;
+    if (type === 'EXTRA_LIFE') points = SCORES.EXTRA_LIFE;
 
-    setActiveBonus({ type, x: spawnPos.x, z: spawnPos.z, points, expiresAt: Date.now() + 15000 });
+    setActiveBonus({ type, x: spawnPos.x, z: spawnPos.z, points, expiresAt: Date.now() + BONUS_EXPIRATION_MS });
 
     bonusTimerRef.current = setTimeout(() => {
         setActiveBonus(null);
-    }, 15000);
+    }, BONUS_EXPIRATION_MS);
   }, [clearBonusTimer, bonusTimerRef]);
 
   const softReset = useCallback(() => {
@@ -198,7 +197,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setScore(0);
     setLives(MAX_LIVES); 
     setLevel(1);        
-    setGhostsEatenBatch(0);
     
     setActiveBonus(null);
     setExtraLifeSpawned(false);
@@ -244,7 +242,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   const activatePowerMode = useCallback(() => {
     clearPowerTimers();
-    setGhostsEatenBatch(0);
     
     ghostsPosRef.current = ghostsPosRef.current.map(g => {
         if (g.state === GhostState.EATEN || g.state === GhostState.EYES) return g;
@@ -257,16 +254,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     });
     notifyListeners();
 
-    const DURATION = 7000;
-    const FLASH_START = DURATION - 2000; 
-
     flashTimerRef.current = setTimeout(() => {
         ghostsPosRef.current = ghostsPosRef.current.map(g => {
             if (g.state === GhostState.SCARED) return { ...g, state: GhostState.FLASHING };
             return g;
         });
         notifyListeners();
-    }, FLASH_START);
+    }, POWER_MODE_FLASH_START_MS);
 
     powerModeTimerRef.current = setTimeout(() => {
         ghostsPosRef.current = ghostsPosRef.current.map(g => {
@@ -276,8 +270,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             return g;
         });
         notifyListeners();
-        setGhostsEatenBatch(0);
-    }, DURATION);
+    }, POWER_MODE_DURATION_MS);
   }, [clearPowerTimers, notifyListeners, flashTimerRef, powerModeTimerRef]);
 
   const handleCollisionHit = useCallback((hitGhost: Ghost, hitGhostIndex: number) => {
@@ -302,12 +295,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     } 
     else if (hitGhost.state === GhostState.SCARED || hitGhost.state === GhostState.FLASHING) {
         playEatGhost(); 
-        setGhostsEatenBatch(prev => {
-            const comboMultiplier = Math.pow(2, prev);
-            const points = 200 * comboMultiplier;
-            setScore(s => s + points);
-            return prev + 1;
-        });
+        
+        setScore(s => s + 200);
         
         const newGhosts = [...ghostsPosRef.current];
         if (newGhosts[hitGhostIndex]) {

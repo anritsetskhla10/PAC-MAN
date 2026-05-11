@@ -102,3 +102,8 @@ export const GHOST_CONFIG = {
   INKY:   { color: '#00FFFF', scatterTarget: { x: 17, z: 13 } },
   CLYDE:  { color: '#FFB852', scatterTarget: { x: 1, z: 13 } }
 };
+
+// --- TIMERS & BUFFS ---
+export const POWER_MODE_DURATION_MS = 7000;
+export const POWER_MODE_FLASH_START_MS = 5000; 
+export const BONUS_EXPIRATION_MS = 15000;
