@@ -25,6 +25,7 @@ const getStartingCoordinates = (currentMap: number[][]) => {
                 let initialZ = rowIndex;
                 let currentDir = { x: 0, z: 0 };
 
+                // Blinky starts outside the ghost house
                 if (type.color === GHOST_CONFIG.BLINKY.color) {
                     initialX = 9;
                     initialZ = 7;
@@ -83,6 +84,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const ghostsPosRef = useRef<Ghost[]>(ghostsStart);
   const layoutRef = useRef(layout);
   const collisionProcessedRef = useRef(false);
+  
+  const ghostsEatenBatchRef = useRef<number>(0);
 
   const listenersRef = useRef<Set<() => void>>(new Set());
   const notifyListeners = useCallback(() => {
@@ -161,6 +164,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     resetWaveTimer();
     setActiveBonus(null); 
     clearBonusTimer();
+    ghostsEatenBatchRef.current = 0;
   }, [notifyListeners, clearBonusTimer, resetWaveTimer]);
 
   const startGame = () => {
@@ -207,6 +211,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setWaveIndex(0);
     resetWaveTimer();
     playerDirRef.current = { x: 1, z: 0 };
+    ghostsEatenBatchRef.current = 0;
 
     playIntro(); 
   };
@@ -234,6 +239,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           setWaveIndex(0);
           resetWaveTimer();
           playerDirRef.current = { x: 1, z: 0 };
+          ghostsEatenBatchRef.current = 0;
           playLevelUp(); 
           
           return nextLevelIndex;
@@ -242,12 +248,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   const activatePowerMode = useCallback(() => {
     clearPowerTimers();
+    ghostsEatenBatchRef.current = 0;
     
     ghostsPosRef.current = ghostsPosRef.current.map(g => {
         if (g.state === GhostState.EATEN || g.state === GhostState.EYES) return g;
         return { 
             ...g, 
             state: GhostState.SCARED,
+            x: g.x - g.currentDir.x,
+            z: g.z - g.currentDir.z,
             currentDir: { x: -g.currentDir.x, z: -g.currentDir.z }, 
             movementProgress: 1 - g.movementProgress 
         };
@@ -270,6 +279,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             return g;
         });
         notifyListeners();
+        ghostsEatenBatchRef.current = 0;
     }, POWER_MODE_DURATION_MS);
   }, [clearPowerTimers, notifyListeners, flashTimerRef, powerModeTimerRef]);
 
@@ -296,7 +306,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     else if (hitGhost.state === GhostState.SCARED || hitGhost.state === GhostState.FLASHING) {
         playEatGhost(); 
         
-        setScore(s => s + 200);
+        const comboMultiplier = Math.pow(2, ghostsEatenBatchRef.current);
+        const points = 200 * comboMultiplier;
+        setScore(s => s + points);
+        
+        ghostsEatenBatchRef.current += 1;
         
         const newGhosts = [...ghostsPosRef.current];
         if (newGhosts[hitGhostIndex]) {
