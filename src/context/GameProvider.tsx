@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { GameContext, type Position } from './GameContext';
 import { type GameStatus, TileType, GhostState, type Ghost, type GlobalMode, type ActiveBonus, type BonusType } from '../types';
-import { LEVEL_MAPS, GHOST_CONFIG, GHOST_SPEEDS, WAVE_TIMINGS, TUNNEL_ROW, SPAWN_POINTS } from '../utils/constants';
-import { calculateGhostNextMove } from '../utils/ghostLogic'; 
+import { LEVEL_MAPS, GHOST_CONFIG, SPAWN_POINTS, TUNNEL_ROW } from '../utils/constants';
 import { useTheme } from './ThemeContext';
 import { useGameAudio } from '../hooks/useGameAudio'; 
 import { checkCollision, checkFoodEaten, checkBonusEaten } from '../utils/physics';
 import { Howler } from 'howler';
+import { useGameTimers } from '../hooks/useGameTimers';
+import { useGameLoop } from '../hooks/useGameLoop';
 
 const MAX_LIVES = 3;
 
@@ -70,7 +71,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [gameStatus, setGameStatus] = useState<GameStatus>('idle'); 
   const [remainingFood, setRemainingFood] = useState<number>(foodCount); 
   const [dotsEaten, setDotsEaten] = useState<number>(0); 
-  const [ghostsEatenBatch, setGhostsEatenBatch] = useState<number>(0); 
+  const [, setGhostsEatenBatch] = useState<number>(0); 
   const [globalMode, setGlobalMode] = useState<GlobalMode>('SCATTER');
   const [waveIndex, setWaveIndex] = useState(0);
 
@@ -79,7 +80,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [elapsedTime, setElapsedTime] = useState<number>(0);
 
   const playerPosRef = useRef<Position>(pacmanStart);
+  const playerDirRef = useRef<Position>({ x: 1, z: 0 }); 
   const ghostsPosRef = useRef<Ghost[]>(ghostsStart);
+  const layoutRef = useRef(layout);
+  const collisionProcessedRef = useRef(false);
 
   const listenersRef = useRef<Set<() => void>>(new Set());
   const notifyListeners = useCallback(() => {
@@ -90,23 +94,24 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       return () => listenersRef.current.delete(callback);
   }, []);
 
-  const waveTimerRef = useRef<number>(0);
-  const powerModeTimerRef = useRef<number | null>(null);
-  const flashTimerRef = useRef<number | null>(null);
-  const bonusTimerRef = useRef<number | null>(null);
-  const collisionProcessedRef = useRef(false);
+  const { 
+    powerModeTimerRef, flashTimerRef, bonusTimerRef, waveTimerRef,
+    clearPowerTimers, clearBonusTimer, clearAllTimers, resetWaveTimer 
+  } = useGameTimers();
 
-  
-  const playerDirRef = useRef<Position>({ x: 1, z: 0 }); 
-  const layoutRef = useRef(layout);
+  const gameStateRef = useRef({ remainingFood, dotsEaten, globalMode, waveIndex, difficulty: settings.difficulty });
+
+  useEffect(() => { layoutRef.current = layout; }, [layout]);
+
+  useEffect(() => {
+    gameStateRef.current = { remainingFood, dotsEaten, globalMode, waveIndex, difficulty: settings.difficulty };
+  }, [remainingFood, dotsEaten, globalMode, waveIndex, settings.difficulty]);
 
   const resumeAudioContext = () => {
     if (Howler.ctx && Howler.ctx.state === 'suspended') {
       Howler.ctx.resume();
     }
   };
-
-  useEffect(() => { layoutRef.current = layout; }, [layout]);
 
   useEffect(() => {
     let intervalId: number;
@@ -121,7 +126,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, [gameStatus]);
 
   const spawnBonus = useCallback((type: BonusType) => {
-    if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
+    clearBonusTimer();
     
     const randomIndex = Math.floor(Math.random() * SPAWN_POINTS.length);
     const spawnPos = SPAWN_POINTS[randomIndex];
@@ -131,37 +136,33 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (type === 'STRAWBERRY') points = 300;
     if (type === 'EXTRA_LIFE') points = 200;
 
-    setActiveBonus({
-        type,
-        x: spawnPos.x,
-        z: spawnPos.z,
-        points,
-        expiresAt: Date.now() + 15000 
-    });
+    setActiveBonus({ type, x: spawnPos.x, z: spawnPos.z, points, expiresAt: Date.now() + 15000 });
 
     bonusTimerRef.current = setTimeout(() => {
         setActiveBonus(null);
     }, 15000);
-  }, []);
+  }, [clearBonusTimer, bonusTimerRef]);
 
   const softReset = useCallback(() => {
     collisionProcessedRef.current = false;
-    const mapIndex = (level - 1) % LEVEL_MAPS.length;
-    const currentMap = LEVEL_MAPS[mapIndex];
-    const { pacmanStart, ghostsStart } = getStartingCoordinates(currentMap);
-    
-    playerPosRef.current = pacmanStart;
-    ghostsPosRef.current = ghostsStart;
-    notifyListeners();
+    setLevel(prevLevel => {
+        const mapIndex = (prevLevel - 1) % LEVEL_MAPS.length;
+        const currentMap = LEVEL_MAPS[mapIndex];
+        const { pacmanStart, ghostsStart } = getStartingCoordinates(currentMap);
+        
+        playerPosRef.current = pacmanStart;
+        ghostsPosRef.current = ghostsStart;
+        notifyListeners();
+        return prevLevel;
+    });
 
     playerDirRef.current = { x: 1, z: 0 };
     setGlobalMode('SCATTER');
     setWaveIndex(0);
-    waveTimerRef.current = 0;
+    resetWaveTimer();
     setActiveBonus(null); 
-    if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
-}, [level, notifyListeners]);
-
+    clearBonusTimer();
+  }, [notifyListeners, clearBonusTimer, resetWaveTimer]);
 
   const startGame = () => {
     resumeAudioContext();
@@ -183,12 +184,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   
   const restartGame = () => {
     resumeAudioContext();
-    if (powerModeTimerRef.current) clearTimeout(powerModeTimerRef.current);
-    if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
-    if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
+    clearAllTimers();
 
     const freshData = getInitialPositions(1);
-    
     playerPosRef.current = freshData.pacmanStart;
     ghostsPosRef.current = freshData.ghostsStart;
     notifyListeners();
@@ -204,59 +202,48 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     
     setActiveBonus(null);
     setExtraLifeSpawned(false);
-    
     setElapsedTime(0);
 
     setGameStatus('ready'); 
     setGlobalMode('SCATTER');
     setWaveIndex(0);
-    waveTimerRef.current = 0;
+    resetWaveTimer();
     playerDirRef.current = { x: 1, z: 0 };
 
     playIntro(); 
   };
 
   const nextLevel = () => {
-      const nextLevelIndex = level + 1;
-      const freshData = getInitialPositions(nextLevelIndex);
-      
-      playerPosRef.current = freshData.pacmanStart;
-      ghostsPosRef.current = freshData.ghostsStart;
-      notifyListeners();
+      setLevel(prevLevel => {
+          const nextLevelIndex = prevLevel + 1;
+          const freshData = getInitialPositions(nextLevelIndex);
+          
+          playerPosRef.current = freshData.pacmanStart;
+          ghostsPosRef.current = freshData.ghostsStart;
+          notifyListeners();
 
-      setLayout(freshData.initialLayout);
-      layoutRef.current = freshData.initialLayout;
-      setRemainingFood(freshData.foodCount);
-      setDotsEaten(0);
-      
-      setLevel(nextLevelIndex);
-      
-      setActiveBonus(null);
-      if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
-      setExtraLifeSpawned(false);
-      
-      setGameStatus('ready'); 
-      setGlobalMode('SCATTER');
-      setWaveIndex(0);
-      waveTimerRef.current = 0;
-      playerDirRef.current = { x: 1, z: 0 };
-      playLevelUp(); 
-  };
-
-  const getGhostSpeed = (ghost: Ghost, remainingFood: number) => {
-      if (ghost.state === GhostState.EATEN || ghost.state === GhostState.EYES) return GHOST_SPEEDS.EATEN;
-      if (ghost.state === GhostState.SCARED || ghost.state === GhostState.FLASHING) return GHOST_SPEEDS.SCARED;
-      if (Math.round(ghost.z) === TUNNEL_ROW && (ghost.x < 2 || ghost.x > 16)) return GHOST_SPEEDS.TUNNEL;
-      if (ghost.color === GHOST_CONFIG.BLINKY.color) {
-          if (remainingFood <= 10) return GHOST_SPEEDS.ELROY_2; 
-          if (remainingFood <= 20) return GHOST_SPEEDS.ELROY_1; 
-      }
-      return GHOST_SPEEDS.NORMAL;
+          setLayout(freshData.initialLayout);
+          layoutRef.current = freshData.initialLayout;
+          setRemainingFood(freshData.foodCount);
+          setDotsEaten(0);
+          
+          setActiveBonus(null);
+          clearBonusTimer();
+          setExtraLifeSpawned(false);
+          
+          setGameStatus('ready'); 
+          setGlobalMode('SCATTER');
+          setWaveIndex(0);
+          resetWaveTimer();
+          playerDirRef.current = { x: 1, z: 0 };
+          playLevelUp(); 
+          
+          return nextLevelIndex;
+      });
   };
 
   const activatePowerMode = useCallback(() => {
-    if (powerModeTimerRef.current) clearTimeout(powerModeTimerRef.current);
-    if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+    clearPowerTimers();
     setGhostsEatenBatch(0);
     
     ghostsPosRef.current = ghostsPosRef.current.map(g => {
@@ -291,32 +278,36 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         notifyListeners();
         setGhostsEatenBatch(0);
     }, DURATION);
-  }, [notifyListeners]);
+  }, [clearPowerTimers, notifyListeners, flashTimerRef, powerModeTimerRef]);
 
   const handleCollisionHit = useCallback((hitGhost: Ghost, hitGhostIndex: number) => {
     if (collisionProcessedRef.current) return;
 
     if (hitGhost.state === GhostState.NORMAL) {
         collisionProcessedRef.current = true;
-        if (lives > 1) {
-            playDeath(); 
-            setLives(prev => prev - 1);
-            setGameStatus('ready'); 
-            softReset(); 
-            if (navigator.vibrate) navigator.vibrate(500); 
-        } else {
-            playDeath(); 
-            setLives(0);
-            setGameStatus('gameover');
-            if (navigator.vibrate) navigator.vibrate(1000);
-        }
+        setLives(prev => {
+            if (prev > 1) {
+                playDeath(); 
+                setGameStatus('ready'); 
+                softReset(); 
+                if (navigator.vibrate) navigator.vibrate(500); 
+                return prev - 1;
+            } else {
+                playDeath(); 
+                setGameStatus('gameover');
+                if (navigator.vibrate) navigator.vibrate(1000);
+                return 0;
+            }
+        });
     } 
     else if (hitGhost.state === GhostState.SCARED || hitGhost.state === GhostState.FLASHING) {
         playEatGhost(); 
-        const comboMultiplier = Math.pow(2, ghostsEatenBatch);
-        const points = 200 * comboMultiplier;
-        setScore(s => s + points);
-        setGhostsEatenBatch(prev => prev + 1);
+        setGhostsEatenBatch(prev => {
+            const comboMultiplier = Math.pow(2, prev);
+            const points = 200 * comboMultiplier;
+            setScore(s => s + points);
+            return prev + 1;
+        });
         
         const newGhosts = [...ghostsPosRef.current];
         if (newGhosts[hitGhostIndex]) {
@@ -325,8 +316,21 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         ghostsPosRef.current = newGhosts;
         notifyListeners();
     }
-}, [lives, ghostsEatenBatch, softReset, playDeath, playEatGhost, notifyListeners]);
+  }, [softReset, playDeath, playEatGhost, notifyListeners]);
 
+  useGameLoop({
+    gameStatus,
+    gameStateRef,
+    setGlobalMode,
+    setWaveIndex,
+    playerPosRef,
+    playerDirRef,
+    ghostsPosRef,
+    layoutRef,
+    waveTimerRef,
+    notifyListeners,
+    handleCollisionHit
+  });
 
   const movePlayer = useCallback((targetX: number, targetZ: number) => {
     if (gameStatus !== 'playing') return;
@@ -336,15 +340,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         else if (targetX > 18) targetX = 0;
     }
 
-    if (!layout[targetZ] || layout[targetZ][targetX] === undefined) return;
-    if (layout[targetZ][targetX] === TileType.WALL) return;
+    if (!layoutRef.current[targetZ] || layoutRef.current[targetZ][targetX] === undefined) return;
+    if (layoutRef.current[targetZ][targetX] === TileType.WALL) return;
 
     const dx = targetX - playerPosRef.current.x;
     const dz = targetZ - playerPosRef.current.z;
     if (dx !== 0 || dz !== 0) playerDirRef.current = { x: dx, z: dz };
 
     const newPos = { x: targetX, z: targetZ };
-    
     playerPosRef.current = newPos;
     notifyListeners();
 
@@ -357,25 +360,32 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const foodResult = checkFoodEaten(newPos, layoutRef.current);
 
     if (foodResult.hasEaten) {
-      layoutRef.current = foodResult.newLayout;
-      const newDots = dotsEaten + 1;
-      setDotsEaten(newDots); 
-      setScore(s => s + foodResult.points);
       setLayout(foodResult.newLayout);
+      layoutRef.current = foodResult.newLayout;
+      
+      setDotsEaten(prev => {
+          const newDots = prev + 1;
+          if (newDots === 30) spawnBonus('CHERRY');
+          if (newDots === 60) spawnBonus('STRAWBERRY');
+          
+          setLives(currentLives => {
+              if (newDots === 90 && !extraLifeSpawned && currentLives < MAX_LIVES) {
+                  spawnBonus('EXTRA_LIFE');
+                  setExtraLifeSpawned(true);
+                  playExtraLife(); 
+              }
+              return currentLives;
+          });
+          return newDots;
+      }); 
+
+      setScore(s => s + foodResult.points);
 
       if (foodResult.eatenType === TileType.FOOD) {
           playChomp(); 
       } else if (foodResult.eatenType === TileType.POWER_PELLET) {
           activatePowerMode(); 
           playPowerPellet(); 
-      }
-
-      if (newDots === 30) spawnBonus('CHERRY');
-      if (newDots === 60) spawnBonus('STRAWBERRY');
-      if (newDots === 90 && !extraLifeSpawned && lives < MAX_LIVES) {
-          spawnBonus('EXTRA_LIFE');
-          setExtraLifeSpawned(true);
-          playExtraLife(); 
       }
       
       setRemainingFood(prev => {
@@ -395,124 +405,25 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-      if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current);
+      clearBonusTimer();
       setActiveBonus(null); 
     }
 
-  }, [layout, gameStatus, dotsEaten, lives, extraLifeSpawned, spawnBonus, playChomp, playExtraLife, playFruit, playPowerPellet, activeBonus, notifyListeners, activatePowerMode, handleCollisionHit]);
-
-
-  useEffect(() => {
-    if (gameStatus !== 'playing') return;
-
-    let animationFrameId: number;
-    let lastTime = performance.now();
-    let accumulator = 0;
-    const TICK_RATE = 50; 
-
-    const gameLoop = (time: number) => {
-      const deltaTime = time - lastTime;
-      lastTime = time;
-      accumulator += deltaTime;
-
-      let hasPositionChanged = false;
-
-      while (accumulator >= TICK_RATE) {
-        accumulator -= TICK_RATE;
-
-        if (waveIndex < WAVE_TIMINGS.length) {
-          const currentWave = WAVE_TIMINGS[waveIndex];
-          if (currentWave.duration !== -1) {
-              waveTimerRef.current += 0.05; 
-              if (waveTimerRef.current >= currentWave.duration) {
-                  const nextIndex = waveIndex + 1;
-                  if (nextIndex < WAVE_TIMINGS.length) {
-                      setWaveIndex(nextIndex);
-                      setGlobalMode(WAVE_TIMINGS[nextIndex].mode as GlobalMode);
-                      waveTimerRef.current = 0;
-                      
-                      ghostsPosRef.current = ghostsPosRef.current.map(g => {
-                          if (g.state === GhostState.NORMAL) return { ...g, currentDir: { x: -g.currentDir.x, z: -g.currentDir.z } };
-                          return g;
-                      });
-                      hasPositionChanged = true;
-                  }
-              }
-          }
-        }
-
-        const prevGhosts = ghostsPosRef.current;
-        const updatedGhosts = prevGhosts.map((g) => {
-          const speed = getGhostSpeed(g, remainingFood);
-          let newProgress = g.movementProgress + speed;
-
-          if (newProgress >= 1) {
-             newProgress -= 1; 
-             if (g.state === GhostState.EATEN || g.state === GhostState.EYES) {
-                 const dist = Math.abs(g.x - g.startX) + Math.abs(g.z - g.startZ);
-                 if (dist < 0.5) return { ...g, state: GhostState.NORMAL, movementProgress: 0 };
-             }
-             const isElroy = g.color === GHOST_CONFIG.BLINKY.color && remainingFood <= 20;
-             const checkCanLeave = (ghost: Ghost, eatenCount: number) => {
-                if (ghost.color === GHOST_CONFIG.BLINKY.color) return true;
-                if (ghost.color === GHOST_CONFIG.PINKY.color) return true; 
-                if (ghost.color === GHOST_CONFIG.INKY.color && eatenCount >= 30) return true;
-                if (ghost.color === GHOST_CONFIG.CLYDE.color && eatenCount >= 60) return true;
-                return false;
-             };
-             const canLeave = checkCanLeave(g, dotsEaten);
-
-             const moveResult = calculateGhostNextMove(
-               g, prevGhosts, playerPosRef.current, playerDirRef.current, layoutRef.current,
-               settings.difficulty, globalMode, isElroy, canLeave
-             );
-
-             let nextX = moveResult.nextPos.x;
-             const nextZ = moveResult.nextPos.z;
-             if (nextZ === TUNNEL_ROW) {
-                if (nextX < 0) nextX = 18;
-                else if (nextX > 18) nextX = 0;
-             }
-
-             return { 
-                 ...g, x: nextX, z: nextZ,
-                 currentDir: moveResult.nextDir, movementProgress: newProgress
-             };
-          }
-          return { ...g, movementProgress: newProgress };
-        });
-
-        ghostsPosRef.current = updatedGhosts;
-        hasPositionChanged = true;
-
-        const { hit, hitGhostIndex, hitGhost } = checkCollision(playerPosRef.current, ghostsPosRef.current);
-        if (hit && hitGhost) {
-            handleCollisionHit(hitGhost, hitGhostIndex);
-            hasPositionChanged = true;
-        }
-      }
-
-      if (hasPositionChanged) {
-          notifyListeners();
-      }
-
-      animationFrameId = requestAnimationFrame(gameLoop);
-    };
-
-    animationFrameId = requestAnimationFrame(gameLoop);
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [gameStatus, settings.difficulty, remainingFood, globalMode, waveIndex, dotsEaten, lives, ghostsEatenBatch, softReset, playDeath, playEatGhost, notifyListeners, handleCollisionHit]);
+  }, [gameStatus, extraLifeSpawned, spawnBonus, playChomp, playExtraLife, playFruit, playPowerPellet, activeBonus, notifyListeners, activatePowerMode, handleCollisionHit, clearBonusTimer]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.code === 'Escape') {
-         if (gameStatus === 'playing') setGameStatus('paused');
-         else if (gameStatus === 'paused') setGameStatus('playing');
+         setGameStatus(prev => {
+             if (prev === 'playing') return 'paused';
+             if (prev === 'paused') return 'playing';
+             return prev;
+         });
       }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [gameStatus]);
+  }, []);
 
   return (
     <GameContext.Provider value={{ 
