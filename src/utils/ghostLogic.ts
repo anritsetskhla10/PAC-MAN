@@ -37,7 +37,6 @@ const isRedZone = (x: number, z: number, dir: Coordinate) => {
   return false;
 };
 
-// --- BFS PATHFINDING (Used for Eyes returning home) ---
 const getNextStepBFS = (start: Coordinate, target: Coordinate, layout: number[][]): { nextPos: Coordinate, nextDir: Coordinate } => {
   const startX = Math.round(start.x);
   const startZ = Math.round(start.z);
@@ -84,7 +83,6 @@ const getNextStepBFS = (start: Coordinate, target: Coordinate, layout: number[][
   return { nextPos: start, nextDir: { x: 0, z: 0 } };
 };
 
-// --- TARGETING ---
 const getBlinkyTarget = (playerPos: Coordinate) => playerPos;
 const getPinkyTarget = (playerPos: Coordinate, playerDir: Coordinate) => ({
   x: playerPos.x + playerDir.x * 4,
@@ -102,7 +100,6 @@ const getClydeTarget = (ghostPos: Coordinate, playerPos: Coordinate) => {
   return getDistSq(ghostPos, playerPos) > 64 ? playerPos : GHOST_CONFIG.CLYDE.scatterTarget;
 };
 
-// --- MOVEMENT ENGINE ---
 const getBestMove = (current: Coordinate, currentDir: Coordinate, target: Coordinate, layout: number[][], allowReverse: boolean, allowHouse: boolean): { nextPos: Coordinate, nextDir: Coordinate } => {
   let bestMove = current;
   let bestDir = currentDir;
@@ -163,10 +160,18 @@ const getRandomMove = (current: Coordinate, currentDir: Coordinate, layout: numb
         const randomIdx = Math.floor(Math.random() * validMoves.length);
         return { nextPos: validMoves[randomIdx].pos, nextDir: validMoves[randomIdx].dir };
     }
+
+    for (const dir of DIRECTIONS) {
+        const nextX = current.x + dir.x;
+        const nextZ = current.z + dir.z;
+        if (!isWall(nextX, nextZ, layout, false)) {
+            return { nextPos: { x: nextX, z: nextZ }, nextDir: dir };
+        }
+    }
+
     return { nextPos: current, nextDir: currentDir };
 };
 
-// --- MAIN EXPORT ---
 export const calculateGhostNextMove = (
   ghost: Ghost,
   allGhosts: Ghost[],
@@ -181,7 +186,6 @@ export const calculateGhostNextMove = (
 
   const currentPos = { x: Math.round(ghost.x), z: Math.round(ghost.z) };
   
-  // EATEN STATE (Eyes returning home)
   if (ghost.state === GhostState.EATEN || ghost.state === GhostState.EYES) {
     const home = { x: ghost.startX, z: ghost.startZ }; 
     if (Math.abs(currentPos.x - home.x) <= 0.5 && Math.abs(currentPos.z - home.z) <= 0.5) {
@@ -190,12 +194,10 @@ export const calculateGhostNextMove = (
     return getNextStepBFS(currentPos, home, layout);
   }
 
-  // HOUSE LOGIC
   if (isInGhostHouse(currentPos)) {
       if (canLeaveHouse) {
           return getBestMove(currentPos, ghost.currentDir, HOUSE_DOOR, layout, false, true);
       } else {
-          // Bounce up and down waiting
           let nextDir = ghost.currentDir;
           if (nextDir.z === 0) nextDir = { x: 0, z: -1 };
           const targetZ = ghost.z + (nextDir.z * 0.2); 
@@ -203,20 +205,14 @@ export const calculateGhostNextMove = (
              nextDir = { x: 0, z: -nextDir.z };
              return { nextPos: { x: ghost.x, z: ghost.z }, nextDir };  
           }
-
-          return {
-              nextPos: { x: ghost.x, z: targetZ },
-              nextDir
-          };
+          return { nextPos: { x: ghost.x, z: targetZ }, nextDir };
       }
   }
 
-  //  SCARED OR FLASHING (Random Movement)
   if (ghost.state === GhostState.SCARED || ghost.state === GhostState.FLASHING) {
     return getRandomMove(currentPos, ghost.currentDir, layout);
   }
 
-  //  CHASE / SCATTER
   let target = playerPos;
   
   if (globalMode === 'SCATTER' && !isElroy) {

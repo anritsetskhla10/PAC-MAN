@@ -84,7 +84,13 @@ export const useGameLoop = ({
                       waveTimerRef.current = 0;
                       
                       ghostsPosRef.current = ghostsPosRef.current.map(g => {
-                          if (g.state === GhostState.NORMAL) return { ...g, currentDir: { x: -g.currentDir.x, z: -g.currentDir.z } };
+                          if (g.state === GhostState.NORMAL) return { 
+                              ...g, 
+                              x: g.x - g.currentDir.x,
+                              z: g.z - g.currentDir.z,
+                              currentDir: { x: -g.currentDir.x, z: -g.currentDir.z },
+                              movementProgress: 1 - g.movementProgress
+                          };
                           return g;
                       });
                       hasPositionChanged = true;
