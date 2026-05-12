@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, type ReactNode } from 'react';
 import { GameContext, type Position } from './GameContext';
 import { type GameStatus, TileType, GhostState, type Ghost, type GlobalMode, type ActiveBonus, type BonusType } from '../types';
 import { LEVEL_MAPS, GHOST_CONFIG, SPAWN_POINTS, TUNNEL_ROW, SCORES, POWER_MODE_DURATION_MS, POWER_MODE_FLASH_START_MS, BONUS_EXPIRATION_MS } from '../utils/constants';
@@ -25,7 +25,6 @@ const getStartingCoordinates = (currentMap: number[][]) => {
                 let initialZ = rowIndex;
                 let currentDir = { x: 0, z: 0 };
 
-                // Blinky starts outside the ghost house
                 if (type.color === GHOST_CONFIG.BLINKY.color) {
                     initialX = 9;
                     initialZ = 7;
@@ -61,16 +60,19 @@ const getInitialPositions = (levelIndex: number = 1) => {
 };
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {
-  const { pacmanStart, ghostsStart, initialLayout, foodCount } = getInitialPositions(1);
+  const initialData = useMemo(() => getInitialPositions(1), []);
+
   const { settings } = useTheme();
   const { playChomp, playDeath, playIntro, playEatGhost, playExtraLife, playFruit, playLevelUp, playPowerPellet } = useGameAudio();
 
   const [lives, setLives] = useState<number>(MAX_LIVES);
   const [level, setLevel] = useState<number>(1);
-  const [layout, setLayout] = useState<number[][]>(initialLayout);
+  
+  const [layout, setLayout] = useState<number[][]>(() => initialData.initialLayout);
+  const [remainingFood, setRemainingFood] = useState<number>(() => initialData.foodCount);
+  
   const [score, setScore] = useState<number>(0);
   const [gameStatus, setGameStatus] = useState<GameStatus>('idle'); 
-  const [remainingFood, setRemainingFood] = useState<number>(foodCount); 
   const [dotsEaten, setDotsEaten] = useState<number>(0); 
   const [globalMode, setGlobalMode] = useState<GlobalMode>('SCATTER');
   const [waveIndex, setWaveIndex] = useState(0);
@@ -79,9 +81,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [extraLifeSpawned, setExtraLifeSpawned] = useState(false);
   const [elapsedTime, setElapsedTime] = useState<number>(0);
 
-  const playerPosRef = useRef<Position>(pacmanStart);
+  const playerPosRef = useRef<Position>(initialData.pacmanStart);
   const playerDirRef = useRef<Position>({ x: 1, z: 0 }); 
-  const ghostsPosRef = useRef<Ghost[]>(ghostsStart);
+  const ghostsPosRef = useRef<Ghost[]>(initialData.ghostsStart);
   const layoutRef = useRef(layout);
   const collisionProcessedRef = useRef(false);
   
@@ -252,6 +254,17 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     
     ghostsPosRef.current = ghostsPosRef.current.map(g => {
         if (g.state === GhostState.EATEN || g.state === GhostState.EYES) return g;
+
+        const inHouse = (g.x >= 8 && g.x <= 10) && (g.z > 8.5 && g.z < 9.5);
+        
+        if (inHouse) {
+            return { 
+                ...g, 
+                state: GhostState.SCARED,
+                currentDir: { x: -g.currentDir.x, z: -g.currentDir.z } 
+            };
+        }
+
         return { 
             ...g, 
             state: GhostState.SCARED,
