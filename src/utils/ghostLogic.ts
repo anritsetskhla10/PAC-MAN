@@ -2,10 +2,10 @@ import { TileType, GhostState, type Ghost, type Coordinate, type Difficulty, typ
 import { GHOST_CONFIG, HOUSE_DOOR, TUNNEL_ROW } from './constants';
 
 const DIRECTIONS = [
-  { x: 0, z: -1 },
+  { x: 0, z: -1 }, 
   { x: -1, z: 0 }, 
   { x: 0, z: 1 }, 
-  { x: 1, z: 0 },  
+  { x: 1, z: 0 },
 ];
 
 const getDistSq = (a: Coordinate, b: Coordinate) => {
@@ -84,18 +84,27 @@ const getNextStepBFS = (start: Coordinate, target: Coordinate, layout: number[][
 };
 
 const getBlinkyTarget = (playerPos: Coordinate) => playerPos;
-const getPinkyTarget = (playerPos: Coordinate, playerDir: Coordinate) => ({
-  x: playerPos.x + playerDir.x * 4,
-  z: playerPos.z + playerDir.z * 4
-});
+
+const getPinkyTarget = (playerPos: Coordinate, playerDir: Coordinate) => {
+  // classic arcade "Up Bug" (overflow bug)
+  const isUpBug = playerDir.x === 0 && playerDir.z === -1;
+  return {
+    x: playerPos.x + playerDir.x * 4 - (isUpBug ? 4 : 0),
+    z: playerPos.z + playerDir.z * 4
+  };
+};
+
 const getInkyTarget = (playerPos: Coordinate, playerDir: Coordinate, blinkyPos: Coordinate) => {
-  const pivotX = playerPos.x + playerDir.x * 2;
+  // classic arcade "Up Bug" (overflow bug) for Inky's pivot point
+  const isUpBug = playerDir.x === 0 && playerDir.z === -1;
+  const pivotX = playerPos.x + playerDir.x * 2 - (isUpBug ? 2 : 0);
   const pivotZ = playerPos.z + playerDir.z * 2;
   return {
     x: blinkyPos.x + (pivotX - blinkyPos.x) * 2,
     z: blinkyPos.z + (pivotZ - blinkyPos.z) * 2
   };
 };
+
 const getClydeTarget = (ghostPos: Coordinate, playerPos: Coordinate) => {
   return getDistSq(ghostPos, playerPos) > 64 ? playerPos : GHOST_CONFIG.CLYDE.scatterTarget;
 };
