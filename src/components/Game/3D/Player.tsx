@@ -7,7 +7,6 @@ import type { PointerLockControls as PointerLockControlsImpl } from 'three-stdli
 
 export const Player = () => {
   const { camera } = useThree();
-  // 🚀 [PERF FIX]: playerPosRef
   const { playerPosRef, movePlayer, gameStatus } = useGame();
   const controlsRef = useRef<PointerLockControlsImpl>(null);
 
@@ -73,7 +72,6 @@ export const Player = () => {
     <>
       <PointerLockControls ref={controlsRef} />
       
-      {/* 🚀 [PERF FIX]: initial position */}
       <group position={[initialPos.x, 0.5, initialPos.z]}>
         <pointLight 
           position={[0, 0.6, 0]} 
