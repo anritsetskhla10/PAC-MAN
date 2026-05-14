@@ -150,19 +150,51 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
     // კამერის მართვა
     if (!isShowcase) {
         if (!isFpsMode) {
-            const isLandscape = viewport.width > viewport.height;
-            const camHeight = isMobile ? (isLandscape ? 16 : 22) : 14; 
-            const camDist = isMobile ? (isLandscape ? 10 : 12) : 8;
-            
-            const camTargetPos = new Vector3(
-                groupRef.current.position.x, 
-                groupRef.current.position.y + camHeight, 
-                groupRef.current.position.z + camDist
-            );
+            const isPortrait = viewport.aspect < 1;
 
-            if (!isNaN(camera.position.x)) {
-                camera.position.lerp(camTargetPos, 0.1); 
-                camera.lookAt(groupRef.current.position); 
+            if (isPortrait) {
+                const mapCenter = new Vector3(9, 0, 11);
+                
+                const dynamicHeight = Math.max(24, 19.5 / viewport.aspect);
+                const staticCamPos = new Vector3(9, dynamicHeight, 16); 
+                
+                if (!isNaN(camera.position.x)) {
+                    camera.position.lerp(staticCamPos, 0.1);
+                    
+                    const targetLookAt = new Vector3();
+                    targetLookAt.copy(mapCenter);
+                    
+                    const currentLookAt = new Vector3();
+                    camera.getWorldDirection(currentLookAt);
+                    currentLookAt.add(camera.position); 
+                    
+                    currentLookAt.lerp(targetLookAt, 0.1);
+                    camera.lookAt(currentLookAt);
+                }
+            } else {
+                const isLandscape = viewport.width > viewport.height;
+                const camHeight = isMobile ? (isLandscape ? 16 : 22) : 14; 
+                const camDist = isMobile ? (isLandscape ? 10 : 12) : 8;
+                
+                const camTargetPos = new Vector3(
+                    groupRef.current.position.x, 
+                    groupRef.current.position.y + camHeight, 
+                    groupRef.current.position.z + camDist
+                );
+
+                if (!isNaN(camera.position.x)) {
+                    camera.position.lerp(camTargetPos, 0.1); 
+                    
+                    const targetLookAt = new Vector3();
+                    targetLookAt.copy(groupRef.current.position);
+                    
+                    const currentLookAt = new Vector3();
+                    camera.getWorldDirection(currentLookAt);
+                    currentLookAt.add(camera.position);
+                    
+                    currentLookAt.lerp(targetLookAt, 0.1);
+                    camera.lookAt(currentLookAt);
+                }
             }
         } else {
             const fpsPos = new Vector3(groupRef.current.position.x, 0.6, groupRef.current.position.z);

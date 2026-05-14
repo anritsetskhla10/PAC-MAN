@@ -41,7 +41,7 @@ export const Board3D = ({ heading }: Board3DProps) => {
       {/* 3D SCENE */}
       <Canvas 
         shadows={!isMobile} 
-        camera={{ fov: 60, near: 0.001 }} 
+        camera={{ fov: 60, near: 0.001, position: [9, 14, 10] }} 
         className="touch-none block"
         dpr={isMobile ? 1 : [1, 2]} 
         frameloop="always"
