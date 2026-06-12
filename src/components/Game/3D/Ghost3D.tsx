@@ -178,7 +178,9 @@ export const Ghost3D = ({ index, color }: Ghost3DProps) => {
         )}
       </group>
       
-      {visualState !== 'EATEN' && visualState !== 'EYES' && (
+      {/* Only the first ghost carries the siren, so the 3D scene has a single
+          positional siren instead of one per ghost playing simultaneously. */}
+      {index === 0 && visualState !== 'EATEN' && visualState !== 'EYES' && (
         <PositionalAudio ref={audioRef} url={sirenUrl} distance={1} loop />
       )}
     </group>

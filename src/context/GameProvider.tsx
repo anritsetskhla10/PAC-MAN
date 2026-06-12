@@ -70,7 +70,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const initialData = useMemo(() => getInitialPositions(1), []);
 
   const { settings } = useTheme();
-  const { playChomp, playDeath, playIntro, playEatGhost, playExtraLife, playFruit, playLevelUp, playPowerPellet } = useGameAudio();
+  const { playChomp, playDeath, playIntro, stopIntro, playEatGhost, playExtraLife, playFruit, playLevelUp, playPowerPellet } = useGameAudio();
 
   const [lives, setLives] = useState<number>(MAX_LIVES);
   const [level, setLevel] = useState<number>(1);
@@ -253,8 +253,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   const startRound = useCallback(() => {
     resumeAudioContext();
+    stopIntro(); // stop the intro jingle so it never overlaps the gameplay siren
     setGameStatus('playing');
-  }, [resumeAudioContext]);
+  }, [resumeAudioContext, stopIntro]);
 
   const pauseGame = useCallback(() => {
     setGameStatus(prev => (prev === 'playing' ? 'paused' : prev));
