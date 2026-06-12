@@ -5,7 +5,7 @@ import { Board } from '../2D/Board';
 import { Ghost3D } from '../3D/Ghost3D'; 
 import { Food3D } from '../3D/Food3D';
 import { InstancedFood } from '../3D/Food/InstancedFood';
-import { useGame } from '../../../context/GameContext';
+import { useGameRefs, useGameLayout } from '../../../context/GameContext';
 import { useTheme } from '../../../context/ThemeContext';
 import type { PlayerHeading } from '../../../hooks/usePlayerHeading';
 import { useIsMobile } from '../../../hooks/useIsMobile'; 
@@ -18,7 +18,8 @@ interface Board3DProps {
 }
 
 export const Board3D = ({ heading }: Board3DProps) => {
-  const { ghostsPosRef, layout, activeBonus } = useGame(); 
+  const { ghostsPosRef } = useGameRefs();
+  const { layout, activeBonus } = useGameLayout();
   const { settings } = useTheme();
   const isMobile = useIsMobile();
 

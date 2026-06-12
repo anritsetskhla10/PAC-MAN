@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, Suspense, lazy } from 'react';
 import { useTheme } from '../context/ThemeContext';
-import { useGame } from '../context/GameContext';
+import { useGameMetrics, useGameSession, useGameActions } from '../context/GameContext';
 import { Board } from '../components/Game/2D/Board';
 import { GameOverlay } from '../components/UI/GameOverlay';
 import { InstructionsModal } from '../components/UI/InstructionsModal'; 
@@ -16,7 +16,9 @@ const Board3D = lazy(() => import('../components/Game/3D/Board3D').then(m => ({ 
 
 export const GamePage = () => {
   const { settings, updateSetting } = useTheme();
-  const { score, gameStatus, pauseGame, lives, level, elapsedTime } = useGame();
+  const { score, lives, elapsedTime } = useGameMetrics();
+  const { gameStatus, level } = useGameSession();
+  const { pauseGame } = useGameActions();
   const playerHeading = usePlayerHeading();
   const isMobile = useIsMobile();
   const { t } = useTranslation();

@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { Vector3, Group, PositionalAudio as ThreePositionalAudio } from 'three'; 
 import { PositionalAudio } from '@react-three/drei';
 import { useTheme } from '../../../context/ThemeContext';
-import { useGame } from '../../../context/GameContext'; 
+import { useGameRefs, useGameSession } from '../../../context/GameContext';
 import { ClassicGhost } from './Ghosts/ClassicGhost';
 import { ReaperGhost } from './Ghosts/ReaperGhost';
 import { Eyes3D } from './Ghosts/Eyes3D'; 
@@ -31,7 +31,8 @@ const isWallBetween = (x1: number, z1: number, x2: number, z2: number, layout: n
 
 export const Ghost3D = ({ index, color }: Ghost3DProps) => {
   const { settings } = useTheme();
-  const { gameStatus, playerPosRef, ghostsPosRef, layoutRef, subscribeToPositions } = useGame(); 
+  const { playerPosRef, ghostsPosRef, layoutRef, subscribeToPositions } = useGameRefs();
+  const { gameStatus } = useGameSession();
   
   const groupRef = useRef<Group>(null);
   const audioRef = useRef<ThreePositionalAudio>(null!); 

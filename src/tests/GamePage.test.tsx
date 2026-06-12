@@ -5,7 +5,7 @@ import { GamePage } from '../pages/GamePage';
 import * as GameContext from '../context/GameContext';
 import * as ThemeContext from '../context/ThemeContext';
 
-type GameContextType = ReturnType<typeof GameContext.useGame>;
+type GameOverrides = Record<string, unknown>;
 type ThemeContextType = ReturnType<typeof ThemeContext.useTheme>;
 
 vi.mock('../components/Game/3D/Board3D', () => ({
@@ -26,18 +26,22 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-const useGameSpy = vi.spyOn(GameContext, 'useGame');
+const metricsSpy = vi.spyOn(GameContext, 'useGameMetrics');
+const sessionSpy = vi.spyOn(GameContext, 'useGameSession');
+const actionsSpy = vi.spyOn(GameContext, 'useGameActions');
+const refsSpy = vi.spyOn(GameContext, 'useGameRefs');
 const useThemeSpy = vi.spyOn(ThemeContext, 'useTheme');
 
 describe('GamePage UI (Sidebar & HUD)', () => {
-  
-  const setupMocks = (gameOverrides: Partial<GameContextType> = {}, themeOverrides: Partial<ThemeContextType['settings']> = {}) => {
-    useGameSpy.mockReturnValue({
+
+  const setupMocks = (gameOverrides: GameOverrides = {}, themeOverrides: Partial<ThemeContextType['settings']> = {}) => {
+    const game = {
       score: 5000,
       level: 3,
       lives: 3,
       elapsedTime: 75,
       gameStatus: 'playing',
+      remainingFood: 10,
       pauseGame: vi.fn(),
       resumeGame: vi.fn(),
       startGame: vi.fn(),
@@ -45,13 +49,27 @@ describe('GamePage UI (Sidebar & HUD)', () => {
       nextLevel: vi.fn(),
       movePlayer: vi.fn(),
       startRound: vi.fn(),
-      playerPos: { x: 1, z: 1 },
-      ghostsPos: [],
-      layout: [[1]],
-      remainingFood: 10,
-      activeBonus: null,
       ...gameOverrides,
-    } as unknown as GameContextType);
+    } as Record<string, unknown>;
+
+    metricsSpy.mockReturnValue({ score: game.score, lives: game.lives, remainingFood: game.remainingFood, elapsedTime: game.elapsedTime } as ReturnType<typeof GameContext.useGameMetrics>);
+    sessionSpy.mockReturnValue({ gameStatus: game.gameStatus, level: game.level } as ReturnType<typeof GameContext.useGameSession>);
+    actionsSpy.mockReturnValue({
+      movePlayer: game.movePlayer,
+      startGame: game.startGame,
+      startRound: game.startRound,
+      pauseGame: game.pauseGame,
+      resumeGame: game.resumeGame,
+      restartGame: game.restartGame,
+      nextLevel: game.nextLevel,
+    } as ReturnType<typeof GameContext.useGameActions>);
+
+    refsSpy.mockReturnValue({
+      playerPosRef: { current: { x: 1, z: 1 } },
+      ghostsPosRef: { current: [] },
+      layoutRef: { current: [[1]] },
+      subscribeToPositions: () => () => {},
+    } as unknown as ReturnType<typeof GameContext.useGameRefs>);
 
     useThemeSpy.mockReturnValue({
       settings: {
@@ -112,14 +130,15 @@ describe('GamePage UI (Sidebar & HUD)', () => {
     expect(screen.getByText('game.lives')).toBeInTheDocument();
   });
 
-  it('should toggle between 2D and 3D modes based on settings', () => {
+  it('should toggle between 2D and 3D modes based on settings', async () => {
     setupMocks({}, { is3DMode: true });
     const { unmount } = render(
       <MemoryRouter>
         <GamePage />
       </MemoryRouter>
     );
-    expect(screen.getByTestId('mock-board-3d')).toBeInTheDocument();
+    // Board3D is lazy-loaded behind Suspense, so resolve it asynchronously.
+    expect(await screen.findByTestId('mock-board-3d')).toBeInTheDocument();
     unmount();
 
     setupMocks({}, { is3DMode: false });

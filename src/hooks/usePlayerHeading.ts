@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { useGame } from '../context/GameContext';
+import { useGameRefs } from '../context/GameContext';
 
 export type PlayerHeading = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT';
 
 export const usePlayerHeading = () => {
-  const { playerPosRef, subscribeToPositions } = useGame();
+  const { playerPosRef, subscribeToPositions } = useGameRefs();
   
   const [heading, setHeading] = useState<PlayerHeading>('RIGHT');
   

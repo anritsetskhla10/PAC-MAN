@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import { PointerLockControls } from '@react-three/drei'; 
-import { useGame } from '../../../context/GameContext'; 
+import { useGameRefs, useGameActions, useGameSession } from '../../../context/GameContext';
 import type { PointerLockControls as PointerLockControlsImpl } from 'three-stdlib';
 
 export const Player = () => {
   const { camera } = useThree();
-  const { playerPosRef, movePlayer, gameStatus } = useGame();
+  const { playerPosRef } = useGameRefs();
+  const { movePlayer } = useGameActions();
+  const { gameStatus } = useGameSession();
   const controlsRef = useRef<PointerLockControlsImpl>(null);
 
   const [initialPos, setInitialPos] = useState({ x: 0, z: 0 });
