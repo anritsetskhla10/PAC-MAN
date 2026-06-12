@@ -3,7 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3, Group } from 'three';
 import { PointerLockControls } from '@react-three/drei';
 import type { PointerLockControls as PointerLockControlsImpl } from 'three-stdlib';
-import { useGame } from '../../../context/GameContext'; 
+import { useGameRefs, useGameActions, useGameSession } from '../../../context/GameContext';
 import { useTheme } from '../../../context/ThemeContext';
 import type { PlayerHeading } from '../../../hooks/usePlayerHeading';
 import { useIsMobile } from '../../../hooks/useIsMobile'; 
@@ -19,7 +19,9 @@ interface Pacman3DProps {
 
 export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'RIGHT', forceModel }: Pacman3DProps) => {
   const { settings } = useTheme();
-  const { playerPosRef, movePlayer, gameStatus } = useGame(); 
+  const { playerPosRef } = useGameRefs();
+  const { movePlayer } = useGameActions();
+  const { gameStatus } = useGameSession();
   const { camera, viewport } = useThree(); 
   const controlsRef = useRef<PointerLockControlsImpl>(null);
   

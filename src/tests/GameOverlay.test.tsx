@@ -3,8 +3,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GameOverlay } from '../components/UI/GameOverlay';
 import * as GameContext from '../context/GameContext';
 
-type GameContextType = ReturnType<typeof GameContext.useGame>;
-
 // Mock Translation
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -12,7 +10,40 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-const useGameSpy = vi.spyOn(GameContext, 'useGame');
+const metricsSpy = vi.spyOn(GameContext, 'useGameMetrics');
+const sessionSpy = vi.spyOn(GameContext, 'useGameSession');
+const actionsSpy = vi.spyOn(GameContext, 'useGameActions');
+
+const mockGame = (overrides: Record<string, unknown> = {}) => {
+  const game = {
+    gameStatus: 'idle',
+    score: 0,
+    level: 1,
+    elapsedTime: 0,
+    startGame: vi.fn(),
+    startRound: vi.fn(),
+    resumeGame: vi.fn(),
+    restartGame: vi.fn(),
+    nextLevel: vi.fn(),
+    movePlayer: vi.fn(),
+    pauseGame: vi.fn(),
+    ...overrides,
+  } as Record<string, unknown>;
+
+  metricsSpy.mockReturnValue({ score: game.score, lives: 3, remainingFood: 0, elapsedTime: game.elapsedTime } as ReturnType<typeof GameContext.useGameMetrics>);
+  sessionSpy.mockReturnValue({ gameStatus: game.gameStatus, level: game.level } as ReturnType<typeof GameContext.useGameSession>);
+  actionsSpy.mockReturnValue({
+    movePlayer: game.movePlayer,
+    startGame: game.startGame,
+    startRound: game.startRound,
+    pauseGame: game.pauseGame,
+    resumeGame: game.resumeGame,
+    restartGame: game.restartGame,
+    nextLevel: game.nextLevel,
+  } as ReturnType<typeof GameContext.useGameActions>);
+
+  return game;
+};
 
 describe('GameOverlay Component', () => {
   beforeEach(() => {
@@ -21,14 +52,8 @@ describe('GameOverlay Component', () => {
 
   it('should display START GAME button when gameStatus is "idle"', () => {
     const startGameMock = vi.fn();
-    
-    useGameSpy.mockReturnValue({
-      gameStatus: 'idle',
-      score: 0,
-      level: 1,
-      elapsedTime: 0,
-      startGame: startGameMock,
-    } as unknown as GameContextType); 
+
+    mockGame({ gameStatus: 'idle', score: 0, level: 1, elapsedTime: 0, startGame: startGameMock });
 
     render(<GameOverlay />);
     
@@ -42,13 +67,7 @@ describe('GameOverlay Component', () => {
   it('should display GAME OVER screen with score and time', () => {
     const restartGameMock = vi.fn();
 
-    useGameSpy.mockReturnValue({
-      gameStatus: 'gameover',
-      score: 1500,
-      level: 5,
-      elapsedTime: 125,
-      restartGame: restartGameMock,
-    } as unknown as GameContextType); 
+    mockGame({ gameStatus: 'gameover', score: 1500, level: 5, elapsedTime: 125, restartGame: restartGameMock });
 
     render(<GameOverlay />);
 
@@ -64,12 +83,7 @@ describe('GameOverlay Component', () => {
   it('should display VICTORY screen (won status)', () => {
     const nextLevelMock = vi.fn();
 
-    useGameSpy.mockReturnValue({
-      gameStatus: 'won',
-      score: 3000,
-      elapsedTime: 60,
-      nextLevel: nextLevelMock,
-    } as unknown as GameContextType); 
+    mockGame({ gameStatus: 'won', score: 3000, elapsedTime: 60, nextLevel: nextLevelMock });
 
     render(<GameOverlay />);
 
@@ -81,9 +95,7 @@ describe('GameOverlay Component', () => {
   });
 
   it('should return null (no overlay) when gameStatus is "playing"', () => {
-    useGameSpy.mockReturnValue({
-      gameStatus: 'playing',
-    } as unknown as GameContextType); 
+    mockGame({ gameStatus: 'playing' });
     const { container } = render(<GameOverlay />);
     expect(container).toBeEmptyDOMElement();
   });

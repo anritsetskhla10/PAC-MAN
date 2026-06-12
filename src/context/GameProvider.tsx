@@ -1,5 +1,12 @@
 import { useState, useEffect, useCallback, useRef, useMemo, type ReactNode } from 'react';
-import { GameContext, type Position } from './GameContext';
+import {
+  GameMetricsContext,
+  GameLayoutContext,
+  GameSessionContext,
+  GameRefsContext,
+  GameActionsContext,
+  type Position,
+} from './GameContext';
 import { type GameStatus, TileType, GhostState, type Ghost, type GlobalMode, type ActiveBonus, type BonusType } from '../types';
 import { LEVEL_MAPS, GHOST_CONFIG, SPAWN_POINTS, TUNNEL_ROW, SCORES, POWER_MODE_DURATION_MS, POWER_MODE_FLASH_START_MS, BONUS_EXPIRATION_MS } from '../utils/constants';
 import { useTheme } from './ThemeContext';
@@ -82,10 +89,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [elapsedTime, setElapsedTime] = useState<number>(0);
 
   const playerPosRef = useRef<Position>(initialData.pacmanStart);
-  const playerDirRef = useRef<Position>({ x: 1, z: 0 }); 
+  const playerDirRef = useRef<Position>({ x: 1, z: 0 });
   const ghostsPosRef = useRef<Ghost[]>(initialData.ghostsStart);
   const layoutRef = useRef(layout);
   const collisionProcessedRef = useRef(false);
+  // Mirror of gameStatus so stable callbacks can read it without depending on it.
+  const gameStatusRef = useRef(gameStatus);
   
   const ghostsEatenBatchRef = useRef<number>(0);
 
@@ -106,16 +115,17 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const gameStateRef = useRef({ remainingFood, dotsEaten, globalMode, waveIndex, difficulty: settings.difficulty });
 
   useEffect(() => { layoutRef.current = layout; }, [layout]);
+  useEffect(() => { gameStatusRef.current = gameStatus; }, [gameStatus]);
 
   useEffect(() => {
     gameStateRef.current = { remainingFood, dotsEaten, globalMode, waveIndex, difficulty: settings.difficulty };
   }, [remainingFood, dotsEaten, globalMode, waveIndex, settings.difficulty]);
 
-  const resumeAudioContext = () => {
+  const resumeAudioContext = useCallback(() => {
     if (Howler.ctx && Howler.ctx.state === 'suspended') {
       Howler.ctx.resume();
     }
-  };
+  }, []);
 
   useEffect(() => {
     let intervalId: number;
@@ -169,25 +179,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     ghostsEatenBatchRef.current = 0;
   }, [notifyListeners, clearBonusTimer, resetWaveTimer]);
 
-  const startGame = () => {
-    resumeAudioContext();
-    if (gameStatus === 'idle' || gameStatus === 'gameover' || gameStatus === 'won') {
-        restartGame();
-    } else {
-        setGameStatus('ready');
-        playIntro();
-    }
-  };
-
-  const startRound = () => {
-    resumeAudioContext();
-    setGameStatus('playing');
-  };
-
-  const pauseGame = () => { if (gameStatus === 'playing') setGameStatus('paused'); };
-  const resumeGame = () => { if (gameStatus === 'paused') setGameStatus('playing'); };
-  
-  const restartGame = () => {
+  const restartGame = useCallback(() => {
     resumeAudioContext();
     clearAllTimers();
 
@@ -198,31 +190,31 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     setLayout(freshData.initialLayout);
     layoutRef.current = freshData.initialLayout;
-    setRemainingFood(freshData.foodCount); 
-    setDotsEaten(0); 
+    setRemainingFood(freshData.foodCount);
+    setDotsEaten(0);
     setScore(0);
-    setLives(MAX_LIVES); 
-    setLevel(1);        
-    
+    setLives(MAX_LIVES);
+    setLevel(1);
+
     setActiveBonus(null);
     setExtraLifeSpawned(false);
     setElapsedTime(0);
 
-    setGameStatus('ready'); 
+    setGameStatus('ready');
     setGlobalMode('SCATTER');
     setWaveIndex(0);
     resetWaveTimer();
     playerDirRef.current = { x: 1, z: 0 };
     ghostsEatenBatchRef.current = 0;
 
-    playIntro(); 
-  };
+    playIntro();
+  }, [resumeAudioContext, clearAllTimers, notifyListeners, resetWaveTimer, playIntro]);
 
-  const nextLevel = () => {
+  const nextLevel = useCallback(() => {
       setLevel(prevLevel => {
           const nextLevelIndex = prevLevel + 1;
           const freshData = getInitialPositions(nextLevelIndex);
-          
+
           playerPosRef.current = freshData.pacmanStart;
           ghostsPosRef.current = freshData.ghostsStart;
           notifyListeners();
@@ -231,22 +223,46 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           layoutRef.current = freshData.initialLayout;
           setRemainingFood(freshData.foodCount);
           setDotsEaten(0);
-          
+
           setActiveBonus(null);
           clearBonusTimer();
           setExtraLifeSpawned(false);
-          
-          setGameStatus('ready'); 
+
+          setGameStatus('ready');
           setGlobalMode('SCATTER');
           setWaveIndex(0);
           resetWaveTimer();
           playerDirRef.current = { x: 1, z: 0 };
           ghostsEatenBatchRef.current = 0;
-          playLevelUp(); 
-          
+          playLevelUp();
+
           return nextLevelIndex;
       });
-  };
+  }, [notifyListeners, clearBonusTimer, resetWaveTimer, playLevelUp]);
+
+  const startGame = useCallback(() => {
+    resumeAudioContext();
+    const status = gameStatusRef.current;
+    if (status === 'idle' || status === 'gameover' || status === 'won') {
+        restartGame();
+    } else {
+        setGameStatus('ready');
+        playIntro();
+    }
+  }, [resumeAudioContext, restartGame, playIntro]);
+
+  const startRound = useCallback(() => {
+    resumeAudioContext();
+    setGameStatus('playing');
+  }, [resumeAudioContext]);
+
+  const pauseGame = useCallback(() => {
+    setGameStatus(prev => (prev === 'playing' ? 'paused' : prev));
+  }, []);
+
+  const resumeGame = useCallback(() => {
+    setGameStatus(prev => (prev === 'paused' ? 'playing' : prev));
+  }, []);
 
   const activatePowerMode = useCallback(() => {
     clearPowerTimers();
@@ -349,7 +365,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const movePlayer = useCallback((targetX: number, targetZ: number) => {
-    if (gameStatus !== 'playing') return;
+    if (gameStatusRef.current !== 'playing') return;
     
     if (targetZ === TUNNEL_ROW) {
         if (targetX < 0) targetX = 18;
@@ -425,7 +441,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       setActiveBonus(null); 
     }
 
-  }, [gameStatus, extraLifeSpawned, spawnBonus, playChomp, playExtraLife, playFruit, playPowerPellet, activeBonus, notifyListeners, activatePowerMode, handleCollisionHit, clearBonusTimer]);
+  }, [extraLifeSpawned, spawnBonus, playChomp, playExtraLife, playFruit, playPowerPellet, activeBonus, notifyListeners, activatePowerMode, handleCollisionHit, clearBonusTimer]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -441,13 +457,42 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
 
+  const metricsValue = useMemo(
+    () => ({ score, lives, remainingFood, elapsedTime }),
+    [score, lives, remainingFood, elapsedTime]
+  );
+
+  const layoutValue = useMemo(
+    () => ({ layout, activeBonus }),
+    [layout, activeBonus]
+  );
+
+  const sessionValue = useMemo(
+    () => ({ gameStatus, level }),
+    [gameStatus, level]
+  );
+
+  const refsValue = useMemo(
+    () => ({ playerPosRef, ghostsPosRef, layoutRef, subscribeToPositions }),
+    [subscribeToPositions]
+  );
+
+  const actionsValue = useMemo(
+    () => ({ movePlayer, startGame, startRound, pauseGame, resumeGame, restartGame, nextLevel }),
+    [movePlayer, startGame, startRound, pauseGame, resumeGame, restartGame, nextLevel]
+  );
+
   return (
-    <GameContext.Provider value={{ 
-      playerPosRef, ghostsPosRef, subscribeToPositions, layoutRef,
-      score, layout, gameStatus, remainingFood, lives, level, activeBonus, elapsedTime,
-      movePlayer, startGame, startRound, pauseGame, resumeGame, restartGame, nextLevel 
-    }}>
-      {children}
-    </GameContext.Provider>
+    <GameRefsContext.Provider value={refsValue}>
+      <GameActionsContext.Provider value={actionsValue}>
+        <GameSessionContext.Provider value={sessionValue}>
+          <GameLayoutContext.Provider value={layoutValue}>
+            <GameMetricsContext.Provider value={metricsValue}>
+              {children}
+            </GameMetricsContext.Provider>
+          </GameLayoutContext.Provider>
+        </GameSessionContext.Provider>
+      </GameActionsContext.Provider>
+    </GameRefsContext.Provider>
   );
 };

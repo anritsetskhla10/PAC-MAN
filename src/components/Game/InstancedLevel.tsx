@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { InstancedMesh, Object3D } from 'three';
 import * as THREE from 'three';
 import { useTheme } from '../../context/ThemeContext';
-import { useGame } from '../../context/GameContext'; 
+import { useGameSession } from '../../context/GameContext';
 import { TileType } from '../../types';
 import { LEVEL_MAPS } from '../../utils/constants'; 
 
 type Position3D = [number, number, number];
 
-export const InstancedLevel = () => {
+const InstancedLevelComponent = () => {
   const { settings } = useTheme();
-  
-  const { level } = useGame(); 
+
+  const { level } = useGameSession();
 
   const wallsRef = useRef<InstancedMesh>(null);
   const floorsRef = useRef<InstancedMesh>(null);
@@ -95,3 +95,7 @@ export const InstancedLevel = () => {
     </group>
   );
 };
+
+// Memoized: the static maze only depends on `level`, so it must not re-render
+// when its parent (Board3D) re-renders as dots are eaten.
+export const InstancedLevel = memo(InstancedLevelComponent);

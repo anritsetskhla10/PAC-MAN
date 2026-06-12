@@ -1,9 +1,11 @@
-import { useGame } from '../../context/GameContext';
+import { useGameMetrics, useGameSession, useGameActions } from '../../context/GameContext';
 import { formatTime } from '../../utils/formatTime'; 
 import { useTranslation } from 'react-i18next';
 
 export const GameOverlay = () => {
-  const { gameStatus, score, level, elapsedTime, startGame, resumeGame, restartGame, startRound, nextLevel } = useGame();
+  const { score, elapsedTime } = useGameMetrics();
+  const { gameStatus, level } = useGameSession();
+  const { startGame, resumeGame, restartGame, startRound, nextLevel } = useGameActions();
   const { t } = useTranslation();
 
   if (gameStatus === 'playing') return null;

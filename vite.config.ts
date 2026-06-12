@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vitest/config'
+import { defineConfig, configDefaults } from 'vitest/config'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import react from '@vitejs/plugin-react'
@@ -55,6 +55,8 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/tests/setup.ts',
-    css: false, 
+    css: false,
+    // Ignore git worktrees kept under .claude so stale copies aren't tested.
+    exclude: [...configDefaults.exclude, '**/.claude/**'],
   }
 })

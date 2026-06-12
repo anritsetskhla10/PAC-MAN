@@ -1,4 +1,4 @@
-import { useGame } from '../../context/GameContext';
+import { useGameRefs, useGameActions, useGameSession } from '../../context/GameContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useIsMobile } from '../../hooks/useIsMobile';
 
@@ -23,7 +23,9 @@ const DPadButton = ({ dir, icon, className, onMove }: DPadButtonProps) => (
 );
 
 export const MobileControls = () => {
-  const { playerPosRef, movePlayer, gameStatus } = useGame();
+  const { playerPosRef } = useGameRefs();
+  const { movePlayer } = useGameActions();
+  const { gameStatus } = useGameSession();
   const { settings } = useTheme();
   const isMobile = useIsMobile();
   
