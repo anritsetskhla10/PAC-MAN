@@ -94,6 +94,17 @@ const InstancedFoodComponent = ({ layout, themeOverride }: InstancedFoodProps) =
     return { dots, powers };
   }, [layout]);
 
+  // Allocate the instance buffers at a capacity that only grows (when a new
+  // level has more food), never shrinks. Eating a dot then changes the rendered
+  // `count` instead of the `args`, so the GPU buffer is no longer recreated on
+  // every dot. (Mutating a ref during render is intentional here.)
+  const dotCapacityRef = useRef(0);
+  const powerCapacityRef = useRef(0);
+  const dotCapacity = Math.max(dotCapacityRef.current, itemData.dots.length);
+  const powerCapacity = Math.max(powerCapacityRef.current, itemData.powers.length);
+  dotCapacityRef.current = dotCapacity;
+  powerCapacityRef.current = powerCapacity;
+
   const { mchadiGeo, lavashGeo, meatGeo } = useMemo(() => ({
     mchadiGeo: createMchadiGeometry(),
     lavashGeo: createLavashGeometry(),
@@ -142,13 +153,18 @@ const InstancedFoodComponent = ({ layout, themeOverride }: InstancedFoodProps) =
       }
     });
 
+    // Only render as many instances as there is food left; the rest of the
+    // (over-allocated) buffer stays hidden.
+    const dotCount = itemData.dots.length;
+    const powerCount = itemData.powers.length;
+
     if (isLabadze) {
-      if (mchadiRef.current) mchadiRef.current.instanceMatrix.needsUpdate = true;
-      if (kebabMeatRef.current) kebabMeatRef.current.instanceMatrix.needsUpdate = true;
-      if (kebabLavashRef.current) kebabLavashRef.current.instanceMatrix.needsUpdate = true;
+      if (mchadiRef.current) { mchadiRef.current.count = dotCount; mchadiRef.current.instanceMatrix.needsUpdate = true; }
+      if (kebabMeatRef.current) { kebabMeatRef.current.count = powerCount; kebabMeatRef.current.instanceMatrix.needsUpdate = true; }
+      if (kebabLavashRef.current) { kebabLavashRef.current.count = powerCount; kebabLavashRef.current.instanceMatrix.needsUpdate = true; }
     } else {
-      if (classicDotRef.current) classicDotRef.current.instanceMatrix.needsUpdate = true;
-      if (classicPowerRef.current) classicPowerRef.current.instanceMatrix.needsUpdate = true;
+      if (classicDotRef.current) { classicDotRef.current.count = dotCount; classicDotRef.current.instanceMatrix.needsUpdate = true; }
+      if (classicPowerRef.current) { classicPowerRef.current.count = powerCount; classicPowerRef.current.instanceMatrix.needsUpdate = true; }
     }
   });
 
@@ -158,7 +174,7 @@ const InstancedFoodComponent = ({ layout, themeOverride }: InstancedFoodProps) =
         <>
           {/* Labadze Mchadi */}
           {itemData.dots.length > 0 && (
-            <instancedMesh ref={mchadiRef} args={[mchadiGeo, undefined, itemData.dots.length]}>
+            <instancedMesh ref={mchadiRef} args={[mchadiGeo, undefined, dotCapacity]}>
               <meshStandardMaterial vertexColors={true} roughness={1} metalness={0.0} emissive={"#8B4513"} emissiveIntensity={0.1} />
             </instancedMesh>
           )}
@@ -166,10 +182,10 @@ const InstancedFoodComponent = ({ layout, themeOverride }: InstancedFoodProps) =
           {/* Labadze Kebab */}
           {itemData.powers.length > 0 && (
             <group>
-              <instancedMesh ref={kebabMeatRef} args={[meatGeo, undefined, itemData.powers.length]}>
+              <instancedMesh ref={kebabMeatRef} args={[meatGeo, undefined, powerCapacity]}>
                 <meshPhysicalMaterial color="#771313" roughness={0.65} metalness={0.0} reflectivity={0.5} />
               </instancedMesh>
-              <instancedMesh ref={kebabLavashRef} args={[lavashGeo, undefined, itemData.powers.length]}>
+              <instancedMesh ref={kebabLavashRef} args={[lavashGeo, undefined, powerCapacity]}>
                 <meshStandardMaterial vertexColors={true} side={THREE.DoubleSide} roughness={1} metalness={0} />
               </instancedMesh>
             </group>
@@ -179,7 +195,7 @@ const InstancedFoodComponent = ({ layout, themeOverride }: InstancedFoodProps) =
         <>
           {/* Classic Dots */}
           {itemData.dots.length > 0 && (
-            <instancedMesh ref={classicDotRef} args={[undefined, undefined, itemData.dots.length]}>
+            <instancedMesh ref={classicDotRef} args={[undefined, undefined, dotCapacity]}>
               <icosahedronGeometry args={[0.15, 0]} />
               <meshStandardMaterial color={foodColor} emissive={foodColor} emissiveIntensity={0.5} roughness={0.3} />
             </instancedMesh>
@@ -187,7 +203,7 @@ const InstancedFoodComponent = ({ layout, themeOverride }: InstancedFoodProps) =
 
           {/* Classic Power Pellets */}
           {itemData.powers.length > 0 && (
-            <instancedMesh ref={classicPowerRef} args={[undefined, undefined, itemData.powers.length]}>
+            <instancedMesh ref={classicPowerRef} args={[undefined, undefined, powerCapacity]}>
               <sphereGeometry args={[0.2, 16, 16]} />
               <meshStandardMaterial color={foodColor} emissive={foodColor} emissiveIntensity={2} toneMapped={false} />
             </instancedMesh>
