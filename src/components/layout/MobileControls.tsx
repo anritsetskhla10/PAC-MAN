@@ -17,8 +17,9 @@ const DPadButton = ({ dir, icon, className, onMove }: DPadButtonProps) => (
       onMove(dir);
     }}
     className={className}
+    aria-label={`Move ${dir.toLowerCase()}`}
   >
-    {icon}
+    <span aria-hidden="true">{icon}</span>
   </button>
 );
 

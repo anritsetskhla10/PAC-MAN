@@ -12,6 +12,7 @@ import { LEVEL_MAPS, GHOST_CONFIG, SPAWN_POINTS, TUNNEL_ROW, SCORES, POWER_MODE_
 import { useTheme } from './ThemeContext';
 import { useGameAudio } from '../hooks/useGameAudio'; 
 import { checkCollision, checkFoodEaten, checkBonusEaten } from '../utils/physics';
+import { isInGhostHouse } from '../utils/ghostLogic';
 import { Howler } from 'howler';
 import { useGameTimers } from '../hooks/useGameTimers';
 import { useGameLoop } from '../hooks/useGameLoop';
@@ -280,8 +281,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     ghostsPosRef.current = ghostsPosRef.current.map(g => {
         if (g.state === GhostState.EATEN || g.state === GhostState.EYES) return g;
 
-        const inHouse = (g.x >= 8 && g.x <= 10) && (g.z > 8.5 && g.z < 9.5);
-        
+        const inHouse = isInGhostHouse(g);
+
         if (inHouse) {
             return { 
                 ...g, 

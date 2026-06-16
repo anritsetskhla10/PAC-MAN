@@ -111,27 +111,31 @@ export const GamePage = () => {
         
         {/* Left Controls */}
         <div className="flex landscape:max-lg:flex-col gap-2 md:gap-3 items-center">
-             <Link to="/settings" className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors" title="Settings">
-                ⚙️
+             <Link to="/settings" className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors" title="Settings" aria-label="Settings">
+                <span aria-hidden="true">⚙️</span>
              </Link>
-             
-             <button 
+
+             <button
                 onClick={handleOpenInstructions}
                 className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
                 title="How to Play"
+                aria-label="How to play"
              >
-                ❓
+                <span aria-hidden="true">❓</span>
              </button>
 
-             <div 
-               className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-primary/20 cursor-pointer hover:bg-white/10 transition-colors" 
+             <button
+               type="button"
+               className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-primary/20 cursor-pointer hover:bg-white/10 transition-colors"
                onClick={() => updateSetting('is3DMode', !settings.is3DMode)}
+               aria-pressed={settings.is3DMode}
+               aria-label={settings.is3DMode ? 'Switch to 2D mode' : 'Switch to 3D mode'}
              >
-                <span className="text-lg">{settings.is3DMode ? "🎮" : "🕹️"}</span>
+                <span className="text-lg" aria-hidden="true">{settings.is3DMode ? "🎮" : "🕹️"}</span>
                 <span className="text-primary font-bold text-xs md:text-sm landscape:max-lg:hidden">
                     {settings.is3DMode ? "3D" : "2D"}
                 </span>
-            </div>
+            </button>
         </div>
 
         {/* Center Info (Lives, Level, Score) */}
@@ -201,17 +205,18 @@ export const GamePage = () => {
         {/* Right Controls (Pause/Camera) */}
         <div className="flex landscape:max-lg:flex-col gap-4 items-center">
            {settings.is3DMode && !isMobile && (
-                <button onClick={toggleCameraMode} className="text-2xl hover:scale-110 transition-transform" title="Change Camera">
-                    {settings.isSpectatorMode ? "🎥" : "👀"}
+                <button onClick={toggleCameraMode} className="text-2xl hover:scale-110 transition-transform" title="Change Camera" aria-label="Change camera mode">
+                    <span aria-hidden="true">{settings.isSpectatorMode ? "🎥" : "👀"}</span>
                 </button>
             )}
 
             {gameStatus === 'playing' && (
-                <button 
+                <button
                 onClick={handlePause}
                 className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-red-600/90 text-white rounded-full shadow-lg active:scale-95 border-2 border-white/20"
+                aria-label="Pause game"
                 >
-                ⏸
+                <span aria-hidden="true">⏸</span>
                 </button>
             )}
         </div>
