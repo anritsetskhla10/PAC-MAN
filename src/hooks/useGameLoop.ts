@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { type GameStatus, type GlobalMode, GhostState, type Ghost, type Difficulty } from '../types';
 import { type Position } from '../context/GameContext';
 import { WAVE_TIMINGS, GHOST_CONFIG, GHOST_SPEEDS, TUNNEL_ROW } from '../utils/constants';
-import { calculateGhostNextMove } from '../utils/ghostLogic';
+import { calculateGhostNextMove, isInGhostHouse } from '../utils/ghostLogic';
 import { checkCollision } from '../utils/physics';
 
 interface GameStateRef {
@@ -85,8 +85,8 @@ export const useGameLoop = ({
                       
                       ghostsPosRef.current = ghostsPosRef.current.map(g => {
                           if (g.state === GhostState.NORMAL) {
-                              const inHouse = (g.x >= 8 && g.x <= 10) && (g.z > 8.5 && g.z < 9.5);
-                              
+                              const inHouse = isInGhostHouse(g);
+
                               if (inHouse) {
                                   return { 
                                       ...g, 

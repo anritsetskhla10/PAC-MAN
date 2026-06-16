@@ -8,6 +8,7 @@ import { Food2D } from '../2D/Food2D';
 import { Pacman2D } from '../../Game/Player/Pacman2D';
 import type { PlayerHeading } from '../../../hooks/usePlayerHeading';
 import type { ActiveBonus } from '../../../types';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 import { debounce } from '../../../utils/debounce';
 
 const MAP_COLS = 19;
@@ -191,6 +192,7 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
   const { layout, activeBonus } = useGameLayout();
   const { movePlayer } = useGameActions();
   const { settings } = useTheme();
+  const isMobile = useIsMobile();
 
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1000);
 
@@ -254,7 +256,6 @@ export const Board = ({ isMinimap = false, heading, parentWidth = 0, parentHeigh
   }, [isMinimap, windowWidth, parentWidth, parentHeight]);
 
   const itemScale = cellSize / 28;
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const cols = layout[0]?.length || 19;
 
   return (

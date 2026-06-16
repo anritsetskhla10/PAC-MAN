@@ -12,7 +12,7 @@ const getDistSq = (a: Coordinate, b: Coordinate) => {
   return (a.x - b.x) ** 2 + (a.z - b.z) ** 2;
 };
 
-const isInGhostHouse = (pos: Coordinate) => {
+export const isInGhostHouse = (pos: Coordinate) => {
   return (pos.z > 8.5 && pos.z < 9.5) && (pos.x >= 8 && pos.x <= 10);
 };
 
