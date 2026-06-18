@@ -8,7 +8,15 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [settings, setSettings] = useState<ThemeSettings>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : defaultSettings;
+      if (!saved) return defaultSettings;
+      const parsed = JSON.parse(saved);
+      // Merge with defaults so settings persisted under an older schema still
+      // get any newly-added fields (e.g. `audio`) instead of being undefined.
+      return {
+        ...defaultSettings,
+        ...parsed,
+        audio: { ...defaultSettings.audio, ...(parsed?.audio ?? {}) },
+      };
     } catch (e) {
       console.warn('Failed to parse theme settings:', e);
       return defaultSettings;
