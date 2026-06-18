@@ -66,6 +66,8 @@
   },
   "instructions": {
     "title": "HOW TO PLAY",
+    "section_gameplay": "Gameplay",
+    "section_features": "Features & Settings",
     "controls": "Controls",
     "desktop_controls": "WASD or Arrow Keys to move.",
     "mobile_controls": "Use the on-screen D-Pad to move.",

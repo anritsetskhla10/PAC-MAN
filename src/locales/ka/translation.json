@@ -66,6 +66,8 @@
   },
   "instructions": {
     "title": "როგორ ვითამაშოთ",
+    "section_gameplay": "გეიმფლეი",
+    "section_features": "ფუნქციები და პარამეტრები",
     "controls": "მართვა",
     "desktop_controls": "მოძრაობისთვის გამოიყენეთ WASD ან ისრები.",
     "mobile_controls": "მოძრაობისთვის გამოიყენეთ ეკრანზე არსებული ღილაკები.",
