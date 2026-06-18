@@ -10,6 +10,11 @@ import { useIsMobile } from '../../../hooks/useIsMobile';
 import { Model as LabadzeModel } from '../../Game/3D/Models/Labadze';
 import { ClassicPacmanModel3D } from '../3D/Models/ClassicPacmanModel3D'; 
 
+// Reused scratch vectors so the per-frame camera math doesn't allocate.
+const _target = new Vector3();
+const _look = new Vector3();
+const _current = new Vector3();
+
 interface Pacman3DProps {
     isShowcase?: boolean;
     isSpectator?: boolean;
@@ -128,10 +133,10 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
     const targetY = isLabadze ? 0.05 : 0.85;
     const playerPos = playerPosRef.current; 
 
-    const targetVec = isShowcase 
-        ? new Vector3(0, 0, 0)
-        : new Vector3(playerPos.x, targetY, playerPos.z);
-    
+    const targetVec = isShowcase
+        ? _target.set(0, 0, 0)
+        : _target.set(playerPos.x, targetY, playerPos.z);
+
     const dx = playerPos.x - currentPosRef.current.x;
     const dz = playerPos.z - currentPosRef.current.z;
     isMoving.current = Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01;
@@ -155,53 +160,41 @@ export const Pacman3D = ({ isShowcase = false, isSpectator = false, heading = 'R
             const isPortrait = viewport.aspect < 1;
 
             if (isPortrait) {
-                const mapCenter = new Vector3(9, 0, 11);
-                
                 const dynamicHeight = Math.max(24, 19.5 / viewport.aspect);
-                const staticCamPos = new Vector3(9, dynamicHeight, 16); 
-                
+
                 if (!isNaN(camera.position.x)) {
-                    camera.position.lerp(staticCamPos, 0.1);
-                    
-                    const targetLookAt = new Vector3();
-                    targetLookAt.copy(mapCenter);
-                    
-                    const currentLookAt = new Vector3();
-                    camera.getWorldDirection(currentLookAt);
-                    currentLookAt.add(camera.position); 
-                    
-                    currentLookAt.lerp(targetLookAt, 0.1);
-                    camera.lookAt(currentLookAt);
+                    camera.position.lerp(_target.set(9, dynamicHeight, 16), 0.1);
+
+                    _look.set(9, 0, 11); // map center
+
+                    camera.getWorldDirection(_current);
+                    _current.add(camera.position);
+
+                    _current.lerp(_look, 0.1);
+                    camera.lookAt(_current);
                 }
             } else {
                 const isLandscape = viewport.width > viewport.height;
-                const camHeight = isMobile ? (isLandscape ? 16 : 22) : 14; 
+                const camHeight = isMobile ? (isLandscape ? 16 : 22) : 14;
                 const camDist = isMobile ? (isLandscape ? 10 : 12) : 8;
-                
-                const camTargetPos = new Vector3(
-                    groupRef.current.position.x, 
-                    groupRef.current.position.y + camHeight, 
-                    groupRef.current.position.z + camDist
-                );
+                const gp = groupRef.current.position;
 
                 if (!isNaN(camera.position.x)) {
-                    camera.position.lerp(camTargetPos, 0.1); 
-                    
-                    const targetLookAt = new Vector3();
-                    targetLookAt.copy(groupRef.current.position);
-                    
-                    const currentLookAt = new Vector3();
-                    camera.getWorldDirection(currentLookAt);
-                    currentLookAt.add(camera.position);
-                    
-                    currentLookAt.lerp(targetLookAt, 0.1);
-                    camera.lookAt(currentLookAt);
+                    camera.position.lerp(_target.set(gp.x, gp.y + camHeight, gp.z + camDist), 0.1);
+
+                    _look.copy(gp);
+
+                    camera.getWorldDirection(_current);
+                    _current.add(camera.position);
+
+                    _current.lerp(_look, 0.1);
+                    camera.lookAt(_current);
                 }
             }
         } else {
-            const fpsPos = new Vector3(groupRef.current.position.x, 0.6, groupRef.current.position.z);
+            const gp = groupRef.current.position;
             if (!isNaN(camera.position.x)) {
-                camera.position.lerp(fpsPos, 0.8);
+                camera.position.lerp(_target.set(gp.x, 0.6, gp.z), 0.8);
             }
         }
     }
