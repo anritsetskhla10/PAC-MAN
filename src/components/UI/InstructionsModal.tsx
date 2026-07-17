@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '../../hooks/useIsMobile';
 
@@ -9,9 +10,26 @@ export const InstructionsModal = ({ onClose }: InstructionsModalProps) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
 
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
   return (
-    <div className="absolute inset-0 z-100 flex items-center justify-center bg-black/85 backdrop-blur-sm animate-in fade-in duration-300 p-4">
-      <div className="bg-[#111] border-2 border-primary/50 rounded-2xl p-6 md:p-8 max-w-2xl w-full shadow-[0_0_30px_rgba(0,212,255,0.2)] text-white overflow-y-auto max-h-[85vh] custom-scrollbar">
+    <div
+      className="absolute inset-0 z-100 flex items-center justify-center bg-black/85 backdrop-blur-sm animate-in fade-in duration-300 p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('instructions.title')}
+    >
+      <div
+        className="bg-[#111] border-2 border-primary/50 rounded-2xl p-6 md:p-8 max-w-2xl w-full shadow-[0_0_30px_rgba(0,212,255,0.2)] text-white overflow-y-auto max-h-[85vh] custom-scrollbar"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         <h2 className="text-3xl md:text-4xl font-black text-center text-primary mb-8 tracking-widest drop-shadow-[0_0_10px_rgba(0,212,255,0.5)]">
           {t('instructions.title')}
@@ -22,7 +40,7 @@ export const InstructionsModal = ({ onClose }: InstructionsModalProps) => {
           {/* Left Column: Gameplay Rules */}
           <div className="space-y-4">
             <h3 className="text-xl font-bold border-b border-white/20 pb-2 mb-4 text-gray-300 uppercase tracking-wider">
-              Gameplay
+              {t('instructions.section_gameplay')}
             </h3>
             
             <div className="bg-white/5 p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
@@ -65,7 +83,7 @@ export const InstructionsModal = ({ onClose }: InstructionsModalProps) => {
           {/* Right Column: Features & Settings */}
           <div className="space-y-4">
              <h3 className="text-xl font-bold border-b border-white/20 pb-2 mb-4 text-gray-300 uppercase tracking-wider">
-              Features & Settings
+              {t('instructions.section_features')}
             </h3>
 
             <div className="bg-primary/10 p-4 rounded-xl border border-primary/20 hover:bg-primary/20 transition-colors">

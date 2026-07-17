@@ -12,7 +12,7 @@ import { useIsMobile } from '../../../hooks/useIsMobile';
 import { debounce } from '../../../utils/debounce';
 
 const MAP_COLS = 19;
-const MAP_ROWS = 22;
+const MAP_ROWS = 15; // LEVEL_MAPS are 19 cols x 15 rows
 
 interface BoardProps {
   isMinimap?: boolean;
